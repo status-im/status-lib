@@ -22,6 +22,9 @@ type
     id*: int
     error*: RpcError
 
+type StatusGoError* = object
+  error*: string
+
 type
   StatusGoException* = object of CatchableError
 

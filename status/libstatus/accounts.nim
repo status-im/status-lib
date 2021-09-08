@@ -4,7 +4,6 @@ from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, ide
 import core
 import ../utils as utils
 import ../types/[account, fleet, rpc_response]
-import ../signals/[base]
 import accounts/constants
 
 proc getNetworkConfig(currentNetwork: string): JsonNode =
