@@ -3,11 +3,12 @@ import json
 import base
 
 import status/types/community
+import signal_type
 
 type CommunitySignal* = ref object of Signal
   community*: Community
 
-proc fromEvent*(event: JsonNode): Signal =
-  var signal: CommunitySignal = CommunitySignal()
-  signal.community = event["event"].toCommunity()
-  result = signal
+proc fromEvent*(T: type CommunitySignal, event: JsonNode): CommunitySignal = 
+  result = CommunitySignal()
+  result.signalType = SignalType.CommunityFound
+  result.community = event["event"].toCommunity()

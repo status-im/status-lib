@@ -1,4 +1,4 @@
-import json, chronicles
+import json
 
 import base
 
@@ -18,7 +18,7 @@ type MessageSignal* = ref object of Signal
   statusUpdates*: seq[StatusUpdate]
   deletedMessages*: seq[RemovedMessage]
 
-proc fromEvent*(event: JsonNode): Signal = 
+proc fromEvent*(T: type MessageSignal, event: JsonNode): MessageSignal = 
   var signal:MessageSignal = MessageSignal()
   signal.messages = @[]
   signal.contacts = @[]
@@ -78,7 +78,6 @@ proc fromEvent*(event: JsonNode): Signal =
       try:
         contentType = ContentType(jsonPinnedMessage{"contentType"}.getInt)
       except:
-        warn "Unknown content type received", type = jsonPinnedMessage{"contentType"}.getInt
         contentType = ContentType.Message
       signal.pinnedMessages.add(Message(
         id: jsonPinnedMessage{"message_id"}.getStr,
@@ -93,3 +92,4 @@ proc fromEvent*(event: JsonNode): Signal =
       ))
 
   result = signal
+

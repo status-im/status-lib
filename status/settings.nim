@@ -5,8 +5,7 @@ import
 
 import libstatus/settings as libstatus_settings
 import ../eventemitter
-import ./types/[fleet, network, setting]
-import ./signals/[base]
+import ./types/[fleet, network, setting, rpc_response]
 
 type
     SettingsModel* = ref object

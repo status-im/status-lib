@@ -1,6 +1,7 @@
 import json
 
 import base
+import signal_type
 
 type MailserverRequestCompletedSignal* = ref object of Signal
   requestID*: string
@@ -12,18 +13,17 @@ type MailserverRequestCompletedSignal* = ref object of Signal
 type MailserverRequestExpiredSignal* = ref object of Signal
   # TODO
 
-proc fromCompletedEvent*(jsonSignal: JsonNode): Signal = 
-  var signal:MailserverRequestCompletedSignal = MailserverRequestCompletedSignal()
+proc fromEvent*(T: type MailserverRequestCompletedSignal, jsonSignal: JsonNode): MailserverRequestCompletedSignal = 
+  result = MailserverRequestCompletedSignal()
+  result.signalType = SignalType.MailserverRequestCompleted
   if jsonSignal["event"].kind != JNull:
-    signal.requestID = jsonSignal["event"]{"requestID"}.getStr()
-    signal.lastEnvelopeHash = jsonSignal["event"]{"lastEnvelopeHash"}.getStr()
-    signal.cursor = jsonSignal["event"]{"cursor"}.getStr()
-    signal.errorMessage = jsonSignal["event"]{"errorMessage"}.getStr()
-    signal.error = signal.errorMessage != ""
-  result = signal
+    result.requestID = jsonSignal["event"]{"requestID"}.getStr()
+    result.lastEnvelopeHash = jsonSignal["event"]{"lastEnvelopeHash"}.getStr()
+    result.cursor = jsonSignal["event"]{"cursor"}.getStr()
+    result.errorMessage = jsonSignal["event"]{"errorMessage"}.getStr()
+    result.error = result.errorMessage != ""
   
-proc fromExpiredEvent*(jsonSignal: JsonNode): Signal = 
-  var signal:MailserverRequestExpiredSignal = MailserverRequestExpiredSignal()
+proc fromEvent*(T: type MailserverRequestExpiredSignal, jsonSignal: JsonNode): MailserverRequestExpiredSignal = 
   # TODO: parse signal
-  result = signal
-  
+  result = MailserverRequestExpiredSignal()
+  result.signalType = SignalType.MailserverRequestExpired

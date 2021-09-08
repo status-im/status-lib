@@ -7,8 +7,7 @@ import
 import
   ./core, ./accounts/constants, ../utils
 
-import ../types/[setting, network, fleet]
-import ../signals/[base]
+import ../types/[setting, network, fleet, rpc_response]
 
 from status_go import nil
 
