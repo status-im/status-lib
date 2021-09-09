@@ -7,7 +7,7 @@ import
 import
   ./core, ./accounts/constants, ../utils
 
-import ../types/[setting, network, fleet, rpc_response]
+import ../types/[setting, network_type, fleet, rpc_response]
 
 from status_go import nil
 
@@ -65,22 +65,22 @@ proc getSetting*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
 proc getSetting*[T](name: Setting, useCached: bool = true): T =
   result = getSetting(name, default(type(T)), useCached)
 
-proc getCurrentNetwork*(): Network =
+proc getCurrentNetwork*(): NetworkType =
   case getSetting[string](Setting.Networks_CurrentNetwork, constants.DEFAULT_NETWORK_NAME):
   of "mainnet_rpc":
-    result = Network.Mainnet
+    result = NetworkType.Mainnet
   of "testnet_rpc":
-    result = Network.Testnet
+    result = NetworkType.Testnet
   of "rinkeby_rpc":
-    result = Network.Rinkeby
+    result = NetworkType.Rinkeby
   of "goerli_rpc":
-    result = Network.Goerli
+    result = NetworkType.Goerli
   of "xdai_rpc":
-    result = Network.XDai
+    result = NetworkType.XDai
   of "poa_rpc":
-    result = Network.Poa
+    result = NetworkType.Poa
   else:
-    result = Network.Other
+    result = NetworkType.Other
 
 proc getCurrentNetworkDetails*(): NetworkDetails =
   let currNetwork = getSetting[string](Setting.Networks_CurrentNetwork, constants.DEFAULT_NETWORK_NAME)

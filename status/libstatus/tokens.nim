@@ -6,7 +6,7 @@ import
 
 import 
   ./settings, ./core, ./wallet, ./eth/contracts,
-  ../types/[setting, network, rpc_response]
+  ../types/[setting, network_type, rpc_response]
 from ../utils import parseAddress
 
 logScope:
@@ -38,7 +38,7 @@ proc getCustomTokens*(useCached: bool = true): seq[Erc20Contract] =
 
 proc visibleTokensSNTDefault(): JsonNode =
   let currentNetwork = getCurrentNetwork()
-  let SNT = if currentNetwork == Network.Mainnet: "SNT" else: "STT"
+  let SNT = if currentNetwork == NetworkType.Mainnet: "SNT" else: "STT"
   let response = getSetting[string](Setting.VisibleTokens, "{}").parseJSON
 
   if not response.hasKey($currentNetwork):

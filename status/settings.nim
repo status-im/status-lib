@@ -5,7 +5,7 @@ import
 
 import libstatus/settings as libstatus_settings
 import ../eventemitter
-import ./types/[fleet, network, setting, rpc_response]
+import ./types/[fleet, network_type, setting, rpc_response]
 
 type
     SettingsModel* = ref object
@@ -49,10 +49,10 @@ proc saveMailserver*(self: SettingsModel, name, enode: string) =
 proc getFleet*(self: SettingsModel): Fleet =
     result = libstatus_settings.getFleet()
 
-proc getCurrentNetwork*(): Network =
+proc getCurrentNetwork*(): NetworkType =
     result = libstatus_settings.getCurrentNetwork()
 
-proc getCurrentNetwork*(self: SettingsModel): Network =
+proc getCurrentNetwork*(self: SettingsModel): NetworkType =
     result = getCurrentNetwork()
 
 proc setWakuVersion*(self: SettingsModel, newVersion: int) =
