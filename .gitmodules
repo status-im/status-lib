@@ -73,9 +73,6 @@
 [submodule "vendor/nim-libp2p"]
 	path = vendor/nim-libp2p
 	url = https://github.com/status-im/nim-libp2p
-[submodule "vendor/edn.nim"]
-	path = vendor/edn.nim
-	url = https://github.com/rosado/edn.nim.git
 [submodule "vendor/nim-task-runner"]
 	path = vendor/nim-task-runner
 	url = https://github.com/status-im/nim-task-runner.git
@@ -85,3 +82,6 @@
 [submodule "vendor/nim-base32"]
 	path = vendor/nim-base32
 	url = https://github.com/elktree/nim-base32
+[submodule "vendor/edn.nim"]
+	path = vendor/edn.nim
+	url = https://github.com/status-im/edn.nim
