@@ -505,10 +505,12 @@ proc leaveCommunity*(self: ChatModel, communityId: string) =
   status_chat.leaveCommunity(communityId)
 
 proc inviteUserToCommunity*(self: ChatModel, communityId: string, pubKey: string) =
-  status_chat.inviteUsersToCommunity(communityId, @[pubKey])
+  let response = status_chat.inviteUsersToCommunity(communityId, @[pubKey])
+  discard self.processMessageUpdateAfterSend(response)
 
 proc inviteUsersToCommunity*(self: ChatModel, communityId: string, pubKeys: seq[string]) =
-  status_chat.inviteUsersToCommunity(communityId, pubKeys)
+  let response = status_chat.inviteUsersToCommunity(communityId, pubKeys)
+  discard self.processMessageUpdateAfterSend(response)
 
 proc removeUserFromCommunity*(self: ChatModel, communityId: string, pubKey: string) =
   status_chat.removeUserFromCommunity(communityId, pubKey)
