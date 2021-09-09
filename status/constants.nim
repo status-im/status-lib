@@ -1,5 +1,6 @@
 import libstatus/accounts/constants
 
+export OPENURI
 export DATADIR
 export STATUSGODIR
 export KEYSTOREDIR
