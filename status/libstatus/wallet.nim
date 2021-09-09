@@ -2,7 +2,7 @@ import json, json, options, json_serialization, stint, chronicles
 import core, conversions, ../types/[transaction, rpc_response], ../utils, strutils, strformat
 from status_go import validateMnemonic#, startWallet
 import ../wallet/account
-import web3/ethtypes
+import web3/conversions as web3_conversions, web3/ethtypes
 
 proc getWalletAccounts*(): seq[WalletAccount] =
   try:
@@ -161,3 +161,21 @@ proc feeHistory*(n: int): string =
 proc getGasPrice*(): string =
   let payload = %* []
   result = callPrivateRPC("eth_gasPrice", payload)
+
+proc addSavedAddress*(name, address: string): string =
+  let
+    payload = %* [{"name": name, "address": address}]
+    jsonRaw = callPrivateRPC("wallet_addSavedAddress", payload)
+  jsonRaw
+
+proc deleteSavedAddress*(address: string): string =
+  let
+    payload = %* [address]
+    jsonRaw = callPrivateRPC("wallet_deleteSavedAddress", payload)
+  jsonRaw
+
+proc getSavedAddresses*(): string =
+  let
+    payload = %* []
+    jsonRaw = callPrivateRPC("wallet_getSavedAddresses", payload)
+  jsonRaw
