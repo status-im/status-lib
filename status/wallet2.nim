@@ -7,14 +7,14 @@ import statusgo_backend/wallet as status_wallet
 import statusgo_backend/network as status_network
 import statusgo_backend/settings as status_settings
 import eth/[contracts]
-import wallet2/[balance_manager, collectibles, network]
+import wallet2/[balance_manager, network]
 import wallet2/account as wallet_account
 import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]
 import ../eventemitter
 from web3/ethtypes import Address
 from web3/conversions import `$`
 
-export wallet_account, collectibles
+export wallet_account
 
 logScope:
   topics = "status-wallet2"
@@ -205,10 +205,12 @@ proc deleteAccount*(self: StatusWalletController, address: string): string =
   self.accounts = self.accounts.filter(acc => acc.address.toLowerAscii != address.toLowerAscii)
 
 proc getOpenseaCollections*(address: string): string =
-  result = status_wallet.getOpenseaCollections(address)
+  let networkId = status_settings.getCurrentNetworkDetails().config.networkId
+  result = status_wallet.getOpenseaCollections(networkId, address)
 
 proc getOpenseaAssets*(address: string, collectionSlug: string, limit: int): string =
-  result = status_wallet.getOpenseaAssets(address, collectionSlug, limit)
+  let networkId = status_settings.getCurrentNetworkDetails().config.networkId
+  result = status_wallet.getOpenseaAssets(networkId, address, collectionSlug, limit)
 
 proc onAsyncFetchCryptoServices*(self: StatusWalletController, response: string) =
   let responseArray = response.parseJson
