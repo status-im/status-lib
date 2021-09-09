@@ -11,7 +11,7 @@ import ../libstatus/tokens as status_tokens
 import ../libstatus/eth/contracts as status_contracts
 import web3/conversions
 from ../utils import parseAddress, wei2Eth
-import setting, network
+import setting, network_type
 
 include message_command_parameters
 include message_reaction
@@ -155,7 +155,7 @@ proc toMessage*(jsonMsg: JsonNode): Message =
   if message.contentType == ContentType.Transaction:
     let
       allContracts = getErc20Contracts().concat(getCustomTokens())
-      ethereum = newErc20Contract("Ethereum", Network.Mainnet, parseAddress(constants.ZERO_ADDRESS), "ETH", 18, true)
+      ethereum = newErc20Contract("Ethereum", NetworkType.Mainnet, parseAddress(constants.ZERO_ADDRESS), "ETH", 18, true)
       tokenAddress = jsonMsg["commandParameters"]["contract"].getStr
       tokenContract = if tokenAddress == "": ethereum else: allContracts.getErc20ContractByAddress(parseAddress(tokenAddress)) 
       tokenContractStr = if tokenContract == nil: "{}" else: $(Json.encode(tokenContract))

@@ -16,7 +16,7 @@ import wallet/account as wallet_account
 import transactions
 import ../eventemitter
 import options
-import ./types/[account, transaction, network, setting, gas_prediction, rpc_response]
+import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]
 export wallet_account, collectibles
 export Transaction
 
@@ -355,7 +355,7 @@ proc validateMnemonic*(self: WalletModel, mnemonic: string): string =
   result = status_wallet.validateMnemonic(mnemonic).parseJSON()["error"].getStr
 
 proc getGasPricePredictions*(): GasPricePrediction =
-  if status_settings.getCurrentNetwork() != Network.Mainnet:
+  if status_settings.getCurrentNetwork() != NetworkType.Mainnet:
     # TODO: what about other chains like xdai?
     return GasPricePrediction(safeLow: 1.0, standard: 2.0, fast: 3.0, fastest: 4.0)
   let secureSSLContext = newContext()

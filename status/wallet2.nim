@@ -4,11 +4,12 @@ import libstatus/accounts as status_accounts
 import libstatus/accounts/constants as constants
 import libstatus/tokens as status_tokens
 import libstatus/wallet as status_wallet
+import libstatus/network as status_network
 import libstatus/settings as status_settings
 import libstatus/eth/[contracts]
-import wallet2/[balance_manager, collectibles]
+import wallet2/[balance_manager, collectibles, network]
 import wallet2/account as wallet_account
-import ./types/[account, transaction, network, setting, gas_prediction, rpc_response]
+import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]
 import ../eventemitter
 from web3/ethtypes import Address
 from web3/conversions import `$`
@@ -26,6 +27,7 @@ type
   StatusWalletController* = ref object
     events: EventEmitter
     accounts: seq[WalletAccount]
+    networks: seq[Network]
     tokens: seq[Erc20Contract]
     totalBalance*: float
 
@@ -39,6 +41,7 @@ proc setup(self: StatusWalletController, events: EventEmitter) =
   self.events = events
   self.accounts = @[]
   self.tokens = @[]
+  self.networks = @[]
   self.totalBalance = 0.0
   self.initEvents()
 
@@ -53,6 +56,9 @@ proc newStatusWalletController*(events: EventEmitter):
 proc initTokens(self: StatusWalletController) =
   self.tokens = status_tokens.getVisibleTokens()
 
+proc initNetworks(self: StatusWalletController) =
+  self.networks = status_network.getNetworks()
+
 proc initAccounts(self: StatusWalletController) =
   let accounts = status_wallet.getWalletAccounts()
   for acc in accounts:
@@ -63,6 +69,7 @@ proc initAccounts(self: StatusWalletController) =
 
 proc init*(self: StatusWalletController) =
   self.initTokens()
+  self.initNetworks()
   self.initAccounts()
 
 proc initEvents*(self: StatusWalletController) = 

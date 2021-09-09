@@ -174,7 +174,74 @@ var NODE_CONFIG* = %* {
   },
   "WalletConfig": {
     "Enabled": true
-  }
+  },
+  "Networks": [
+    {
+      "chain_id": 1,
+      "chain_name": "Ethereum Mainnet",
+      "rpc_url": "https://mainnet.infura.io/v3/" & INFURA_TOKEN_RESOLVED,
+      "block_explorer_url": "https://etherscan.io/",
+      "icon_url": "",
+      "native_currency_name": "Ether",
+      "native_currency_symbol": "ETH",
+      "native_currency_decimals": 18,
+      "isTest": false,
+      "layer": 1,
+      "enabled": true,
+    },
+    {
+      "chain_id": 3,
+      "chain_name": "Ropsten",
+      "rpc_url": "https://ropsten.infura.io/v3/" & INFURA_TOKEN_RESOLVED,
+      "block_explorer_url": "https://ropsten.etherscan.io/",
+      "icon_url": "",
+      "native_currency_name": "Ether",
+      "native_currency_symbol": "ETH",
+      "native_currency_decimals": 18,
+      "isTest": true,
+      "layer": 1,
+      "enabled": false,
+    },
+    {
+      "chain_id": 4,
+      "chain_name": "Rinkeby",
+      "rpc_url": "https://rinkeby.infura.io/v3/" & INFURA_TOKEN_RESOLVED,
+      "block_explorer_url": "https://rinkeby.etherscan.io/",
+      "icon_url": "",
+      "native_currency_name": "Ether",
+      "native_currency_symbol": "ETH",
+      "native_currency_decimals": 18,
+      "isTest": true,
+      "layer": 1,
+      "enabled": false,
+    },
+    {
+      "chain_id": 5,
+      "chain_name": "Goerli",
+      "rpc_url": "http://goerli.blockscout.com/",
+      "block_explorer_url": "https://goerli.etherscan.io/",
+      "icon_url": "",
+      "native_currency_name": "Ether",
+      "native_currency_symbol": "ETH",
+      "native_currency_decimals": 18,
+      "isTest": true,
+      "layer": 1,
+      "enabled": false,
+    },
+    {
+      "chain_id": 10,
+      "chain_name": "Optimistic Ethereum",
+      "rpc_url": "https://mainnet.infura.io/v3/" & INFURA_TOKEN_RESOLVED,
+      "block_explorer_url": "https://optimistic.etherscan.io",
+      "icon_url": "",
+      "native_currency_name": "Ether",
+      "native_currency_symbol": "ETH",
+      "native_currency_decimals": 18,
+      "isTest":  false,
+      "layer":   2,
+      "enabled": true,
+    }
+  ]
 }
 
 const DEFAULT_NETWORK_NAME* = "mainnet_rpc"

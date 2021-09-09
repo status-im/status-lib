@@ -5,7 +5,7 @@ include network_details
 include upstream_config
 
 type
-  Network* {.pure.} = enum
+  NetworkType* {.pure.} = enum
     Mainnet = "mainnet_rpc",
     Testnet = "testnet_rpc",
     Rinkeby = "rinkeby_rpc",
