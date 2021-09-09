@@ -58,10 +58,10 @@ proc generateAlias*(publicKey: string): string =
 proc generateIdenticon*(publicKey: string): string =
   result = $status_go.identicon(publicKey)
 
-proc initNode*() =
-  createDir(STATUSGODIR)
-  createDir(KEYSTOREDIR)
-  discard $status_go.initKeystore(KEYSTOREDIR)
+proc initNode*(statusGoDir, keystoreDir: string) =
+  createDir(statusGoDir)
+  createDir(keystoreDir)
+  discard $status_go.initKeystore(keystoreDir)
 
 proc parseIdentityImage*(images: JsonNode): IdentityImage =
   result = IdentityImage()
@@ -73,7 +73,7 @@ proc parseIdentityImage*(images: JsonNode): IdentityImage =
       elif (image["type"].getStr == "large"):
         result.large = image["uri"].getStr
 
-proc openAccounts*(): seq[NodeAccount] =
+proc openAccounts*(STATUSGODIR: string): seq[NodeAccount] =
   let strNodeAccounts = status_go.openAccounts(STATUSGODIR).parseJson
   # FIXME fix serialization
   result = @[]
@@ -226,9 +226,9 @@ proc loadAccount*(address: string, password: string): GeneratedAccount =
 
   raise newException(StatusGoException, "Error loading wallet account: " & error)
 
-proc verifyAccountPassword*(address: string, password: string): bool =
+proc verifyAccountPassword*(address: string, password: string, keystoreDir: string): bool =
   let hashedPassword = hashPassword(password)
-  let verifyResult = $status_go.verifyAccountPassword(KEYSTOREDIR, address, hashedPassword)
+  let verifyResult = $status_go.verifyAccountPassword(keystoreDir, address, hashedPassword)
   let error = parseJson(verifyResult)["error"].getStr
 
   if error == "":

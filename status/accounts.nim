@@ -25,8 +25,8 @@ proc generateAddresses*(self: AccountModel): seq[GeneratedAccount] =
     self.generatedAddresses.add(account)
   result = self.generatedAddresses
 
-proc openAccounts*(self: AccountModel): seq[NodeAccount] =
-  result = status_accounts.openAccounts()
+proc openAccounts*(self: AccountModel, statusGoDir: string): seq[NodeAccount] =
+  result = status_accounts.openAccounts(statusGoDir)
 
 proc login*(self: AccountModel, selectedAccountIndex: int, password: string): NodeAccount =
   let currentNodeAccount = self.nodeAccounts[selectedAccountIndex]

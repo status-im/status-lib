@@ -151,24 +151,24 @@ proc generateNewAccount*(self: StatusWalletController, password: string, account
   if statusGoResult.error != "":
     error "Error storing the latest wallet index", msg=statusGoResult.error
 
-proc addAccountsFromSeed*(self: StatusWalletController, seed: string, password: string, accountName: string, color: string) =
+proc addAccountsFromSeed*(self: StatusWalletController, seed: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let mnemonic = replace(seed, ',', ' ')
   var generatedAccount = status_accounts.multiAccountImportMnemonic(mnemonic)
   generatedAccount.derived = status_accounts.deriveAccounts(generatedAccount.id)
 
   let
     defaultAccount = status_accounts.getDefaultAccount()
-    isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password)
+    isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
   if not isPasswordOk:
     raise newException(StatusGoException, "Error generating new account: invalid password")
 
   self.addNewGeneratedAccount(generatedAccount, password, accountName, color, constants.SEED)
 
-proc addAccountsFromPrivateKey*(self: StatusWalletController, privateKey: string, password: string, accountName: string, color: string) =
+proc addAccountsFromPrivateKey*(self: StatusWalletController, privateKey: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let
     generatedAccount = status_accounts.MultiAccountImportPrivateKey(privateKey)
     defaultAccount = status_accounts.getDefaultAccount()
-    isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password)
+    isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
 
   if not isPasswordOk:
     raise newException(StatusGoException, "Error generating new account: invalid password")

@@ -1,9 +1,6 @@
 import # std libs
   json, os, sequtils, strutils
 
-import # vendor libs
-  confutils
-
 const GENERATED* = "generated"
 const SEED* = "seed"
 const KEY* = "key"
@@ -204,37 +201,13 @@ proc defaultDataDir(): string =
         targetDir
   absolutePath(joinPath(parentDir, "Status"))
 
-type StatusDesktopConfig = object
-    dataDir* {.
-      defaultValue: defaultDataDir()
-      desc: "Status Desktop data directory"
-      abbr: "d" .}: string
-    uri* {.
-      defaultValue: ""
-      desc: "status-im:// URI to open a chat or other"
-      name: "uri" .}: string
 
-# On macOS the first time when a user gets the "App downloaded from the
-# internet" warning, and clicks the Open button, the OS passes a unique process
-# serial number (PSN) as -psn_... command-line argument, which we remove before
-# processing the arguments with nim-confutils.
-# Credit: https://github.com/bitcoin/bitcoin/blame/b6e34afe9735faf97d6be7a90fafd33ec18c0cbb/src/util/system.cpp#L383-L389
+proc ensureDirectories*(dataDir, tmpDir, logDir: string) =
+  createDir(dataDir)
+  createDir(tmpDir)
+  createDir(logDir)
 
-var cliParams = commandLineParams()
-if defined(macosx):
-  cliParams.keepIf(proc(p: string): bool = not p.startsWith("-psn_"))
-
-let desktopConfig = StatusDesktopConfig.load(cliParams)
-
-let
-  baseDir = absolutePath(expandTilde(desktopConfig.dataDir))
-  OPENURI* = desktopConfig.uri
-  DATADIR* = baseDir & sep
-  STATUSGODIR* = joinPath(baseDir, "data") & sep
-  KEYSTOREDIR* = joinPath(baseDir, "data", "keystore") & sep
-  TMPDIR* = joinPath(baseDir, "tmp") & sep
-  LOGDIR* = joinPath(baseDir, "logs") & sep
-
-createDir(DATADIR)
-createDir(TMPDIR)
-createDir(LOGDIR)
+# C Helpers
+# ==============================================================================
+proc ensureDirectories*(dataDir, tmpDir, logDir: cstring) {.exportc, dynlib.} =
+  ensureDirectories($dataDir, $tmpDir, $logDir)

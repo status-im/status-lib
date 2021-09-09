@@ -9,7 +9,7 @@ import ./types/[setting]
 
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
 
-type Status* = ref object
+type Status* = ref object 
   events*: EventEmitter
   fleet*: FleetModel
   chat*: ChatModel
@@ -53,13 +53,13 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.provider = provider.newProviderModel(result.events, result.permissions)
   result.osnotifications = newOsNotifications(result.events)
 
-proc initNode*(self: Status) =
-  libstatus_accounts.initNode()
+proc initNode*(self: Status, statusGoDir, keystoreDir: string) =
+  libstatus_accounts.initNode(statusGoDir, keystoreDir)
 
-proc startMessenger*(self: Status) =
+proc startMessenger*(self: Status) {.exportc, dynlib.} =
   libstatus_core.startMessenger()
 
-proc reset*(self: Status) =
+proc reset*(self: Status) {.exportc, dynlib.} =
   # TODO: remove this once accounts are not tracked in the AccountsModel
   self.accounts.reset()
 
@@ -71,19 +71,39 @@ proc reset*(self: Status) =
 
   # TODO: add all resets here
 
-proc getNodeVersion*(self: Status): string =
+proc getNodeVersion*(self: Status): string  {.exportc, dynlib.} =
   libstatus_settings.getWeb3ClientVersion()
 
 # TODO: duplicated??
 proc saveSetting*(self: Status, setting: Setting, value: string | bool) =
   discard libstatus_settings.saveSetting(setting, value)
 
-proc getBloomFilter*(self: Status): string =
+proc getBloomFilter*(self: Status): string {.exportc, dynlib.} =
   result = libstatus_core.getBloomFilter()
 
-proc getBloomFilterBitsSet*(self: Status): int =
+proc getBloomFilterBitsSet*(self: Status): int {.exportc, dynlib.} =
   let bloomFilter = libstatus_core.getBloomFilter()
   var bitCount = 0;
   for b in hexToSeqByte(bloomFilter):
     bitCount += countSetBits(b)
   return bitCount
+
+# C Helpers
+# ==============================================================================
+# This creates extra functions with a simpler API for C interop. This is to avoid
+# having to manually create nim strings, (we can use cstring) instead, and also
+# because functions that accept more than one type for the same parameter are not
+# exported correctly
+
+
+proc newStatusInstance*(fleetConfig: cstring): Status {.exportc, dynlib.} =
+  newStatusInstance($fleetConfig)
+
+proc initNode*(self: Status, statusGoDir, keystoreDir: cstring) {.exportc, dynlib.} =
+  self.initNode($statusGoDir, $keystoreDir)
+
+proc saveStringSetting*(self: Status, setting: Setting, value: cstring) {.exportc, dynlib.} =
+  self.saveSetting(setting, $value)
+
+proc saveBoolSetting*(self: Status, setting: Setting, value: bool) {.exportc, dynlib.} =
+  self.saveSetting(setting, value)
