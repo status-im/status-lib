@@ -19,6 +19,7 @@ type SignalType* {.pure.} = enum
   SubscriptionsError = "subscriptions.error"
   WhisperFilterAdded = "whisper.filter.added"
   CommunityFound = "community.found"
+  PeerStats = "wakuv2.peerstats"
   Stats = "stats"
   Unknown
 
