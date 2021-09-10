@@ -4,7 +4,7 @@ import
 import json_serialization
 
 from ./core import callPrivateRPC
-from ../types/rpc_response import RpcResponse, RpcException
+from ../types/rpc_response import RpcResponseTyped, RpcException
 from ../wallet2/network import Network, toPayload
 
 logScope:
@@ -24,11 +24,11 @@ proc getNetworks*(useCached: bool = true): seq[Network] =
   else: 
     let payload = %* [false]
     let responseStr = callPrivateRPC("wallet_getEthereumChains", payload)
-    let response = RpcResponse(result: $(responseStr.parseJSON()["result"]))
+    let response = Json.decode(responseStr, RpcResponseTyped[JsonNode])
     if not response.error.isNil:
       raise newException(RpcException, "Error getting networks: " & response.error.message)
-
-    result = if response.result == "null": @[] else: Json.decode(response.result, seq[Network])
+    result =  if response.result.isNil or response.result.kind == JNull: @[]
+              else: Json.decode($response.result, seq[Network])
     dirty.store(false)
     networks = result
     netowrksInited = true
