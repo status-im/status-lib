@@ -8,6 +8,7 @@ import # vendor libs
 import # status-desktop libs
   ../libstatus/core as status, ../eth/contracts as contracts,
   ../stickers as status_stickers,
+  ../utils as status_utils,
   web3/[conversions, ethtypes], ../utils, account
 
 const CRYPTOKITTY* = "cryptokitty"
@@ -242,7 +243,7 @@ proc getStickers*(address: Address, running: var Atomic[bool]): string =
       let sticker = availableStickerPacks[stickerId]
       stickers.add(Collectible(id: $tokensIds[index],
         name: sticker.name,
-        image: fmt"https://ipfs.infura.io/ipfs/{status_stickers.decodeContentHash(sticker.preview)}",
+        image: fmt"https://ipfs.infura.io/ipfs/{status_utils.decodeContentHash(sticker.preview)}",
         collectibleType: STICKER,
         description: sticker.author,
         externalUrl: "")
