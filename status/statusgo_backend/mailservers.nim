@@ -1,11 +1,12 @@
 import json, times, chronicles
 import core, ../utils
 
-proc ping*(mailservers: seq[string], timeoutMs: int): string =
+proc ping*(mailservers: seq[string], timeoutMs: int, isWakuV2: bool = false): string =
   var addresses: seq[string] = @[]
   for mailserver in mailservers:
     addresses.add(mailserver)
-  result = callPrivateRPC("mailservers_ping", %* [
+  var rpcMethod = if isWakuV2: "mailservers_multiAddressPing" else: "mailservers_ping"
+  result = callPrivateRPC(rpcMethod, %* [
     { "addresses": addresses, "timeoutMs": timeoutMs }
   ])
   info "ping", topics="mailserver-interaction", rpc_method="mailservers_ping", addresses, timeoutMs, result

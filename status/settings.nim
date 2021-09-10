@@ -45,6 +45,9 @@ proc getCurrentNetwork*(self: SettingsModel): NetworkType =
 proc setWakuVersion*(self: SettingsModel, newVersion: int) =
   statusgo_backend_settings.setWakuVersion(newVersion)
 
+proc getWakuVersion*(self: SettingsModel): int =
+  statusgo_backend_settings.getWakuVersion()
+
 proc setBloomFilterMode*(self: SettingsModel, bloomFilterMode: bool): StatusGoError =
   statusgo_backend_settings.setBloomFilterMode(bloomFilterMode)
 
