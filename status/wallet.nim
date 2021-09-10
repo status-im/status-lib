@@ -1,6 +1,6 @@
 import json, strformat, strutils, chronicles, sequtils, sugar, httpclient, tables, net
-import json_serialization, stint
-from web3/ethtypes import Address, EthSend, Quantity
+import json_serialization, stint, stew/byteutils, algorithm
+from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
 from libstatus/core import getBlockByNumber
 import libstatus/accounts as status_accounts
@@ -10,7 +10,7 @@ import libstatus/wallet as status_wallet
 import libstatus/accounts/constants as constants
 import libstatus/eth/[eth, contracts]
 from libstatus/core import getBlockByNumber
-from utils as libstatus_utils import eth2Wei, gwei2Wei, first, toUInt64, parseAddress
+from utils as libstatus_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]
 import wallet/account as wallet_account
 import transactions
@@ -38,6 +38,8 @@ type WalletModel* = ref object
   defaultCurrency*: string
   tokens*: seq[Erc20Contract]
   totalBalance*: float
+  eip1559Enabled*: bool
+  latestBaseFee*: string
 
 proc getDefaultCurrency*(self: WalletModel): string
 proc calculateTotalFiatBalance*(self: WalletModel)
@@ -49,6 +51,7 @@ proc newWalletModel*(events: EventEmitter): WalletModel =
   result.events = events
   result.defaultCurrency = ""
   result.totalBalance = 0.0
+  result.eip1559Enabled = false
 
 proc initEvents*(self: WalletModel) =
   self.events.on("currencyChanged") do(e: Args):
@@ -64,12 +67,12 @@ proc initEvents*(self: WalletModel) =
 proc delete*(self: WalletModel) =
   discard
 
-proc buildTokenTransaction(source, to, assetAddress: Address, value: float, transfer: var Transfer, contract: var Erc20Contract, gas = "", gasPrice = ""): EthSend =
+proc buildTokenTransaction(source, to, assetAddress: Address, value: float, transfer: var Transfer, contract: var Erc20Contract, gas = "", gasPrice = "", isEIP1559Enabled: bool = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): TransactionData =
   contract = getErc20Contract(assetAddress)
   if contract == nil:
     raise newException(ValueError, fmt"Could not find ERC-20 contract with address '{assetAddress}' for the current network")
   transfer = Transfer(to: to, value: eth2Wei(value, contract.decimals))
-  transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice)
+  transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
 proc getKnownTokenContract*(self: WalletModel, address: Address): Erc20Contract =
   getErc20Contracts().concat(getCustomTokens()).getErc20ContractByAddress(address)
@@ -99,15 +102,17 @@ proc confirmTransactionStatus(self: WalletModel, pendingTransactions: JsonNode, 
                )
       self.events.emit(parseEnum[PendingTransactionType](trx["type"].getStr).confirmed, ev)
 
-proc getLatestBlockNumber*(self: WalletModel): int = 
+proc getLatestBlock*(): tuple[blockNumber: int, baseFee: string] = 
   let response = getBlockByNumber("latest").parseJson()
-  if not response.hasKey("result"):
-    return -1
+  if response.hasKey("result"):
+    let blockNumber = parseInt($fromHex(Stuint[256], response["result"]["number"].getStr))
+    let baseFee = $fromHex(Stuint[256], response["result"]{"baseFeePerGas"}.getStr)
+    return (blockNumber, baseFee)
+  return (-1, "")
 
-  return parseInt($fromHex(Stuint[256], response["result"]["number"].getStr))
+proc getLatestBlockNumber*(self: WalletModel): int = getLatestBlock()[0]
 
-proc checkPendingTransactions*(self: WalletModel) =
-  let latestBlockNumber = self.getLatestBlockNumber()
+proc checkPendingTransactions*(self: WalletModel, latestBlockNumber: int) =
   if latestBlockNumber == -1:
     return
 
@@ -133,10 +138,10 @@ proc estimateTokenGas*(self: WalletModel, source, to, assetAddress, value: strin
 
   result = contract.methods["transfer"].estimateGas(tx, transfer, success)
 
-proc sendTransaction*(source, to, value, gas, gasPrice, password: string, success: var bool, data = ""): string =
+proc sendTransaction*(source, to, value, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas, maxFeePerGas, password: string, success: var bool, data = ""): string =
   var tx = transactions.buildTransaction(
     parseAddress(source),
-    eth2Wei(parseFloat(value), 18), gas, gasPrice, data
+    eth2Wei(parseFloat(value), 18), gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas, data
   )
 
   if to != "":
@@ -146,7 +151,7 @@ proc sendTransaction*(source, to, value, gas, gasPrice, password: string, succes
   if success:
     trackPendingTransaction(result, $source, $to, PendingTransactionType.WalletTransfer, "")
 
-proc sendTokenTransaction*(source, to, assetAddress, value, gas, gasPrice, password: string, success: var bool): string =
+proc sendTokenTransaction*(source, to, assetAddress, value, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas, maxFeePerGas, password: string, success: var bool): string =
   var
     transfer: Transfer
     contract: Erc20Contract
@@ -158,7 +163,8 @@ proc sendTokenTransaction*(source, to, assetAddress, value, gas, gasPrice, passw
       transfer,
       contract,
       gas,
-      gasPrice
+      gasPrice,
+      isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas
     )
 
   result = contract.methods["transfer"].send(tx, transfer, password, success)
@@ -216,6 +222,37 @@ proc newAccount*(self: WalletModel, walletType: string, derivationPath: string, 
   var account = WalletAccount(name: name, path: derivationPath, walletType: walletType, address: address, iconColor: iconColor, balance: none[string](), assetList: assets, realFiatBalance: none[float](), publicKey: publicKey)
   updateBalance(account, self.getDefaultCurrency())
   account
+
+proc maxPriorityFeePerGas*(self: WalletModel):string =
+  let response = status_wallet.maxPriorityFeePerGas().parseJson()
+  if response.hasKey("result"):
+    return $fromHex(Stuint[256], response["result"].getStr)
+  else:
+    error "Error obtaining max priority fee per gas", error=response
+    raise newException(StatusGoException, "Error obtaining max priority fee per gas")    
+
+proc suggestFees*(self: WalletModel):JsonNode =
+  let response = status_wallet.suggestFees().parseJson()
+  if response.hasKey("result"):
+    return response["result"].getElems()[0]
+  else:
+    error "Error obtaining suggested fees", error=response
+    raise newException(StatusGoException, "Error obtaining suggested fees")    
+
+proc cmpUint256(x, y: Uint256): int =
+  if x > y: 1
+  elif x == y: 0
+  else: -1
+
+proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
+  let response = status_wallet.feeHistory(101).parseJson()
+  if response.hasKey("result"):
+    for it in response["result"]["baseFeePerGas"]:
+      result.add(fromHex(Stuint[256], it.getStr))
+    result.sort(cmpUint256)    
+  else:
+    error "Error obtaining fee history", error=response
+    raise newException(StatusGoException, "Error obtaining fee history")    
 
 proc initAccounts*(self: WalletModel) =
   self.tokens = status_tokens.getVisibleTokens()
@@ -354,23 +391,6 @@ proc getTransfersByAddress*(self: WalletModel, address: string, toBlock: Uint256
 proc validateMnemonic*(self: WalletModel, mnemonic: string): string =
   result = status_wallet.validateMnemonic(mnemonic).parseJSON()["error"].getStr
 
-proc getGasPricePredictions*(): GasPricePrediction =
-  if status_settings.getCurrentNetwork() != NetworkType.Mainnet:
-    # TODO: what about other chains like xdai?
-    return GasPricePrediction(safeLow: 1.0, standard: 2.0, fast: 3.0, fastest: 4.0)
-  let secureSSLContext = newContext()
-  let client = newHttpClient(sslContext = secureSSLContext)
-  try:
-    let url: string = fmt"https://etherchain.org/api/gasPriceOracle"
-    client.headers = newHttpHeaders({ "Content-Type": "application/json" })
-    let response = client.request(url)
-    result = Json.decode(response.body, GasPricePrediction)
-  except Exception as e:
-    echo "error getting gas price predictions"
-    echo e.msg
-  finally:
-    client.close()
-
 proc checkRecentHistory*(self: WalletModel, addresses: seq[string]): string =
   result = status_wallet.checkRecentHistory(addresses)
 
@@ -406,3 +426,35 @@ proc getOpenseaCollections*(address: string): string =
 
 proc getOpenseaAssets*(address: string, collectionSlug: string, limit: int): string =
   result = status_wallet.getOpenseaAssets(address, collectionSlug, limit)
+
+proc getGasPrice*(self: WalletModel): string =
+  let response = status_wallet.getGasPrice().parseJson
+  if response.hasKey("result"):
+    return $fromHex(Stuint[256], response["result"].getStr)
+  else:
+    error "Error obtaining max priority fee per gas", error=response
+    raise newException(StatusGoException, "Error obtaining gas price")    
+
+
+proc setLatestBaseFee*(self: WalletModel, latestBaseFee: string) =
+  self.latestBaseFee = latestBaseFee
+
+proc getLatestBaseFee*(self: WalletModel): string =
+  result = self.latestBaseFee
+
+proc isEIP1559Enabled*(self: WalletModel, blockNumber: int):bool =
+  let networkId = status_settings.getCurrentNetworkDetails().config.networkId
+  let activationBlock = case status_settings.getCurrentNetworkDetails().config.networkId:
+    of 3: 10499401 # Ropsten
+    of 4: 8897988 # Rinkeby
+    of 5: 5062605 # Goerli
+    of 1: 12965000 # Mainnet
+    else: -1
+  if activationBlock > -1 and blockNumber >= activationBlock:
+    result = true
+  else:
+    result = false
+  self.eip1559Enabled = result
+
+proc isEIP1559Enabled*(self: WalletModel): bool =
+  result = self.eip1559Enabled
