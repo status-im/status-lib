@@ -7,11 +7,10 @@ import # project deps
 import # local deps
   utils as status_utils,
   eth/contracts as status_contracts,
-  libstatus/stickers as status_stickers, transactions,
+  stickers_backend as status_stickers, transactions,
   libstatus/wallet, ../eventemitter
 import ./types/[sticker, transaction, rpc_response]
 from utils as libstatus_utils import eth2Wei, gwei2Wei, toUInt64, parseAddress
-
 
 logScope:
   topics = "stickers-model"

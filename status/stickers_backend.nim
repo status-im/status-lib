@@ -1,15 +1,20 @@
+# used to be libstatus, should be merged with stickers
+
 import # std libs
-  atomics, json, tables, sequtils, httpclient, net
+  atomics, json, tables, sequtils, httpclient, net,
+  json, json_serialization, chronicles, web3/ethtypes,
+  stint, strutils
 from strutils import parseHexInt, parseInt
-  
+import nbaser
+
 import # vendor libs
   json_serialization, chronicles, libp2p/[multihash, multicodec, cid], stint,
   web3/[ethtypes, conversions]
 from nimcrypto import fromHex
 
 import # status-desktop libs
-  ./core as status, ../types/[sticker, setting, rpc_response], 
-  ../eth/contracts, ./settings, ./edn_helpers, ../utils
+  ./eth/transactions as transactions, types/[sticker, setting, rpc_response], 
+  eth/contracts, ./libstatus/settings, ./libstatus/edn_helpers, utils
 
 # Retrieves number of sticker packs owned by user
 # See https://notes.status.im/Q-sQmQbpTOOWCQcYiXtf5g#Read-Sticker-Packs-owned-by-a-user
@@ -25,8 +30,8 @@ proc getBalance*(address: Address): int =
       "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
     }, "latest"]
 
-  let responseStr = status.callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+  let response = transactions.eth_call(payload)
+
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
   if response.result == "0x":
@@ -43,8 +48,8 @@ proc getPackCount*(): int =
       "data": contract.methods["packCount"].encodeAbi()
     }, "latest"]
 
-  let responseStr = status.callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+  let response = transactions.eth_call(payload)
+
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
   if response.result == "0x":
@@ -64,8 +69,7 @@ proc getPackData*(id: Stuint[256], running: var Atomic[bool]): StickerPack =
         "to": $contract.address,
         "data": contractMethod.encodeAbi(getPackData)
         }, "latest"]
-    let responseStr = status.callPrivateRPC("eth_call", payload)
-    let response = Json.decode(responseStr, RpcResponse)
+    let response = transactions.eth_call(payload)
     if not response.error.isNil:
       raise newException(RpcException, "Error getting sticker pack data: " & response.error.message)
 
@@ -104,8 +108,7 @@ proc tokenOfOwnerByIndex*(address: Address, idx: Stuint[256]): int =
       "data": contract.methods["tokenOfOwnerByIndex"].encodeAbi(tokenOfOwnerByIndex)
     }, "latest"]
 
-  let responseStr = status.callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+  let response = transactions.eth_call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting owned tokens: " & response.error.message)
   if response.result == "0x":
@@ -121,8 +124,7 @@ proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
       "data": contract.methods["tokenPackId"].encodeAbi(tokenPackId)
     }, "latest"]
 
-  let responseStr = status.callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+  let response = transactions.eth_call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting pack id from token id: " & response.error.message)
   if response.result == "0x":
