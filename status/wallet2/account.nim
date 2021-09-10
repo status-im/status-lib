@@ -14,9 +14,13 @@ type OpenseaCollection* = ref object
     name*, slug*, imageUrl*: string
     ownedAssetCount*: int
 
+type OpenseaTrait* = ref object
+    traitType*, value*, displayType*: string
+
 type OpenseaAsset* = ref object
     id*: int
-    name*, description*, permalink*, imageThumbnailUrl*, imageUrl*, address*: string
+    name*, description*, permalink*, imageThumbnailUrl*, imageUrl*, address*, backgroundColor*: string
+    traits*: seq[OpenseaTrait]
 
 type CurrencyArgs* = ref object of Args
     currency*: string
@@ -55,7 +59,7 @@ proc `$`*(self: OpenseaCollection): string =
   return fmt"OpenseaCollection(name:{self.name}, slug:{self.slug}, owned asset count:{self.ownedAssetCount})"
 
 proc `$`*(self: OpenseaAsset): string =
-  return fmt"OpenseaAsset(id:{self.id}, name:{self.name}, address:{self.address}, imageUrl: {self.imageUrl}, imageThumbnailUrl: {self.imageThumbnailUrl})"
+  return fmt"OpenseaAsset(id:{self.id}, name:{self.name}, address:{self.address}, imageUrl: {self.imageUrl}, imageThumbnailUrl: {self.imageThumbnailUrl}, backgroundColor: {self.backgroundColor})"
 
 proc toOpenseaCollection*(jsonCollection: JsonNode): OpenseaCollection =
     return OpenseaCollection(
@@ -65,6 +69,17 @@ proc toOpenseaCollection*(jsonCollection: JsonNode): OpenseaCollection =
         ownedAssetCount: jsonCollection{"owned_asset_count"}.getInt
     )
 
+proc getOpenseaTraits*(jsonAsset: JsonNode): seq[OpenseaTrait] =
+    var traitList: seq[OpenseaTrait] = @[]
+    for index in jsonAsset{"traits"}.items:
+        var newTrait: OpenseaTrait
+        new newTrait
+        newTrait.traitType = index["trait_type"].getStr
+        newTrait.value = index["value"].getStr
+        newTrait.displayType = index["display_type"].getStr
+        traitList.add(newTrait)
+    return traitList
+
 proc toOpenseaAsset*(jsonAsset: JsonNode): OpenseaAsset =
     return OpenseaAsset(
         id: jsonAsset{"id"}.getInt,
@@ -73,5 +88,7 @@ proc toOpenseaAsset*(jsonAsset: JsonNode): OpenseaAsset =
         permalink: jsonAsset{"permalink"}.getStr,
         imageThumbnailUrl: jsonAsset{"image_thumbnail_url"}.getStr,
         imageUrl: jsonAsset{"image_url"}.getStr,
-        address: jsonAsset{"asset_contract"}{"address"}.getStr
+        address: jsonAsset{"asset_contract"}{"address"}.getStr,
+        backgroundColor: jsonAsset{"background_color"}.getStr,
+        traits: getOpenseaTraits(jsonAsset)
     )
