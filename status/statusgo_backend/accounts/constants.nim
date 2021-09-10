@@ -167,7 +167,8 @@ var NODE_CONFIG* = %* {
   "WakuV2Config": {
     "Enabled": false,
     "Host": "0.0.0.0",
-    "Port": 0
+    "Port": 0,
+    "LightClient": false
   },
   "WalletConfig": {
     "Enabled": true
