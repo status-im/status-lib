@@ -1,7 +1,7 @@
 import json, json_serialization, strutils
-import signals/[base, community, discovery_summary, envelope, expired, mailserver, messages, signal_type, stats, wallet, whisper_filter, peerstats]
+import signals/[base, community, discovery_summary, envelope, expired, mailserver, messages, signal_type, stats, wallet, whisper_filter]
 
-export base, community, discovery_summary, envelope, expired, mailserver, messages, signal_type, stats, wallet, whisper_filter, peerstats
+export base, community, discovery_summary, envelope, expired, mailserver, messages, signal_type, stats, wallet, whisper_filter
 
 proc decode*(jsonSignal: JsonNode): Signal =
   let signalString = jsonSignal{"type"}.getStr
@@ -18,7 +18,6 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.WhisperFilterAdded: WhisperFilterSignal.fromEvent(jsonSignal)
     of SignalType.Wallet: WalletSignal.fromEvent(jsonSignal)
     of SignalType.NodeLogin: Json.decode($jsonSignal, NodeSignal)
-    of SignalType.PeerStats: PeerStatsSignal.fromEvent(jsonSignal)
     of SignalType.DiscoverySummary: DiscoverySummarySignal.fromEvent(jsonSignal)
     of SignalType.MailserverRequestCompleted: MailserverRequestCompletedSignal.fromEvent(jsonSignal)
     of SignalType.MailserverRequestExpired: MailserverRequestExpiredSignal.fromEvent(jsonSignal)
