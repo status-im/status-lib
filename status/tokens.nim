@@ -1,5 +1,5 @@
 import libstatus/tokens as status_tokens
-import libstatus/eth/contracts
+import eth/contracts
 import ../eventemitter
 
 type

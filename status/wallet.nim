@@ -8,7 +8,7 @@ import libstatus/tokens as status_tokens
 import libstatus/settings as status_settings
 import libstatus/wallet as status_wallet
 import libstatus/accounts/constants as constants
-import libstatus/eth/[eth, contracts]
+import eth/[eth, contracts]
 from libstatus/core import getBlockByNumber
 from utils as libstatus_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]

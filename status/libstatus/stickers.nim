@@ -9,7 +9,7 @@ from nimcrypto import fromHex
 
 import # status-desktop libs
   ./core as status, ../types/[sticker, setting, rpc_response], 
-  ./eth/contracts, ./settings, ./edn_helpers
+  ../eth/contracts, ./settings, ./edn_helpers
 
 proc decodeContentHash*(value: string): string =
   if value == "":

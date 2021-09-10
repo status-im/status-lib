@@ -5,7 +5,7 @@ import # project deps
   chronicles, web3/[ethtypes, conversions], stint
 
 import # local deps
-  libstatus/eth/contracts as status_contracts,
+  eth/contracts as status_contracts,
   libstatus/stickers as status_stickers, transactions,
   libstatus/wallet, ../eventemitter
 import ./types/[sticker, transaction, rpc_response]
