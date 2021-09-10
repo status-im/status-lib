@@ -1,18 +1,18 @@
 from json import JsonNode, `%*`
 from strformat import fmt
-from json_serialization import serializedFieldName
+import json_serialization
 
 type Network* = ref object
-  chainID* {.serializedFieldName("chain_id").}: int
-  nativeCurrencyDecimals* {.serializedFieldName("native_currency_decimals").}: int
+  chainID* {.serializedFieldName("chainId").}: int
+  nativeCurrencyDecimals* {.serializedFieldName("nativeCurrencyDecimals").}: int
   layer* {.serializedFieldName("layer").}: int
-  chainName* {.serializedFieldName("chain_name").}: string
-  rpcURL* {.serializedFieldName("rpc_url").}: string
-  blockExplorerURL* {.serializedFieldName("block_explorer_url").}: string
-  iconURL* {.serializedFieldName("icon_url").}: string
-  nativeCurrencyName* {.serializedFieldName("native_currency_name").}: string
-  nativeCurrencySymbol* {.serializedFieldName("native_currency_symbol").}: string
-  isTest* {.serializedFieldName("is_test").}: bool
+  chainName* {.serializedFieldName("chainName").}: string
+  rpcURL* {.serializedFieldName("rpcUrl").}: string
+  blockExplorerURL* {.serializedFieldName("blockExplorerUrl").}: string
+  iconURL* {.serializedFieldName("iconUrl").}: string
+  nativeCurrencyName* {.serializedFieldName("nativeCurrencyName").}: string
+  nativeCurrencySymbol* {.serializedFieldName("nativeCurrencySymbol").}: string
+  isTest* {.serializedFieldName("isTest").}: bool
   enabled* {.serializedFieldName("enabled").}: bool
 
 proc `$`*(self: Network): string =
