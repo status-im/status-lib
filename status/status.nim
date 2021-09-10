@@ -50,7 +50,7 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.mailservers = mailservers.newMailserversModel(result.events)
   result.browser = browser.newBrowserModel(result.events)
   result.tokens = tokens.newTokensModel(result.events)
-  result.provider = provider.newProviderModel(result.events, result.permissions)
+  result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: string) =

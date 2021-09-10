@@ -246,7 +246,7 @@ proc registerUsernameEstimateGas*(username: string, address: string, pubKey: str
   if success:
     result = fromHex[int](response)
 
-proc registerUsername*(username, pubKey, address, gas, gasPrice,  password: string, success: var bool): string =
+proc registerUsername*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string, maxFeePerGas: string, password: string, success: var bool): string =
   let
     label = fromHex(FixedBytes[32], label(username))
     coordinates = extractCoordinates(pubkey)
@@ -261,7 +261,7 @@ proc registerUsername*(username, pubKey, address, gas, gasPrice,  password: stri
     registerAbiEncoded = ensUsernamesContract.methods["register"].encodeAbi(register)
     approveAndCallObj = ApproveAndCall[132](to: ensUsernamesContract.address, value: price, data: DynamicBytes[132].fromHex(registerAbiEncoded))
 
-  var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, gas, gasPrice)
+  var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
   result = sntContract.methods["approveAndCall"].send(tx, approveAndCallObj, password, success)
   if success:
@@ -288,7 +288,7 @@ proc setPubKeyEstimateGas*(username: string, address: string, pubKey: string, su
   except RpcException as e:
     raise
 
-proc setPubKey*(username, pubKey, address, gas, gasPrice, password: string, success: var bool): string =
+proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string, maxFeePerGas: string, password: string, success: var bool): string =
   var hash = namehash(username)
   hash.removePrefix("0x")
 
@@ -300,7 +300,7 @@ proc setPubKey*(username, pubKey, address, gas, gasPrice, password: string, succ
     setPubkey = SetPubkey(label: label, x: x, y: y)
     resolverAddress = resolver(hash)
 
-  var tx = transactions.buildTokenTransaction(parseAddress(address), parseAddress(resolverAddress), gas, gasPrice)
+  var tx = transactions.buildTokenTransaction(parseAddress(address), parseAddress(resolverAddress), gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
   try:
     result = resolverContract.methods["setPubkey"].send(tx, setPubkey, password, success)

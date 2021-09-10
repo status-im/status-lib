@@ -145,3 +145,19 @@ proc fetchCryptoServices*(success: var bool): string =
     success = false
     error "Error getting crypto services: ", msg = e.msg
     result = ""
+
+proc maxPriorityFeePerGas*(): string =
+  let payload = %* []
+  result = callPrivateRPC("eth_maxPriorityFeePerGas", payload)
+
+proc suggestFees*(): string =
+  let payload = %* []
+  result = callPrivateRPC("wallet_suggestFees", payload)
+
+proc feeHistory*(n: int): string =
+  let payload = %* [n, "latest", nil]
+  result = callPrivateRPC("eth_feeHistory", payload)
+
+proc getGasPrice*(): string =
+  let payload = %* []
+  result = callPrivateRPC("eth_gasPrice", payload)
