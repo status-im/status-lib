@@ -6,7 +6,7 @@ import libstatus/tokens as status_tokens
 import libstatus/wallet as status_wallet
 import libstatus/network as status_network
 import libstatus/settings as status_settings
-import libstatus/eth/[contracts]
+import eth/[contracts]
 import wallet2/[balance_manager, collectibles, network]
 import wallet2/account as wallet_account
 import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]

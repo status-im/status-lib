@@ -8,7 +8,7 @@ import ../libstatus/accounts/constants as constants
 import ../libstatus/wallet as status_wallet
 import ../libstatus/settings as status_settings
 import ../libstatus/tokens as status_tokens
-import ../libstatus/eth/contracts as status_contracts
+import ../eth/contracts as status_contracts
 import web3/conversions
 from ../utils import parseAddress, wei2Eth
 import setting, network_type

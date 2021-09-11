@@ -15,8 +15,8 @@ import unicode
 import transactions
 import algorithm
 import web3/[ethtypes, conversions], stew/byteutils, stint
-import libstatus/eth/contracts
-import libstatus/eth/transactions as eth_transactions
+import eth/contracts
+import eth/transactions as eth_transactions
 import chronicles, libp2p/[multihash, multicodec, cid]
 
 import ./settings as status_settings

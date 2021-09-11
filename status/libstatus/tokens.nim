@@ -5,7 +5,7 @@ import
   web3/[ethtypes, conversions], json_serialization
 
 import 
-  ./settings, ./core, ./wallet, ./eth/contracts,
+  ./settings, ./core, ./wallet, ../eth/contracts,
   ../types/[setting, network_type, rpc_response]
 from ../utils import parseAddress
 
