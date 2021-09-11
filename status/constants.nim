@@ -1,4 +1,4 @@
-import libstatus/accounts/constants
+import statusgo_backend/accounts/constants
 
 const APP_UPDATES_ENS* = "desktop.status.eth"
 const CHECK_VERSION_TIMEOUT_MS* = 5000

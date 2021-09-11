@@ -2,9 +2,9 @@ import ens, wallet, permissions, utils
 import ../eventemitter
 import ./types/[setting]
 import utils
-import libstatus/accounts
-import libstatus/core
-import libstatus/settings as status_settings
+import statusgo_backend/accounts
+import statusgo_backend/core
+import statusgo_backend/settings as status_settings
 import json, json_serialization, sets, strutils
 import chronicles
 import nbaser

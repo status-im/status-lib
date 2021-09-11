@@ -1,7 +1,7 @@
 import system
-import libstatus/settings
+import statusgo_backend/settings
 import types/[setting, installation]
-import libstatus/installations
+import statusgo_backend/installations
 import json
 
 proc setDeviceName*(name: string) =

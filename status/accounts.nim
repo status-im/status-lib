@@ -1,6 +1,6 @@
 import options, chronicles, json, json_serialization, sequtils, sugar
-import libstatus/accounts as status_accounts
-import libstatus/settings as status_settings
+import statusgo_backend/accounts as status_accounts
+import statusgo_backend/settings as status_settings
 import ./types/[account, fleet, sticker, setting]
 import utils
 import ../eventemitter

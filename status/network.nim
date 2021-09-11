@@ -1,6 +1,6 @@
 import chronicles
 import ../eventemitter
-import libstatus/settings
+import statusgo_backend/settings
 import json
 import uuids
 import json_serialization

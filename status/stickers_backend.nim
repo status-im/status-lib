@@ -1,4 +1,4 @@
-# used to be libstatus, should be merged with stickers
+# used to be statusgo_backend, should be merged with stickers
 
 import # std libs
   atomics, json, tables, sequtils, httpclient, net,
@@ -14,7 +14,7 @@ from nimcrypto import fromHex
 
 import # status-desktop libs
   ./eth/transactions as transactions, types/[sticker, setting, rpc_response], 
-  eth/contracts, ./libstatus/settings, ./libstatus/edn_helpers, utils
+  eth/contracts, ./statusgo_backend/settings, ./statusgo_backend/edn_helpers, utils
 
 # Retrieves number of sticker packs owned by user
 # See https://notes.status.im/Q-sQmQbpTOOWCQcYiXtf5g#Read-Sticker-Packs-owned-by-a-user

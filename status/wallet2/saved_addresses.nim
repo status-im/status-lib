@@ -5,7 +5,7 @@ import
   chronicles, json_serialization, stew/results
 
 import # modules
-  ../types/[address, conversions, rpc_response], ../libstatus/wallet
+  ../types/[address, conversions, rpc_response], ../statusgo_backend/wallet
 
 export address, results
 

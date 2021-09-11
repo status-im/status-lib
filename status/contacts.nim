@@ -1,7 +1,7 @@
 import json, sequtils, sugar, chronicles
-import libstatus/contacts as status_contacts
-import libstatus/accounts as status_accounts
-import libstatus/chat as status_chat
+import statusgo_backend/contacts as status_contacts
+import statusgo_backend/accounts as status_accounts
+import statusgo_backend/chat as status_chat
 import profile/profile
 import ../eventemitter
 
