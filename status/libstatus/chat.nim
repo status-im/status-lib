@@ -4,11 +4,6 @@ import ../types/[chat, message, community, activity_center_notification,
   status_update, rpc_response, setting, sticker]
 import ./settings as status_settings
 
-proc buildFilter*(chat: Chat):JsonNode =
-  if chat.chatType == ChatType.PrivateGroupChat:
-    return newJNull()
-  result = %* { "ChatID": chat.id, "OneToOne": chat.chatType == ChatType.OneToOne }
-
 proc loadFilters*(filters: seq[JsonNode]): string =
   result =  callPrivateRPC("loadFilters".prefix, %* [filter(filters, proc(x:JsonNode):bool = x.kind != JNull)])
 
@@ -49,19 +44,6 @@ proc deactivateChat*(chat: Chat):string =
 proc createProfileChat*(pubKey: string):string =
   callPrivateRPC("createProfileChat".prefix, %* [{ "ID": pubKey }])
 
-proc sortChats(x, y: Chat): int =
-  var t1 = x.lastMessage.whisperTimestamp
-  var t2 = y.lastMessage.whisperTimestamp
-
-  if t1 <= $x.joined:
-    t1 = $x.joined
-  if t2 <= $y.joined:
-    t2 = $y.joined
-
-  if t1 > t2: 1
-  elif t1 == t2: 0
-  else: -1
-
 proc loadChats*(): seq[Chat] =
   result = @[]
   let jsonResponse = parseJson($callPrivateRPC("chats".prefix))
@@ -70,15 +52,6 @@ proc loadChats*(): seq[Chat] =
       let chat = jsonChat.toChat
       if chat.isActive and chat.chatType != ChatType.Unknown:
         result.add(chat)
-  result.sort(sortChats)
-
-proc parseActivityCenterNotifications*(rpcResult: JsonNode): (string, seq[ActivityCenterNotification]) =
-  var notifs: seq[ActivityCenterNotification] = @[]
-  var msg: Message
-  if rpcResult{"notifications"}.kind != JNull:
-    for jsonMsg in rpcResult["notifications"]:
-      notifs.add(jsonMsg.toActivityCenterNotification())
-  return (rpcResult{"cursor"}.getStr, notifs)
 
 proc statusUpdates*(): seq[StatusUpdate] =
   let rpcResult = callPrivateRPC("statusUpdates".prefix, %* []).parseJson()["result"]
@@ -543,6 +516,14 @@ proc rpcActivityCenterNotifications*(cursorVal: JsonNode, limit: int, success: v
   except RpcException as e:
     success = false
     result = e.msg
+
+proc parseActivityCenterNotifications*(rpcResult: JsonNode): (string, seq[ActivityCenterNotification]) =
+  var notifs: seq[ActivityCenterNotification] = @[]
+  var msg: Message
+  if rpcResult{"notifications"}.kind != JNull:
+    for jsonMsg in rpcResult["notifications"]:
+      notifs.add(jsonMsg.toActivityCenterNotification())
+  return (rpcResult{"cursor"}.getStr, notifs)
 
 proc activityCenterNotification*(cursor: string = ""): (string, seq[ActivityCenterNotification]) =
   var cursorVal: JsonNode

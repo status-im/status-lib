@@ -1,8 +1,9 @@
-import json, strutils, sequtils, tables, chronicles, times, sugar
+import json, strutils, sequtils, tables, chronicles, times, sugar, algorithm
 import libstatus/chat as status_chat
 import libstatus/chatCommands as status_chat_commands
 import types/[message, status_update, activity_center_notification, 
   sticker, removed_message]
+import types/chat as chat_type
 import utils as status_utils
 import stickers
 import ../eventemitter
@@ -19,6 +20,11 @@ logScope:
 
 const backToFirstChat* = "__goBackToFirstChat"
 const ZERO_ADDRESS* = "0x0000000000000000000000000000000000000000"
+
+proc buildFilter*(chat: Chat):JsonNode =
+  if chat.chatType == ChatType.PrivateGroupChat:
+    return newJNull()
+  result = %* { "ChatID": chat.id, "OneToOne": chat.chatType == ChatType.OneToOne }
 
 type 
   ChatUpdateArgs* = ref object of Args
@@ -188,7 +194,7 @@ proc getActiveChannel*(self: ChatModel): string =
   if (self.channels.len == 0): "" else: toSeq(self.channels.values)[self.channels.len - 1].id
 
 proc emitTopicAndJoin(self: ChatModel, chat: Chat) =
-  let filterResult = status_chat.loadFilters(@[status_chat.buildFilter(chat)])
+  let filterResult = status_chat.loadFilters(@[buildFilter(chat)])
   self.events.emit("channelJoined", ChannelArgs(chat: chat))
 
 proc join*(self: ChatModel, chatId: string, chatType: ChatType, ensName: string = "", pubKey: string = "") =
@@ -230,11 +236,25 @@ proc requestMissingCommunityInfos*(self: ChatModel) =
   for communityId in self.communitiesToFetch:
     status_chat.requestCommunityInfo(communityId)
 
+proc sortChats(x, y: chat_type.Chat): int =
+  var t1 = x.lastMessage.whisperTimestamp
+  var t2 = y.lastMessage.whisperTimestamp
+
+  if t1 <= $x.joined:
+    t1 = $x.joined
+  if t2 <= $y.joined:
+    t2 = $y.joined
+
+  if t1 > t2: 1
+  elif t1 == t2: 0
+  else: -1
+
 proc init*(self: ChatModel, pubKey: string) =
   self.publicKey = pubKey
 
   var contacts = getAddedContacts()
   var chatList = status_chat.loadChats()
+  chatList.sort(sortChats)
 
   let profileUpdatesChatIds = chatList.filter(c => c.chatType == ChatType.Profile).map(c => c.id)
 
@@ -265,7 +285,7 @@ proc init*(self: ChatModel, pubKey: string) =
   for chat in chatList:
     if self.hasChannel(chat.id):
       continue
-    filters.add status_chat.buildFilter(chat)
+    filters.add buildFilter(chat)
     self.channels[chat.id] = chat
     self.events.emit("channelLoaded", ChannelArgs(chat: chat))
 
