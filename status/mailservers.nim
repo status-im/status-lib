@@ -1,6 +1,6 @@
 import json
 
-import libstatus/mailservers as status_mailservers
+import statusgo_backend/mailservers as status_mailservers
 import ../eventemitter
 
 type

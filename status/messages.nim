@@ -1,5 +1,5 @@
 import tables, sets
-import libstatus/chat
+import statusgo_backend/chat
 import ../eventemitter
 
 type

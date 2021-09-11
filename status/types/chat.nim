@@ -2,7 +2,7 @@
 
 import strutils, random, strformat, json
 
-import ../libstatus/accounts as status_accounts
+import ../statusgo_backend/accounts as status_accounts
 import message
 
 include chat_member

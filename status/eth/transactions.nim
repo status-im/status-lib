@@ -2,7 +2,7 @@ import
   json, json_serialization, chronicles, web3/ethtypes
 
 import
-  ../libstatus/core, ../types/[rpc_response, transaction], ../libstatus/conversions
+  ../statusgo_backend/core, ../types/[rpc_response, transaction], ../statusgo_backend/conversions
 
 proc estimateGas*(tx: TransactionData): RpcResponse =
   let response = core.callPrivateRPC("eth_estimateGas", %*[%tx])

@@ -1,4 +1,4 @@
-import libstatus/tokens as status_tokens
+import statusgo_backend/tokens as status_tokens
 import eth/contracts
 import ../eventemitter
 

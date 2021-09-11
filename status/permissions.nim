@@ -1,7 +1,7 @@
 import json
 import strutils
 import sets
-import libstatus/core
+import statusgo_backend/core
 import chronicles
 import ../eventemitter
 import sequtils

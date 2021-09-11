@@ -1,11 +1,11 @@
 import json, strformat, options, chronicles, sugar, sequtils, strutils
 
-import libstatus/accounts as status_accounts
-import libstatus/accounts/constants as constants
-import libstatus/tokens as status_tokens
-import libstatus/wallet as status_wallet
-import libstatus/network as status_network
-import libstatus/settings as status_settings
+import statusgo_backend/accounts as status_accounts
+import statusgo_backend/accounts/constants as constants
+import statusgo_backend/tokens as status_tokens
+import statusgo_backend/wallet as status_wallet
+import statusgo_backend/network as status_network
+import statusgo_backend/settings as status_settings
 import eth/[contracts]
 import wallet2/[balance_manager, collectibles, network]
 import wallet2/account as wallet_account

@@ -1,6 +1,6 @@
-import libstatus/accounts as libstatus_accounts
-import libstatus/core as libstatus_core
-import libstatus/settings as libstatus_settings
+import statusgo_backend/accounts as statusgo_backend_accounts
+import statusgo_backend/core as statusgo_backend_core
+import statusgo_backend/settings as statusgo_backend_settings
 import chat, accounts, wallet, wallet2, node, network, messages, contacts, profile, stickers, permissions, fleet, settings, mailservers, browser, tokens, provider
 import notifications/os_notifications
 import ../eventemitter
@@ -54,10 +54,10 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.osnotifications = newOsNotifications(result.events)
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: string) =
-  libstatus_accounts.initNode(statusGoDir, keystoreDir)
+  statusgo_backend_accounts.initNode(statusGoDir, keystoreDir)
 
 proc startMessenger*(self: Status) {.exportc, dynlib.} =
-  libstatus_core.startMessenger()
+  statusgo_backend_core.startMessenger()
 
 proc reset*(self: Status) {.exportc, dynlib.} =
   # TODO: remove this once accounts are not tracked in the AccountsModel
@@ -72,17 +72,17 @@ proc reset*(self: Status) {.exportc, dynlib.} =
   # TODO: add all resets here
 
 proc getNodeVersion*(self: Status): string  {.exportc, dynlib.} =
-  libstatus_settings.getWeb3ClientVersion()
+  statusgo_backend_settings.getWeb3ClientVersion()
 
 # TODO: duplicated??
 proc saveSetting*(self: Status, setting: Setting, value: string | bool) =
-  discard libstatus_settings.saveSetting(setting, value)
+  discard statusgo_backend_settings.saveSetting(setting, value)
 
 proc getBloomFilter*(self: Status): string {.exportc, dynlib.} =
-  result = libstatus_core.getBloomFilter()
+  result = statusgo_backend_core.getBloomFilter()
 
 proc getBloomFilterBitsSet*(self: Status): int {.exportc, dynlib.} =
-  let bloomFilter = libstatus_core.getBloomFilter()
+  let bloomFilter = statusgo_backend_core.getBloomFilter()
   var bitCount = 0;
   for b in hexToSeqByte(bloomFilter):
     bitCount += countSetBits(b)
