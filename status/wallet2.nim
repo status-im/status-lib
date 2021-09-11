@@ -2,7 +2,7 @@ import json, strformat, options, chronicles, sugar, sequtils, strutils
 
 import libstatus/accounts as status_accounts
 import libstatus/accounts/constants as constants
-import libstatus/tokens as status_tokens
+import tokens_backend as status_tokens
 import libstatus/wallet as status_wallet
 import libstatus/network as status_network
 import libstatus/settings as status_settings
