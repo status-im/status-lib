@@ -5,12 +5,12 @@ import # project deps
   chronicles, web3/[ethtypes, conversions], stint
 
 import # local deps
+  utils as status_utils,
   eth/contracts as status_contracts,
-  libstatus/stickers as status_stickers, transactions,
+  stickers_backend as status_stickers, transactions,
   libstatus/wallet, ../eventemitter
 import ./types/[sticker, transaction, rpc_response]
 from utils as libstatus_utils import eth2Wei, gwei2Wei, toUInt64, parseAddress
-
 
 logScope:
   topics = "stickers-model"
@@ -143,7 +143,7 @@ proc addStickerToRecent*(self: StickersModel, sticker: Sticker, save: bool = fal
     status_stickers.saveRecentStickers(self.recentStickers)
 
 proc decodeContentHash*(value: string): string =
-  result = status_stickers.decodeContentHash(value)
+  result = status_utils.decodeContentHash(value)
 
 proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
   result = status_stickers.getPackIdFromTokenId(tokenId)

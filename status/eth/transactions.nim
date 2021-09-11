@@ -1,8 +1,5 @@
 import
-  json
-
-import
-  json_serialization, chronicles, web3/ethtypes
+  json, json_serialization, chronicles, web3/ethtypes
 
 import
   ../libstatus/core, ../types/[rpc_response, transaction], ../libstatus/conversions
@@ -25,6 +22,12 @@ proc sendTransaction*(tx: TransactionData, password: string): RpcResponse =
 
 proc call*(tx: TransactionData): RpcResponse =
   let responseStr = core.callPrivateRPC("eth_call", %*[%tx, "latest"])
+  result = Json.decode(responseStr, RpcResponse)
+  if not result.error.isNil:
+    raise newException(RpcException, "Error calling method: " & result.error.message)
+
+proc eth_call*(payload = %* []): RpcResponse =
+  let responseStr = core.callPrivateRPC("eth_call", payload)
   result = Json.decode(responseStr, RpcResponse)
   if not result.error.isNil:
     raise newException(RpcException, "Error calling method: " & result.error.message)
