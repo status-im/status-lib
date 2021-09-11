@@ -2,7 +2,7 @@ import json, random, strutils, strformat, tables, chronicles, unicode, times
 from sugar import `=>`, `->`
 import stint
 from times import getTime, toUnix, nanosecond
-import libstatus/accounts/signing_phrases
+import signing_phrases
 from web3 import Address, fromHex
 import web3/ethhexstrings
 
