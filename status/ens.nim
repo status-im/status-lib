@@ -6,10 +6,10 @@ import json
 import json_serialization
 import tables
 import strformat
-import libstatus/core
+import statusgo_backend/core
 import ./types/[transaction, setting, rpc_response]
 import utils
-import libstatus/wallet
+import statusgo_backend/wallet
 import stew/byteutils
 import unicode
 import transactions

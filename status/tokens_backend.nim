@@ -1,4 +1,4 @@
-# used to be libstatus, should be merged with tokens
+# used to be statusgo_backend, should be merged with tokens
 import
   json, chronicles, strformat, stint, strutils, sequtils, tables, atomics
 
@@ -6,11 +6,11 @@ import
   web3/[ethtypes, conversions], json_serialization
 
 import 
-  ./libstatus/settings, ./libstatus/core, ./libstatus/wallet, eth/contracts,
+  ./statusgo_backend/settings, ./statusgo_backend/core, ./statusgo_backend/wallet, eth/contracts,
   types/[setting, network_type, rpc_response]
 from utils import parseAddress
 
-import libstatus/tokens as libstatus_tokens
+import statusgo_backend/tokens as statusgo_backend_tokens
 
 var
   customTokens {.threadvar.}: seq[Erc20Contract]
@@ -64,12 +64,12 @@ proc getVisibleTokens*(): seq[Erc20Contract] =
   let currentNetwork = getCurrentNetwork()
   let visibleTokens = visibleTokensSNTDefault()
   var visibleTokenList = visibleTokens[$currentNetwork].to(seq[string])
-  let customTokens = libstatus_tokens.getCustomTokens()
+  let customTokens = statusgo_backend_tokens.getCustomTokens()
 
   result = convertStringSeqToERC20ContractSeq(visibleTokenList)
 
 proc getToken*(tokenAddress: string): Erc20Contract =
-  getErc20Contracts().concat(libstatus_tokens.getCustomTokens()).getErc20ContractByAddress(tokenAddress.parseAddress)
+  getErc20Contracts().concat(statusgo_backend_tokens.getCustomTokens()).getErc20ContractByAddress(tokenAddress.parseAddress)
 
 proc getTokenBalance*(tokenAddress: string, account: string): string = 
   var postfixedAccount: string = account
@@ -83,7 +83,7 @@ proc getTokenBalance*(tokenAddress: string, account: string): string =
   var decimals = 18
   let address = parseAddress(tokenAddress)
   let t = getErc20Contract(address)
-  let ct = libstatus_tokens.getCustomTokens().getErc20ContractByAddress(address)
+  let ct = statusgo_backend_tokens.getCustomTokens().getErc20ContractByAddress(address)
   if t != nil: 
     decimals = t.decimals
   elif ct != nil: 

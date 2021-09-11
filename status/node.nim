@@ -1,4 +1,4 @@
-import libstatus/core as status
+import statusgo_backend/core as status
 import ../eventemitter
 
 type NodeModel* = ref object

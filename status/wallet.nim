@@ -2,16 +2,16 @@ import json, strformat, strutils, chronicles, sequtils, sugar, httpclient, table
 import json_serialization, stint, stew/byteutils, algorithm
 from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
-from libstatus/core import getBlockByNumber
-import libstatus/accounts as status_accounts
+from statusgo_backend/core import getBlockByNumber
+import statusgo_backend/accounts as status_accounts
 import tokens_backend as status_tokens
-import libstatus/tokens as libstatus_tokens
-import libstatus/settings as status_settings
-import libstatus/wallet as status_wallet
-import libstatus/accounts/constants as constants
+import statusgo_backend/tokens as statusgo_backend_tokens
+import statusgo_backend/settings as status_settings
+import statusgo_backend/wallet as status_wallet
+import statusgo_backend/accounts/constants as constants
 import eth/[eth, contracts]
-from libstatus/core import getBlockByNumber
-from utils as libstatus_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
+from statusgo_backend/core import getBlockByNumber
+from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]
 import wallet/account as wallet_account
 import transactions
@@ -76,7 +76,7 @@ proc buildTokenTransaction(source, to, assetAddress: Address, value: float, tran
   transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
 proc getKnownTokenContract*(self: WalletModel, address: Address): Erc20Contract =
-  getErc20Contracts().concat(libstatus_tokens.getCustomTokens()).getErc20ContractByAddress(address)
+  getErc20Contracts().concat(statusgo_backend_tokens.getCustomTokens()).getErc20ContractByAddress(address)
 
 proc estimateGas*(self: WalletModel, source, to, value, data: string, success: var bool): string =
   var tx = transactions.buildTransaction(
@@ -384,7 +384,7 @@ proc hideAsset*(self: WalletModel, symbol: string) =
   self.events.emit("assetChanged", Args())
 
 proc addCustomToken*(self: WalletModel, symbol: string, enable: bool, address: string, name: string, decimals: int, color: string) =
-  libstatus_tokens.addCustomToken(address, name, symbol, decimals, color)
+  statusgo_backend_tokens.addCustomToken(address, name, symbol, decimals, color)
 
 proc getTransfersByAddress*(self: WalletModel, address: string, toBlock: Uint256, limit: int, loadMore: bool): seq[Transaction] =
   result = status_wallet.getTransfersByAddress(address, toBlock, limit, loadMore)

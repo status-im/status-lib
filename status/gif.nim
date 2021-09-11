@@ -4,7 +4,7 @@ import strformat
 import os
 import sequtils
 
-from libstatus/gif import getRecentGifs, getFavoriteGifs, setFavoriteGifs, setRecentGifs
+from statusgo_backend/gif import getRecentGifs, getFavoriteGifs, setFavoriteGifs, setRecentGifs
 
 
 const MAX_RECENT = 50

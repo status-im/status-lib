@@ -1,5 +1,5 @@
 import strformat, strutils, stint, httpclient, json, chronicles, net
-import ../libstatus/wallet as status_wallet
+import ../statusgo_backend/wallet as status_wallet
 import ../tokens_backend as status_tokens
 import ../types/[rpc_response]
 import ../utils/cache

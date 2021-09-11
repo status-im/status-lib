@@ -4,10 +4,10 @@ import json, strutils, sequtils, sugar, chronicles
 import json_serialization
 import ../utils
 import ../wallet/account
-import ../libstatus/accounts/constants as constants
-import ../libstatus/wallet as status_wallet
-import ../libstatus/settings as status_settings
-import ../libstatus/tokens as status_tokens
+import ../statusgo_backend/accounts/constants as constants
+import ../statusgo_backend/wallet as status_wallet
+import ../statusgo_backend/settings as status_settings
+import ../statusgo_backend/tokens as status_tokens
 import ../eth/contracts as status_contracts
 import web3/conversions
 from ../utils import parseAddress, wei2Eth

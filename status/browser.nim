@@ -1,4 +1,4 @@
-import libstatus/browser as status_browser
+import statusgo_backend/browser as status_browser
 import ../eventemitter
 
 import ./types/[bookmark]

@@ -1,6 +1,6 @@
 import json, strutils, sequtils, tables, chronicles, times, sugar, algorithm
-import libstatus/chat as status_chat
-import libstatus/chatCommands as status_chat_commands
+import statusgo_backend/chat as status_chat
+import statusgo_backend/chatCommands as status_chat_commands
 import types/[message, status_update, activity_center_notification, 
   sticker, removed_message]
 import types/chat as chat_type

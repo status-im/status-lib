@@ -6,7 +6,7 @@ import # vendor libs
   stint
 
 import # status-desktop libs
-  ../libstatus/core as status, ../eth/contracts as contracts,
+  ../statusgo_backend/core as status, ../eth/contracts as contracts,
   ../stickers as status_stickers,
   ../utils as status_utils,
   web3/[conversions, ethtypes], ../utils, account
