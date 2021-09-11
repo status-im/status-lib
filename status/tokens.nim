@@ -1,4 +1,5 @@
-import libstatus/tokens as status_tokens
+import libstatus/tokens as libstatus_tokens
+import tokens_backend as status_tokens
 import eth/contracts
 import ../eventemitter
 
@@ -14,10 +15,10 @@ proc getSNTAddress*(): string =
   result = status_tokens.getSNTAddress()
 
 proc getCustomTokens*(self: TokensModel, useCached: bool = true): seq[Erc20Contract] =
-  result = status_tokens.getCustomTokens(useCached)
+  result = libstatus_tokens.getCustomTokens(useCached)
 
 proc removeCustomToken*(self: TokensModel, address: string) =
-  status_tokens.removeCustomToken(address)
+  libstatus_tokens.removeCustomToken(address)
 
 proc getSNTBalance*(account: string): string =
   result = status_tokens.getSNTBalance(account)

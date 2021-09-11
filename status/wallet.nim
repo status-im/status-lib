@@ -4,7 +4,8 @@ from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
 from libstatus/core import getBlockByNumber
 import libstatus/accounts as status_accounts
-import libstatus/tokens as status_tokens
+import tokens_backend as status_tokens
+import libstatus/tokens as libstatus_tokens
 import libstatus/settings as status_settings
 import libstatus/wallet as status_wallet
 import libstatus/accounts/constants as constants
@@ -75,7 +76,7 @@ proc buildTokenTransaction(source, to, assetAddress: Address, value: float, tran
   transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
 proc getKnownTokenContract*(self: WalletModel, address: Address): Erc20Contract =
-  getErc20Contracts().concat(getCustomTokens()).getErc20ContractByAddress(address)
+  getErc20Contracts().concat(libstatus_tokens.getCustomTokens()).getErc20ContractByAddress(address)
 
 proc estimateGas*(self: WalletModel, source, to, value, data: string, success: var bool): string =
   var tx = transactions.buildTransaction(
@@ -383,7 +384,7 @@ proc hideAsset*(self: WalletModel, symbol: string) =
   self.events.emit("assetChanged", Args())
 
 proc addCustomToken*(self: WalletModel, symbol: string, enable: bool, address: string, name: string, decimals: int, color: string) =
-  addCustomToken(address, name, symbol, decimals, color)
+  libstatus_tokens.addCustomToken(address, name, symbol, decimals, color)
 
 proc getTransfersByAddress*(self: WalletModel, address: string, toBlock: Uint256, limit: int, loadMore: bool): seq[Transaction] =
   result = status_wallet.getTransfersByAddress(address, toBlock, limit, loadMore)
