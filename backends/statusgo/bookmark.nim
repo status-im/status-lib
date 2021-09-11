@@ -1,6 +1,6 @@
-import json, chronicles
-import core
-import ../types/[bookmark]
+import types
+import core, ../../types/[bookmark], json, chronicles
+import ../backend_type
 
 proc storeBookmark*(bookmark: Bookmark): Bookmark =
   let payload = %* [{"url": bookmark.url, "name": bookmark.name}]

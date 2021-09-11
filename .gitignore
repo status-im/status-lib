@@ -2,3 +2,4 @@
 nimcache
 vendor/.nimble
 /bottles/
+/test_nim/build

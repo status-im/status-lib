@@ -7,3 +7,46 @@ license       = "MIT"
 skipDirs      = @["test"]
 
 requires "nim >= 1.2.0"
+
+import strutils
+
+const release_opts =
+  " --define:danger" &
+  " --define:strip" &
+  " --hints:off" &
+  " --opt:size" &
+  " --passC:-flto" &
+  " --passL:-flto"
+
+const debug_opts =
+  " --debugger:native" &
+  " --define:chronicles_line_numbers" &
+  " --define:debug" &
+  " --linetrace:on" &
+  " --stacktrace:on"
+
+proc buildAndRun(name: string,
+                 srcDir = "test_nim/",
+                 outDir = "test_nim/build/",
+                 params = "",
+                 cmdParams = "",
+                 lang = "c") =
+  mkDir outDir
+  exec "nim " &
+    lang &
+    (if getEnv("RELEASE").strip != "false": release_opts else: debug_opts) &
+    " --define:ssl" &
+    " --passL:" & getEnv("STATUSGO") & "" &
+    # " --passL:" & "vendor/status-go/build/bin/libstatus.dylib" & "" &
+    " --out:" & outDir & name &
+    " " &
+    srcDir & name & ".nim"
+  if defined(macosx):
+    exec "install_name_tool -add_rpath " & getEnv("STATUSGO_LIBDIR") & " " & outDir & name
+    exec "install_name_tool -change " & "libstatus." & getEnv("LIBSTATUS_EXT") & " @rpath/libstatus." & getEnv("LIBSTATUS_EXT") & " " & outDir & name
+  if getEnv("RUN_AFTER_BUILD").strip != "false":
+    exec outDir & name
+
+task tests, "Build and run all tests":
+  rmDir "test_nim/build/"
+  buildAndRun "test_all"

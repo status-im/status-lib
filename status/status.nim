@@ -7,9 +7,12 @@ import ../eventemitter
 import bitops, stew/byteutils, chronicles
 import ./types/[setting]
 
+import ../backends/backend
+
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
 
 type Status* = ref object 
+  backend*: BackendWrapper
   events*: EventEmitter
   fleet*: FleetModel
   chat*: ChatModel
@@ -30,8 +33,10 @@ type Status* = ref object
   provider*: ProviderModel
   osnotifications*: OsNotifications
 
-proc newStatusInstance*(fleetConfig: string): Status =
+proc newStatusInstance*(fleetConfig: string, backendName:string = "statusgo"): Status =
   result = Status()
+  result.backend = newBackendWrapperInstance()
+  result.backend.loadBackend(backendName)
   result.events = createEventEmitter()
   result.fleet = fleet.newFleetModel(fleetConfig)
   result.chat = chat.newChatModel(result.events)
@@ -48,7 +53,7 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.permissions = permissions.newPermissionsModel(result.events)
   result.settings = settings.newSettingsModel(result.events)
   result.mailservers = mailservers.newMailserversModel(result.events)
-  result.browser = browser.newBrowserModel(result.events)
+  result.browser = browser.newBrowserModel(result.events, result.backend)
   result.tokens = tokens.newTokensModel(result.events)
   result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
