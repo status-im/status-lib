@@ -1,6 +1,8 @@
+import statusgo_backend/settings as status_settings
 import statusgo_backend/tokens as statusgo_backend_tokens
-import tokens_backend as status_tokens
+import eth/tokens as status_tokens
 import eth/contracts
+import ./types/network_type
 import ../eventemitter
 
 type
@@ -12,7 +14,8 @@ proc newTokensModel*(events: EventEmitter): TokensModel =
   result.events = events
 
 proc getSNTAddress*(): string =
-  result = status_tokens.getSNTAddress()
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_tokens.getSNTAddress(network)
 
 proc getCustomTokens*(self: TokensModel, useCached: bool = true): seq[Erc20Contract] =
   result = statusgo_backend_tokens.getCustomTokens(useCached)
@@ -21,7 +24,8 @@ proc removeCustomToken*(self: TokensModel, address: string) =
   statusgo_backend_tokens.removeCustomToken(address)
 
 proc getSNTBalance*(account: string): string =
-  result = status_tokens.getSNTBalance(account)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_tokens.getSNTBalance(network, account)
 
 proc tokenDecimals*(contract: Contract): int =
   result = status_tokens.tokenDecimals(contract)
@@ -33,12 +37,14 @@ proc tokensymbol*(contract: Contract): string =
   result = status_tokens.tokensymbol(contract)
 
 proc getTokenBalance*(tokenAddress: string, account: string): string = 
-  result = status_tokens.getTokenBalance(tokenAddress, account)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_tokens.getTokenBalance(network, tokenAddress, account)
 
 proc getToken*(self: TokensModel, tokenAddress: string): Erc20Contract =
-    result = status_tokens.getToken(tokenAddress)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_tokens.getToken(network, tokenAddress)
 
 export newErc20Contract
-export getErc20Contracts
+export allErc20ContractsByChainId
 export Erc20Contract
-export getErc20ContractByAddress
+export findByAddress

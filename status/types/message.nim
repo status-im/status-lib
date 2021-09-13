@@ -11,7 +11,7 @@ import ../statusgo_backend/tokens as status_tokens
 import ../eth/contracts as status_contracts
 import web3/conversions
 from ../utils import parseAddress, wei2Eth
-import setting, network_type
+import setting, network
 
 include message_command_parameters
 include message_reaction
@@ -156,10 +156,10 @@ proc toMessage*(jsonMsg: JsonNode): Message =
 
   if message.contentType == ContentType.Transaction:
     let
-      allContracts = getErc20Contracts().concat(getCustomTokens())
-      ethereum = newErc20Contract("Ethereum", NetworkType.Mainnet, parseAddress(constants.ZERO_ADDRESS), "ETH", 18, true)
+      allContracts = allErc20Contracts().concat(getCustomTokens())
+      ethereum = newErc20Contract("Ethereum", Mainnet, parseAddress(constants.ZERO_ADDRESS), "ETH", 18, true)
       tokenAddress = jsonMsg["commandParameters"]["contract"].getStr
-      tokenContract = if tokenAddress == "": ethereum else: allContracts.getErc20ContractByAddress(parseAddress(tokenAddress)) 
+      tokenContract = if tokenAddress == "": ethereum else: allContracts.findByAddress(parseAddress(tokenAddress)) 
       tokenContractStr = if tokenContract == nil: "{}" else: $(Json.encode(tokenContract))
     var weiStr = if tokenContract == nil: "0" else: wei2Eth(jsonMsg["commandParameters"]["value"].getStr, tokenContract.decimals)
     weiStr.trimZeros()

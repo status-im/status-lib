@@ -4,12 +4,12 @@ from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
 from statusgo_backend/core import getBlockByNumber
 import statusgo_backend/accounts as status_accounts
-import tokens_backend as status_tokens
 import statusgo_backend/tokens as statusgo_backend_tokens
 import statusgo_backend/settings as status_settings
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/accounts/constants as constants
 import eth/[eth, contracts]
+import eth/tokens as status_tokens
 from statusgo_backend/core import getBlockByNumber
 from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]
@@ -17,7 +17,7 @@ import wallet/account as wallet_account
 import transactions
 import ../eventemitter
 import options
-import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]
+import ./types/[account, transaction, network, network_type, setting, gas_prediction, rpc_response]
 export wallet_account, collectibles
 export Transaction
 
@@ -69,14 +69,16 @@ proc delete*(self: WalletModel) =
   discard
 
 proc buildTokenTransaction(source, to, assetAddress: Address, value: float, transfer: var Transfer, contract: var Erc20Contract, gas = "", gasPrice = "", isEIP1559Enabled: bool = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): TransactionData =
-  contract = getErc20Contract(assetAddress)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  contract = findErc20Contract(network.chainId, assetAddress)
   if contract == nil:
     raise newException(ValueError, fmt"Could not find ERC-20 contract with address '{assetAddress}' for the current network")
   transfer = Transfer(to: to, value: eth2Wei(value, contract.decimals))
   transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
 proc getKnownTokenContract*(self: WalletModel, address: Address): Erc20Contract =
-  getErc20Contracts().concat(statusgo_backend_tokens.getCustomTokens()).getErc20ContractByAddress(address)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  allErc20ContractsByChainId(network.chainId).concat(statusgo_backend_tokens.getCustomTokens()).findByAddress(address)
 
 proc estimateGas*(self: WalletModel, source, to, value, data: string, success: var bool): string =
   var tx = transactions.buildTransaction(
@@ -180,9 +182,10 @@ proc getDefaultCurrency*(self: WalletModel): string =
 # TODO: This needs to be removed or refactored so that test tokens are shown
 # when on testnet https://github.com/status-im/nim-status-client/issues/613.
 proc getStatusToken*(self: WalletModel): string =
+  let network = status_settings.getCurrentNetwork().toNetwork()
   var
     token = Asset()
-    erc20Contract = getSntContract()
+    erc20Contract = findErc20Contract(network.chainId, network.sntSymbol())
   token.name = erc20Contract.name
   token.symbol = erc20Contract.symbol
   token.address = $erc20Contract.address
@@ -256,7 +259,8 @@ proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
     raise newException(StatusGoException, "Error obtaining fee history")    
 
 proc initAccounts*(self: WalletModel) =
-  self.tokens = status_tokens.getVisibleTokens()
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  self.tokens = status_tokens.getVisibleTokens(network)
   let accounts = status_wallet.getWalletAccounts()
   for account in accounts:
     var acc = WalletAccount(account)
@@ -369,15 +373,17 @@ proc deleteAccount*(self: WalletModel, address: string): string =
   self.accounts = self.accounts.filter(acc => acc.address.toLowerAscii != address.toLowerAscii)
 
 proc toggleAsset*(self: WalletModel, symbol: string) =
-  self.tokens = status_tokens.toggleAsset(symbol)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  self.tokens = status_tokens.toggleAsset(network, symbol)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())
   self.events.emit("assetChanged", Args())
 
 proc hideAsset*(self: WalletModel, symbol: string) =
-  status_tokens.hideAsset(symbol)
-  self.tokens = status_tokens.getVisibleTokens()
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  status_tokens.hideAsset(network, symbol)
+  self.tokens = status_tokens.getVisibleTokens(network)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())

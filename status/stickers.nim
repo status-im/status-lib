@@ -6,10 +6,12 @@ import # project deps
 
 import # local deps
   utils as status_utils,
+  statusgo_backend/settings as status_settings,
   eth/contracts as status_contracts,
-  stickers_backend as status_stickers, transactions,
+  eth/stickers as status_stickers,
+  transactions,
   statusgo_backend/wallet, ../eventemitter
-import ./types/[sticker, transaction, rpc_response]
+import ./types/[sticker, transaction, rpc_response, network_type, network]
 from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, toUInt64, parseAddress
 
 logScope:
@@ -44,9 +46,10 @@ proc init*(self: StickersModel) =
     self.addStickerToRecent(evArgs.sticker, evArgs.save)
 
 proc buildTransaction(packId: Uint256, address: Address, price: Uint256, approveAndCall: var ApproveAndCall[100], sntContract: var Erc20Contract, gas = "", gasPrice = "", isEIP1559Enabled = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): TransactionData =
-  sntContract = status_contracts.getSntContract()
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  sntContract = status_contracts.findErc20Contract(network.chainId, network.sntSymbol())
   let
-    stickerMktContract = status_contracts.getContract("sticker-market")
+    stickerMktContract = status_contracts.findContract(network.chainId, "sticker-market")
     buyToken = BuyToken(packId: packId, address: address, price: price)
     buyTxAbiEncoded = stickerMktContract.methods["buyToken"].encodeAbi(buyToken)
   approveAndCall = ApproveAndCall[100](to: stickerMktContract.address, value: price, data: DynamicBytes[100].fromHex(buyTxAbiEncoded))
@@ -55,7 +58,8 @@ proc buildTransaction(packId: Uint256, address: Address, price: Uint256, approve
 proc estimateGas*(packId: int, address: string, price: string, success: var bool): int =
   var
     approveAndCall: ApproveAndCall[100]
-    sntContract = status_contracts.getSntContract()
+    network = status_settings.getCurrentNetwork().toNetwork()
+    sntContract = status_contracts.findErc20Contract(network.chainId, network.sntSymbol())
     tx = buildTransaction(
       packId.u256,
       parseAddress(address),
@@ -90,14 +94,16 @@ proc buyPack*(self: StickersModel, packId: int, address, price, gas, gasPrice: s
     trackPendingTransaction(result, address, $sntContract.address, PendingTransactionType.BuyStickerPack, $packId)
 
 proc getStickerMarketAddress*(self: StickersModel): Address =
-  result = status_contracts.getContract("sticker-market").address
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_contracts.findContract(network.chainId, "sticker-market").address
 
 proc getPurchasedStickerPacks*(self: StickersModel, address: Address): seq[int] =
   try:
     let
-      balance = status_stickers.getBalance(address)
-      tokenIds = toSeq[0..<balance].mapIt(status_stickers.tokenOfOwnerByIndex(address, it.u256))
-      purchasedPackIds = tokenIds.mapIt(status_stickers.getPackIdFromTokenId(it.u256))
+      network = status_settings.getCurrentNetwork().toNetwork()
+      balance = status_stickers.getBalance(network.chainId, address)
+      tokenIds = toSeq[0..<balance].mapIt(status_stickers.tokenOfOwnerByIndex(network.chainId, address, it.u256))
+      purchasedPackIds = tokenIds.mapIt(status_stickers.getPackIdFromTokenId(network.chainId, it.u256))
     self.purchasedStickerPacks = self.purchasedStickerPacks.concat(purchasedPackIds)
     result = self.purchasedStickerPacks
   except RpcException:
@@ -111,7 +117,9 @@ proc getInstalledStickerPacks*(self: StickersModel): Table[int, StickerPack] =
   self.installedStickerPacks = status_stickers.getInstalledStickerPacks()
   result = self.installedStickerPacks
 
-proc getAvailableStickerPacks*(running: var Atomic[bool]): Table[int, StickerPack] = status_stickers.getAvailableStickerPacks(running)
+proc getAvailableStickerPacks*(running: var Atomic[bool]): Table[int, StickerPack] =
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  return status_stickers.getAvailableStickerPacks(network.chainId, running)
 
 proc getRecentStickers*(self: StickersModel): seq[Sticker] =
   result = status_stickers.getRecentStickers()
@@ -146,4 +154,5 @@ proc decodeContentHash*(value: string): string =
   result = status_utils.decodeContentHash(value)
 
 proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
-  result = status_stickers.getPackIdFromTokenId(tokenId)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = status_stickers.getPackIdFromTokenId(network.chainId, tokenId)
