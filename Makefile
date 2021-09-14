@@ -105,6 +105,7 @@ $(STATUSGO): | deps
 	+ cd vendor/status-go && \
 	  $(MAKE) statusgo-shared-library $(HANDLE_OUTPUT)
 
+LIBSTATUSLIB := build/$@.$(LIBSTATUS_EXT).0
 libstatuslib: | $(STATUSGO) 
 	echo -e $(BUILD_MSG) "$@" && \
 		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
@@ -115,7 +116,7 @@ libstatuslib: | $(STATUSGO)
 
 # libraries for dynamic linking of non-Nim objects
 EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus
-build_ctest: | libstatuslib build deps 
+build_ctest: | $(LIBSTATUSLIB) build deps
 	echo -e $(BUILD_MSG) "build/ctest" && \
 		 $(CC) test/main.c -Wl,-rpath,'$$ORIGIN' -I./vendor/nimbus-build-system/vendor/Nim/lib $(EXTRA_LIBS_DYNAMIC) -g -o build/ctest
 
