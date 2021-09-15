@@ -4,3 +4,5 @@ vendor/.nimble
 /bottles/
 /test_nim/build
 tmp
+src/libstatuslib-stamp
+settings.json

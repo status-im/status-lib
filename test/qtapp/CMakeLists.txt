@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ExternalProject)
@@ -30,6 +30,7 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick REQUIRED)
 
 set(PROJECT_SOURCES
+        nimstatus.cpp
         main.cpp
         qml.qrc
 )
@@ -74,11 +75,6 @@ include_directories(${STATUSGO_LIB_DIR})
 
 
 
-# Include nim headers
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/nimbus-build-system/vendor/Nim/lib)
-
-
-
 # Begin: status-lib
 set(STATUSLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(STATUSLIB_LIB_DIR ${STATUSLIB_ROOT}/build)
@@ -97,8 +93,8 @@ ExternalProject_Get_Property(libstatuslib SOURCE_DIR)
 add_library(statuslib SHARED IMPORTED)
 set_property(TARGET statuslib PROPERTY IMPORTED_LOCATION ${STATUSLIB_LIB_DIR}/libstatuslib.so)
 add_dependencies(statuslib libstatuslib)
-include_directories(${STATUSLIB_LIB_DIR})
-message(STATUS "foo include dir: ${STATUSLIB_LIB_DIR}")
+include_directories(${STATUSLIB_ROOT}/include)
+
 
 
 target_compile_definitions(test-qtapp

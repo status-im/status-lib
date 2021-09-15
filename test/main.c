@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "../build/statuslib.h"
+#include "statuslib.h"
 
 void NimMain();
 
@@ -18,4 +18,6 @@ int main(int argc, char *argv[])
 
   initNode(statusObj, "./build/A", "./build/B");
 
+  freeStatusInstance(statusObj);
+  
 }

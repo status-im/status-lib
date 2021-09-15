@@ -100,8 +100,13 @@ proc getBloomFilterBitsSet*(self: Status): int {.exportc, dynlib.} =
 # exported correctly
 
 
-proc newStatusInstance*(fleetConfig: cstring): Status {.exportc, dynlib.} =
-  newStatusInstance($fleetConfig)
+proc newStatusInstance*(fleetConfig: cstring): Status {.exportc, cdecl, dynlib.} =
+  result = newStatusInstance($fleetConfig)
+  GC_ref(result)
+
+proc freeStatusInstance*(instance: var Status) {.exportc, cdecl, dynlib.} =
+  GC_unref(instance)
+  instance = nil
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: cstring) {.exportc, dynlib.} =
   self.initNode($statusGoDir, $keystoreDir)
@@ -109,5 +114,5 @@ proc initNode*(self: Status, statusGoDir, keystoreDir: cstring) {.exportc, dynli
 proc saveStringSetting*(self: Status, setting: Setting, value: cstring) {.exportc, dynlib.} =
   self.saveSetting(setting, $value)
 
-proc saveBoolSetting*(self: Status, setting: Setting, value: bool) {.exportc, dynlib.} =
-  self.saveSetting(setting, value)
+proc saveBoolSetting*(self: Status, setting: Setting, value: cint) {.exportc, dynlib.} =
+  self.saveSetting(setting, value.bool)
