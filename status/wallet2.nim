@@ -218,3 +218,9 @@ proc onAsyncFetchCryptoServices*(self: StatusWalletController, response: string)
     return
 
   self.events.emit("cryptoServicesFetched", CryptoServicesArg(services: responseArray))
+
+proc onAsyncTransactionFetched*(self: StatusWalletController, address: string, 
+  transactions: seq[Transaction]) =
+
+  self.events.emit("walletTransactionsFetched", WalletTransactionsArg(address: address, 
+  transactions: transactions))

@@ -31,8 +31,9 @@ proc getWalletAccounts*(): seq[WalletAccount] =
 proc getTransactionReceipt*(transactionHash: string): string =
   result = callPrivateRPC("eth_getTransactionReceipt", %* [transactionHash])
 
-proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadMore: bool = false): seq[Transaction] =
+proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadMore: bool, success: var bool): seq[Transaction] =
   try:
+    success = true
     let
       toBlockParsed = "0x" & stint.toHex(toBlock)
       limitParsed = "0x" & limit.toHex.stripLeadingZeros
@@ -48,7 +49,7 @@ proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadM
         contract: transaction["contract"].getStr,
         blockNumber: transaction["blockNumber"].getStr,
         blockHash: transaction["blockhash"].getStr,
-        timestamp: $hex2LocalDateTime(transaction["timestamp"].getStr()),
+        timestamp: transaction["timestamp"].getStr,
         gasPrice: transaction["gasPrice"].getStr,
         gasLimit: transaction["gasLimit"].getStr,
         gasUsed: transaction["gasUsed"].getStr,
@@ -56,10 +57,16 @@ proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadM
         txStatus: transaction["txStatus"].getStr,
         value: transaction["value"].getStr,
         fromAddress: transaction["from"].getStr,
-        to: transaction["to"].getStr
+        to: transaction["to"].getStr,
+        maxFeePerGas: transaction["maxFeePerGas"].getStr,
+        maxPriorityFeePerGas: transaction["maxPriorityFeePerGas"].getStr,
+        input: transaction["input"].getStr,
+        txHash: transaction["txHash"].getStr,
+        networkId: transaction["networkId"].getInt
       ))
     return accountTransactions
   except:
+    success = false
     let msg = getCurrentExceptionMsg()
     error "Failed getting wallet account transactions", msg
 

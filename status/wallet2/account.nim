@@ -68,6 +68,9 @@ proc newWalletAccount*(name, address, iconColor, path, walletType, publicKey: st
   result.balance = none[string]()
   result.realFiatBalance = none[float]()
 
+proc isEmpty*(self: WalletAccount): bool =
+  self.address.len == 0
+
 type AccountArgs* = ref object of Args
     account*: WalletAccount
 
