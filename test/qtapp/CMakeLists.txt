@@ -53,26 +53,7 @@ endif()
 
 
 
-# Begin: status-go
-set(STATUSGO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/status-go)
-set(STATUSGO_LIB_DIR ${STATUSGO_ROOT}/build/bin)
-ExternalProject_Add(status-go
-  PREFIX ${STATUSGO_ROOT}
-  SOURCE_DIR ${STATUSGO_ROOT}
-  UPDATE_COMMAND ""
-  PATCH_COMMAND ""
-  CONFIGURE_COMMAND ""
-  INSTALL_COMMAND ""
-  BUILD_IN_SOURCE 1
-  BUILD_COMMAND make statusgo-shared-library V=1
-  BUILD_BYPRODUCTS ${STATUSGO_LIB_DIR}/libstatus.so
-)
-ExternalProject_Get_Property(status-go SOURCE_DIR)
-add_library(status SHARED IMPORTED)
-set_property(TARGET status PROPERTY IMPORTED_LOCATION ${STATUSGO_LIB_DIR}/libstatus.so)
-add_dependencies(status status-go)
-include_directories(${STATUSGO_LIB_DIR})
-
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/status-go bin/status-go)
 
 
 # Begin: status-lib
@@ -99,9 +80,10 @@ include_directories(${STATUSLIB_ROOT}/include)
 
 target_compile_definitions(test-qtapp
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
+
 target_link_libraries(test-qtapp
   PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Quick
     statuslib  
-    status)
+    statusgo_shared)
