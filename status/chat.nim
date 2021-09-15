@@ -201,7 +201,7 @@ proc join*(self: ChatModel, chatId: string, chatType: ChatType, ensName: string 
   if self.hasChannel(chatId): return
   var chat = newChat(chatId, ChatType(chatType))
   self.channels[chat.id] = chat
-  status_chat.saveChat(chatId, chatType, color=chat.color, ensName=ensName, profile=pubKey)
+  status_chat.saveChat(chatId, chatType, color=chat.color, name=ensName, profile=pubKey)
   self.emitTopicAndJoin(chat)
 
 proc createOneToOneChat*(self: ChatModel, publicKey: string, ensName: string = "") =
@@ -276,9 +276,9 @@ proc init*(self: ChatModel, pubKey: string) =
   # first time, won't have any of those otherwise.
   if profileUpdatesChatIds.filter(id => id != timelineChatId).len != contacts.len:
     for contact in contacts:
-      if not profileUpdatesChatIds.contains(status_utils.getTimelineChatId(contact.address)):
-        let profileUpdatesChannel = newChat(status_utils.getTimelineChatId(contact.address), ChatType.Profile)
-        status_chat.saveChat(profileUpdatesChannel.id, profileUpdatesChannel.chatType, ensName=contact.ensName, profile=contact.address)
+      if not profileUpdatesChatIds.contains(status_utils.getTimelineChatId(contact.id)):
+        let profileUpdatesChannel = newChat(status_utils.getTimelineChatId(contact.id), ChatType.Profile)
+        status_chat.saveChat(profileUpdatesChannel.id, profileUpdatesChannel.chatType, name=contact.name, profile=contact.id)
         chatList.add(profileUpdatesChannel)
 
   var filters:seq[JsonNode] = @[]
@@ -402,7 +402,7 @@ proc renameGroup*(self: ChatModel, chatId: string, newName: string) =
 
 proc getUserName*(self: ChatModel, id: string, defaultUserName: string):string =
   if(self.contacts.hasKey(id)):
-    return userNameOrAlias(self.contacts[id])
+    return displayName(self.contacts[id])
   else:
     return defaultUserName
 
@@ -729,13 +729,13 @@ proc onLoadMoreMessagesForChannel*(self: ChatModel, response: string) =
   self.events.emit("reactionsLoaded", ReactionsLoadedArgs(reactions: reactions))
   self.events.emit("pinnedMessagesLoaded", MsgsLoadedArgs(chatId: chatId, messages: pinnedMessages))
 
-proc userNameOrAlias*(self: ChatModel, pubKey: string, 
+proc displayName*(self: ChatModel, pubKey: string, 
   prettyForm: bool = false): string =
   ## Returns ens name or alias, in case if prettyForm is true and ens name
   ## ends with ".stateofus.eth" that part will be removed.
   var alias: string
   if self.contacts.hasKey(pubKey):
-    alias = ens.userNameOrAlias(self.contacts[pubKey])
+    alias = ens.displayName(self.contacts[pubKey])
   else:
     alias = generateAlias(pubKey)
 
@@ -753,9 +753,9 @@ proc chatName*(self: ChatModel, chatItem: Chat): string =
     return self.contacts[chatItem.id].localNickname
 
   if chatItem.ensName != "":
-    return "@" & userName(chatItem.ensName).userName(true)
+    return "@" & stripDomain(chatItem.ensName)
 
-  return self.userNameOrAlias(chatItem.id)
+  return self.displayName(chatItem.id)
 
 proc isMessageCursorSet*(self: ChatModel, channelId: string): bool =
   self.msgCursor.hasKey(channelId)

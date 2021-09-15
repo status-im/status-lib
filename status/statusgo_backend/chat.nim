@@ -12,14 +12,14 @@ proc removeFilters*(chatId: string, filterId: string) =
     [{ "ChatID": chatId, "FilterID": filterId }]
   ])
 
-proc saveChat*(chatId: string, chatType: ChatType, active: bool = true, color: string = "#000000", ensName: string = "", profile: string = "", joined: int64 = 0) =
+proc saveChat*(chatId: string, chatType: ChatType, active: bool = true, color: string = "#000000", name: string = "", profile: string = "", joined: int64 = 0) =
   # TODO: ideally status-go/stimbus should handle some of these fields instead of having the client
   # send them: lastMessage, unviewedMEssagesCount, timestamp, lastClockValue, name?
   discard callPrivateRPC("saveChat".prefix, %* [
     {
       "lastClockValue": 0, # TODO:
       "color": color,
-      "name": (if ensName != "": ensName else: chatId),
+      "name": (if name != "": name else: chatId),
       "lastMessage": nil, # TODO:
       "active": active,
       "profile": profile,

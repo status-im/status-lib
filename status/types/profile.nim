@@ -6,7 +6,7 @@ import identity_image
 export identity_image
 
 type Profile* = ref object
-  id*, alias*, username*, identicon*, address*, ensName*, localNickname*: string
+  id*, alias*, identicon*, name*, localNickname*: string
   ensVerified*: bool
   messagesFromContactsOnly*: bool
   sendUserStatus*: bool
@@ -16,7 +16,7 @@ type Profile* = ref object
   systemTags*: seq[string]
 
 proc `$`*(self: Profile): string =
-  return fmt"Profile(id:{self.id}, username:{self.username})"
+  return fmt"Profile(id:{self.id}, alias:{self.alias})"
 
 proc toProfileModel*(profile: JsonNode): Profile =
   var systemTags: seq[string] = @[]
@@ -25,22 +25,15 @@ proc toProfileModel*(profile: JsonNode): Profile =
 
   result = Profile(
     id: profile["id"].str,
-    username: profile["alias"].str,
     identicon: profile["identicon"].str,
     identityImage: IdentityImage(),
-    address: profile["id"].str,
     alias: profile["alias"].str,
-    ensName: "",
+    name: profile{"name"}.getStr,
     ensVerified: profile["ensVerified"].getBool,
+    localNickname: profile{"localNickname"}.getStr,
     appearance: 0,
     systemTags: systemTags
   )
-  
-  if profile.hasKey("name"):
-    result.ensName = profile["name"].str
-  
-  if profile.hasKey("localNickname"):
-    result.localNickname = profile["localNickname"].str
 
   if profile.hasKey("images") and profile["images"].kind != JNull:
     if profile["images"].hasKey("thumbnail"):

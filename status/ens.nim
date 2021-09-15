@@ -24,16 +24,14 @@ import ./wallet as status_wallet
 
 const domain* = ".stateofus.eth"
 
-proc userName*(ensName: string, removeSuffix: bool = false): string =
-  if ensName != "" and ensName.endsWith(domain):
-    if removeSuffix:
-      result = ensName.split(".")[0]
-    else:
-      result = ensName
-  else:
-    if ensName.endsWith(".eth") and removeSuffix:
-      return ensName.split(".")[0]
-    result = ensName
+proc stripDomain*(ensName: string): string =
+  if ensName.endsWith(domain):
+    return ensName.split(".")[0]
+
+  if ensName.endsWith(".eth"):
+    return ensName.split(".")[0]
+
+  return ensName
 
 proc addDomain*(username: string): string =
   if username.endsWith(".eth"):
@@ -43,17 +41,20 @@ proc addDomain*(username: string): string =
 
 proc hasNickname*(contact: Profile): bool = contact.localNickname != ""
 
-proc userNameOrAlias*(contact: Profile, removeSuffix: bool = false): string =
-  if(contact.ensName != "" and contact.ensVerified):
-    result = "@" & userName(contact.ensName, removeSuffix)
+proc displayName*(contact: Profile, removeSuffix: bool = false): string =
+  if(contact.name != "" and contact.ensVerified):
+    if removeSuffix:
+      result = "@" & stripDomain(contact.name)
+    else:
+      result = "@" & contact.name
   elif(contact.localNickname != ""):
     result = contact.localNickname
   else:
     result = contact.alias
 
-proc label*(username:string): string =
+proc label*(username: string): string =
   let name = username.toLower()
-  var node:array[32, byte] = keccak_256.digest(username).data
+  var node:array[32, byte] = keccak_256.digest(name).data
   result = "0x" & node.toHex()
 
 proc namehash*(ensName:string): string =

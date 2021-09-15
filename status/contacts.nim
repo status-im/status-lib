@@ -19,6 +19,13 @@ proc newContactModel*(events: EventEmitter): ContactModel =
     result = ContactModel()
     result.events = events
 
+proc saveContact(self: ContactModel, contact: Profile) = 
+  var thumbnail = ""
+  if contact.identityImage != nil:
+    thumbnail = contact.identityImage.thumbnail
+
+  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.name, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+
 proc getContactByID*(self: ContactModel, id: string): Profile =
   let response = status_contacts.getContactByID(id)
   # TODO: change to options
@@ -31,13 +38,13 @@ proc getContactByID*(self: ContactModel, id: string): Profile =
 proc blockContact*(self: ContactModel, id: string): string =
   var contact = self.getContactByID(id)
   contact.systemTags.add(contactBlocked)
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, contact.identityImage.thumbnail, contact.systemTags, contact.localNickname)
+  self.saveContact(contact)
   self.events.emit("contactBlocked", Args())
 
 proc unblockContact*(self: ContactModel, id: string): string =
   var contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactBlocked))
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, contact.identityImage.thumbnail, contact.systemTags, contact.localNickname)
+  self.saveContact(contact)
   self.events.emit("contactUnblocked", Args())
 
 proc getAllContacts*(): seq[Profile] =
@@ -56,11 +63,10 @@ proc getOrCreateContact*(self: ContactModel, id: string): Profile =
     let alias = status_accounts.generateAlias(id)
     result = Profile(
       id: id,
-      username: alias,
       localNickname: "",
       identicon: status_accounts.generateIdenticon(id),
       alias: alias,
-      ensName: "",
+      name: "",
       ensVerified: false,
       appearance: 0,
       systemTags: @[]
@@ -76,10 +82,7 @@ proc setNickName*(self: ContactModel, id: string, localNickname: string): string
     else:
       localNickname
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-  result = status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, nickname)
+  self.saveContact(contact)
   self.events.emit("contactAdded", Args())
   discard requestContactUpdate(contact.id)
 
@@ -96,21 +99,16 @@ proc addContact*(self: ContactModel, id: string): string =
     if (index > -1):
       contact.systemTags.delete(index)
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  result = status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  self.saveContact(contact)
   self.events.emit("contactAdded", Args())
   discard requestContactUpdate(contact.id)
 
   if updating:
     let profile = Profile(
       id: contact.id,
-      username: contact.alias,
       identicon: contact.identicon,
       alias: contact.alias,
-      ensName: contact.ensName,
+      name: contact.name,
       ensVerified: contact.ensVerified,
       appearance: 0,
       systemTags: contact.systemTags,
@@ -122,11 +120,7 @@ proc removeContact*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactAdded))
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
 
 proc isAdded*(self: ContactModel, id: string): bool =
@@ -143,9 +137,5 @@ proc rejectContactRequest*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactRequest))
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  self.saveContact(contact)
   self.events.emit("contactRemoved", Args())

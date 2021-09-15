@@ -25,10 +25,10 @@ proc getContacts*(): JsonNode =
     contacts = result
     contactsInited = true
 
-proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, identicon: string, thumbnail: string, systemTags: seq[string], localNickname: string): string =
+proc saveContact*(id: string, ensVerified: bool, name: string, alias: string, identicon: string, thumbnail: string, systemTags: seq[string], localNickname: string): string =
   let payload = %* [{
       "id": id,
-      "name": ensName,
+      "name": name,
       "ensVerified": ensVerified,
       "alias": alias,
       "identicon": identicon,

@@ -1,4 +1,3 @@
-import json
 import ../types/[profile, account]
 
 export profile
@@ -19,10 +18,9 @@ proc requestReceived*(self: Profile): bool =
 proc toProfileModel*(account: Account): Profile =
   result = Profile(
     id: "",
-    username: account.name,
     identicon: account.identicon,
     alias: account.name,
-    ensName: "",
+    name: "",
     ensVerified: false,
     appearance: 0,
     systemTags: @[]
