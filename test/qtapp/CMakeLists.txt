@@ -51,32 +51,9 @@ else()
     endif()
 endif()
 
-
-
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/status-go bin/status-go)
 
-
-# Begin: status-lib
-set(STATUSLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)
-set(STATUSLIB_LIB_DIR ${STATUSLIB_ROOT}/build)
-ExternalProject_Add(libstatuslib
-  PREFIX ${STATUSLIB_ROOT}
-  SOURCE_DIR ${STATUSLIB_ROOT}
-  UPDATE_COMMAND ""
-  PATCH_COMMAND ""
-  CONFIGURE_COMMAND ""
-  INSTALL_COMMAND ""
-  BUILD_IN_SOURCE 1
-  BUILD_COMMAND make V=1
-  BUILD_BYPRODUCTS ${STATUSLIB_LIB_DIR}/libstatuslib.so
-)
-ExternalProject_Get_Property(libstatuslib SOURCE_DIR)
-add_library(statuslib SHARED IMPORTED)
-set_property(TARGET statuslib PROPERTY IMPORTED_LOCATION ${STATUSLIB_LIB_DIR}/libstatuslib.so)
-add_dependencies(statuslib libstatuslib)
-include_directories(${STATUSLIB_ROOT}/include)
-
-
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ bin/status-lib)
 
 target_compile_definitions(test-qtapp
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
