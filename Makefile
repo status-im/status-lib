@@ -117,17 +117,31 @@ $(STATUSGO): | deps
 	+ cd vendor/status-go && \
 	  $(MAKE) statusgo-shared-library $(HANDLE_OUTPUT)
 
+ifeq ($(detected_OS), Darwin)
+	install_name_tool -id \
+		@rpath/libstatus.$(LIBSTATUS_EXT) \
+		$(STATUSGO_LIBDIR)/libstatus.$(LIBSTATUS_EXT)
+endif
+
+ifeq ($(detectedOS),Windows)
+ STATUSGO_LDFLAGS := -L$(shell cygpath -m $(STATUSGO_LIBDIR)) -lstatus
+else ifeq ($(detected_OS),Darwin)
+ STATUSGO_LDFLAGS := -L$(STATUSGO_LIBDIR) -lstatus -rpath $(STATUSGO_LIBDIR)
+else
+ STATUSGO_LDFLAGS := -L$(STATUSGO_LIBDIR) -lstatus
+endif
+
 LIBSTATUSLIB := build/libstatuslib.$(LIBSTATUS_EXT).0
 libstatuslib: | $(STATUSGO) 
 	echo -e $(BUILD_MSG) "$@" && \
-		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
+		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"$(STATUSGO_LDFLAGS)" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
 		rm -f build/$@.$(LIBSTATUS_EXT) && \
 		ln -s $@.$(LIBSTATUS_EXT).0 build/$@.$(LIBSTATUS_EXT) && \
 		cp nimcache/libstatuslib/statuslib.h build/statuslib.h.for-reference-only && \
 		[[ $$? = 0 ]]
 
 # libraries for dynamic linking of non-Nim objects
-EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus
+EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm $(STATUSGO_LDFLAGS)
 build_ctest: | $(LIBSTATUSLIB) build deps
 	echo -e $(BUILD_MSG) "build/ctest" && \
 		 $(CC) test/main.c -Wl,-rpath,'$$ORIGIN' -Iinclude/ $(EXTRA_LIBS_DYNAMIC) -g -o build/ctest
@@ -155,14 +169,21 @@ else ifneq ($(detected_OS),Darwin)
 endif
 
 ctest: | build_ctest
-	echo -e "Running ctest:" && \
-	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR)" \
+	echo -e "Running ctest:"
+
+ifeq ($(detected_OS), Darwin)
 	./build/ctest
+else ifeq ($(detected_OS), Windows)
+	./build/ctest
+else
+	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR):build/" \
+	./build/ctest
+endif
 
 test: | $(STATUSGO)
 	$(NIMBLE_ENV) $(ENV_SCRIPT) nimble tests
 
 clean: | clean-common
-	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)
+	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO) build/*
 
 endif # "variables.mk" was not included
