@@ -3,9 +3,12 @@ import json
 import strformat
 import os
 import sequtils
+import chronicles
 
 from statusgo_backend/gif import getRecentGifs, getFavoriteGifs, setFavoriteGifs, setRecentGifs
 
+logScope:
+  topics = "gif"
 
 const MAX_RECENT = 50
 # set via `nim c` param `-d:TENOR_API_KEY:[api_key]`; should be set in CI/release builds
@@ -73,9 +76,24 @@ proc newGifClient*(): GifClient =
   result.favorites = @[]
   result.recents = @[]
 
-proc tenorQuery(self: GifClient, path: string): seq[GifItem] = 
+proc getContentWithRetry(self: GifClient, path: string, maxRetry: int = 3): string =
+  var currentRetry = 0
+  while true:
+    try:
+      let content = self.client.getContent(fmt("{baseUrl}{path}{defaultParams}"))
+      return content
+    except Exception as e:
+      currentRetry += 1
+      error "could not query tenor API", msg=e.msg
+
+      if currentRetry >= maxRetry:
+        raise
+
+      sleep(100 * currentRetry)
+
+proc tenorQuery(self: GifClient, path: string): seq[GifItem] =
   try:
-    let content = self.client.getContent(fmt("{baseUrl}{path}{defaultParams}"))
+    let content = self.getContentWithRetry(path)
     let doc = content.parseJson()
 
     var items: seq[GifItem] = @[]
@@ -84,7 +102,6 @@ proc tenorQuery(self: GifClient, path: string): seq[GifItem] =
 
     return items
   except:
-    echo getCurrentExceptionMsg()
     return @[]
 
 proc search*(self: GifClient, query: string): seq[GifItem] =
@@ -146,6 +163,6 @@ proc addToRecents*(self: GifClient, gifItem: GifItem) =
 
     newRecents.add(recents[idx])
     idx += 1
-  
+
   self.recents = newRecents
   setRecentGifs(%*{"items": map(newRecents, toJsonNode)})
