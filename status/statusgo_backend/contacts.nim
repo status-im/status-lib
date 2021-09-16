@@ -1,8 +1,9 @@
-import json, strmisc, atomics
-import core, ../utils
+import tables, json, strmisc, atomics, sugar, sequtils, json_serialization, chronicles
+import ./core, ./settings, ./accounts, ../utils, ../types/[profile, setting]
 
 var
-  contacts {.threadvar.}: JsonNode
+  contacts {.threadvar.}: seq[Profile]
+  contactsIndex {.threadvar.}: Table[string, Profile]
   contactsInited {.threadvar.}: bool
   dirty: Atomic[bool]
 
@@ -10,20 +11,35 @@ proc getContactByID*(id: string): string =
   result = callPrivateRPC("getContactByID".prefix, %* [id])
   dirty.store(true)
 
-proc getContacts*(): JsonNode =
-  let cacheIsDirty = (not contactsInited) or dirty.load
+proc getContacts*(useCache: bool = true): (seq[Profile], bool) =
+  let cacheIsDirty = (not useCache) or (not contactsInited) or dirty.load
   if not cacheIsDirty:
-    result = contacts
+    return (contacts, true)
+  
+  let payload = %* []
+  let response = callPrivateRPC("contacts".prefix, payload).parseJson
+  dirty.store(false)
+  contactsIndex = initTable[string, Profile]()
+  contactsInited = true
+
+  if response["result"].kind == JNull:
+    contacts = @[]
+    return (contacts, false)
+
+  contacts = map(response["result"].getElems(), proc(x: JsonNode): Profile = x.toProfileModel())
+  for contact in contacts:
+    contactsIndex[contact.id] = contact
+
+  return  (contacts, false)
+
+proc getContactsIndex*(): (Table[string, Profile], bool)=
+  let cacheIsDirty = (not contactsInited) or dirty.load
+
+  if not cacheIsDirty:
+    return (contactsIndex, true)
   else:
-    let payload = %* []
-    let response = callPrivateRPC("contacts".prefix, payload).parseJson
-    if response["result"].kind == JNull:
-      result = %* []
-    else:
-      result = response["result"]
-    dirty.store(false)
-    contacts = result
-    contactsInited = true
+    discard getContacts()
+    return (contactsIndex, false)
 
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, identicon: string, thumbnail: string, systemTags: seq[string], localNickname: string): string =
   let payload = %* [{
@@ -40,6 +56,15 @@ proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string,
   result = callPrivateRPC("saveContact".prefix, payload)
   dirty.store(true)
 
-proc requestContactUpdate*(publicKey: string): string =
-  result = callPrivateRPC("sendContactUpdate".prefix, %* [publicKey, "", ""])
+proc sendContactUpdate*(publicKey: string, accountKeyUID: string) : string =
+  let preferredUsername = getSetting[string](Setting.PreferredUsername, "")
+  let usernames = getSetting[seq[string]](Setting.Usernames, @[])
+  var ensName = ""
+  if len(preferredUsername) > 0:
+    ensName = preferredUsername
+  elif len(usernames) >= 1:
+    ensName = usernames[0]
+
+  let identityImage = getIdentityImage(accountKeyUID)
+  result = callPrivateRPC("sendContactUpdate".prefix, %* [publicKey, ensName, identityImage.thumbnail])
   dirty.store(true)

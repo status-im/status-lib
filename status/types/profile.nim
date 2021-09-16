@@ -16,7 +16,7 @@ type Profile* = ref object
   systemTags*: seq[string]
 
 proc `$`*(self: Profile): string =
-  return fmt"Profile(id:{self.id}, username:{self.username})"
+  return fmt"Profile(id:{self.id}, username:{self.username}, systemTags: {self.systemTags}, ensName: {self.ensName})"
 
 proc toProfileModel*(profile: JsonNode): Profile =
   var systemTags: seq[string] = @[]
