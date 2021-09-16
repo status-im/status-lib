@@ -27,7 +27,7 @@ type
   StatusWalletController* = ref object
     events: EventEmitter
     accounts: seq[WalletAccount]
-    networks: seq[Network]
+    networks*: seq[Network]
     tokens: seq[Erc20Contract]
     totalBalance*: float
 

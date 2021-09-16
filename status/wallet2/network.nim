@@ -1,4 +1,4 @@
-from json import JsonNode, `%*`
+from json import JsonNode, `%*`, parseJson
 from strformat import fmt
 import json_serialization
 
@@ -19,9 +19,4 @@ proc `$`*(self: Network): string =
   return fmt"Network(chainID:{self.chainID}, name:{self.chainName}, rpcURL:{self.rpcURL}, isTest:{self.isTest}, enabled:{self.enabled})"
 
 proc toPayload*(self: Network): JsonNode =
-  return %* [{
-    "chain_id": self.chainID, "native_currency_decimals": self.nativeCurrencyDecimals, "layer": self.layer,
-    "chain_name": self.chainName, "rpc_url": self.rpcURL, "block_explorer_url": self.blockExplorerURL,
-    "icon_url": self.iconURL, "native_currency_name": self.nativeCurrencyName,
-    "native_currency_symbol": self.nativeCurrencySymbol, "is_test": self.isTest, "enabled": self.enabled
-  }]
+  return %* [Json.encode(self).parseJson]
