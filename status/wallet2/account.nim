@@ -79,8 +79,9 @@ proc `$`*(self: OpenseaAsset): string =
 
 proc getOpenseaCollectionTraits*(jsonCollection: JsonNode): Table[string, OpenseaCollectionTrait] =
     var traitList: Table[string, OpenseaCollectionTrait] = initTable[string, OpenseaCollectionTrait]()
-    for key, value in jsonCollection{"traits"}:
-        traitList[key] = OpenseaCollectionTrait(min: value{"min"}.getFloat, max: value{"max"}.getFloat)
+    if jsonCollection.hasKey("traits"):
+        for key, value in jsonCollection{"traits"}:
+            traitList[key] = OpenseaCollectionTrait(min: value{"min"}.getFloat, max: value{"max"}.getFloat)
     return traitList
 
 proc toOpenseaCollection*(jsonCollection: JsonNode): OpenseaCollection =
