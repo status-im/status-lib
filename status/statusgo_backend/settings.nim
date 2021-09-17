@@ -97,29 +97,38 @@ proc getFleet*(): Fleet =
 proc getPinnedMailserver*(): string =
   let pinnedMailservers = getSetting[JsonNode](Setting.PinnedMailservers, %*{})
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
-  return pinnedMailservers{fleet}.getStr()
+  result = pinnedMailservers{fleet}.getStr()
+  info "getPinnedMailserver", topics="mailserver-interaction", fleet, result
+
 
 proc pinMailserver*(enode: string = "") =
   let pinnedMailservers = getSetting[JsonNode](Setting.PinnedMailservers, %*{})
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
 
   pinnedMailservers[fleet] = newJString(enode)
-  discard saveSetting(Setting.PinnedMailservers, pinnedMailservers)
+  let response = saveSetting(Setting.PinnedMailservers, pinnedMailservers)
+  info "pinMailserver", topics="mailserver-interaction", enode, response
+
 
 proc saveMailserver*(name, enode: string) =
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
-  let result = callPrivateRPC("mailservers_addMailserver", %* [
+  let id = $genUUID()
+  let response = callPrivateRPC("mailservers_addMailserver", %* [
     %*{
-      "id": $genUUID(),
+      "id": id,
       "name": name,
       "address": enode,
       "fleet": $fleet
     }
-  ]).parseJSON()["result"]
+  ])
+  let result = response.parseJSON()["result"]
+  info "saveMailserver", topics="mailserver-interaction", rpc_method="mailservers_addMailserver", id, name, enode, fleet, response
+
 
 proc getMailservers*():JsonNode =
-  let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
-  result = callPrivateRPC("mailservers_getMailservers").parseJSON()["result"]
+  let response = callPrivateRPC("mailservers_getMailservers")
+  result = response.parseJSON()["result"]
+  info "getMailservers", topics="mailserver-interaction", rpc_method="mailservers_getMailservers", response
 
 proc getNodeConfig*():JsonNode =
   result = status_go.getNodeConfig().parseJSON()
