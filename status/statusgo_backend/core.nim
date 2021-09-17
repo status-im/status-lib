@@ -33,13 +33,18 @@ proc startMessenger*() =
   discard callPrivateRPC("startMessenger".prefix)
 
 proc addPeer*(peer: string) =
-  discard callPrivateRPC("admin_addPeer", %* [peer])
+  let response = callPrivateRPC("admin_addPeer", %* [peer])
+  info "addPeer", topics="mailserver-interaction", rpc_method="admin_addPeer", peer, response
 
 proc removePeer*(peer: string) =
-  discard callPrivateRPC("admin_removePeer", %* [peer])
+  let response = callPrivateRPC("admin_removePeer", %* [peer])
+  info "removePeer", topics="mailserver-interaction", rpc_method="admin_removePeer", peer, response
+
 
 proc markTrustedPeer*(peer: string) =
-  discard callPrivateRPC("markTrustedPeer".prefix(false), %* [peer])
+  let response = callPrivateRPC("markTrustedPeer".prefix(false), %* [peer])
+  info "markTrustedPeer", topics="mailserver-interaction", rpc_method="waku_markTrustedPeer", peer, response
+
 
 proc getBlockByNumber*(blockNumber: string): string =
   result = callPrivateRPC("eth_getBlockByNumber", %* [blockNumber, false])
