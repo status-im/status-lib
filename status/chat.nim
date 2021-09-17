@@ -335,8 +335,15 @@ proc processMessageUpdateAfterSend(self: ChatModel, response: string): (seq[Chat
   if chats.len == 0 and messages.len == 0:
     self.events.emit("messageSendingFailed", Args())
     return
+
+  # This fixes issue#3490
+  var msg = messages[0]
+  for m in messages:
+    if(m.responseTo.len > 0):
+      msg = m
+      break
   
-  self.events.emit("messageSendingSuccess", MessageSendingSuccess(message: messages[0], chat: chats[0]))
+  self.events.emit("messageSendingSuccess", MessageSendingSuccess(message: msg, chat: chats[0]))
 
 proc sendMessage*(self: ChatModel, chatId: string, msg: string, replyTo: string = "", contentType: int = ContentType.Message.int, communityId: string = "") =
   var response = status_chat.sendChatMessage(chatId, msg, replyTo, contentType, communityId)
