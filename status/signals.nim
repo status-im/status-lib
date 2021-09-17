@@ -25,3 +25,5 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.Stats: StatsSignal.fromEvent(jsonSignal)
     of SignalType.ChroniclesLogs: ChroniclesLogsSignal.fromEvent(jsonSignal)
     else: Signal()
+  
+  result.signalType = signalType
