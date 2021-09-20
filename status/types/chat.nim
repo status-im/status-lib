@@ -56,6 +56,7 @@ proc toJsonNode*(self: Chat): JsonNode =
     "color": self.color,
     "deletedAtClockValue": self.deletedAtClockValue,
     "id": self.id,
+    "communityId": self.communityId,
     "lastClockValue": self.lastClockValue,
     "lastMessage": nil,
     "members": self.members.toJsonNode,
