@@ -3,13 +3,6 @@ import Tables, options, json, strformat, strutils
 from ../../eventemitter import Args
 import ../types/[transaction]
 
-type CollectibleList* = ref object
-    collectibleType*, collectiblesJSON*, error*: string
-    loading*: int
-
-type Collectible* = ref object
-    name*, image*, id*, collectibleType*, description*, externalUrl*: string
-
 type OpenseaCollectionTrait* = ref object
     min*, max*: float
 
@@ -38,7 +31,6 @@ type WalletAccount* = ref object
     realFiatBalance*: Option[float]
     assetList*: seq[Asset]
     wallet*, chat*: bool
-    collectiblesLists*: seq[CollectibleList]
     transactions*: tuple[hasMore: bool, data: seq[Transaction]]
 
 type TraitType* {.pure.} = enum
