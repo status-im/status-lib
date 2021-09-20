@@ -4,6 +4,7 @@ import strformat
 import os
 import sequtils
 import chronicles
+import uri
 
 from statusgo_backend/gif import getRecentGifs, getFavoriteGifs, setFavoriteGifs, setRecentGifs
 
@@ -105,7 +106,7 @@ proc tenorQuery(self: GifClient, path: string): seq[GifItem] =
     return @[]
 
 proc search*(self: GifClient, query: string): seq[GifItem] =
-  return self.tenorQuery(fmt("search?q={query}"))
+  return self.tenorQuery(fmt("search?q={encodeUrl(query)}"))
 
 proc getTrendings*(self: GifClient): seq[GifItem] =
   return self.tenorQuery("trending?")
