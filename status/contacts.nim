@@ -1,4 +1,4 @@
-import json, sequtils, sugar, chronicles
+import json, chronicles
 import statusgo_backend/contacts as status_contacts
 import statusgo_backend/accounts as status_accounts
 import statusgo_backend/chat as status_chat
@@ -19,6 +19,13 @@ proc newContactModel*(events: EventEmitter): ContactModel =
     result = ContactModel()
     result.events = events
 
+proc saveContact(self: ContactModel, contact: Profile): string = 
+  var thumbnail = ""
+  if contact.identityImage != nil:
+    thumbnail = contact.identityImage.thumbnail
+  
+  return status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+
 proc getContactByID*(self: ContactModel, id: string): Profile =
   let response = status_contacts.getContactByID(id)
   # TODO: change to options
@@ -31,24 +38,21 @@ proc getContactByID*(self: ContactModel, id: string): Profile =
 proc blockContact*(self: ContactModel, id: string): string =
   var contact = self.getContactByID(id)
   contact.systemTags.add(contactBlocked)
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, contact.identityImage.thumbnail, contact.systemTags, contact.localNickname)
+  discard self.saveContact(contact)
   self.events.emit("contactBlocked", Args())
 
 proc unblockContact*(self: ContactModel, id: string): string =
   var contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactBlocked))
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, contact.identityImage.thumbnail, contact.systemTags, contact.localNickname)
+  discard self.saveContact(contact)
   self.events.emit("contactUnblocked", Args())
 
-proc getAllContacts*(): seq[Profile] =
-  result = map(status_contacts.getContacts().getElems(), proc(x: JsonNode): Profile = x.toProfileModel())
+proc getContacts*(self: ContactModel, useCache: bool = true): seq[Profile] =
+  let (contacts, usedCache) = status_contacts.getContacts(useCache)
+  if not usedCache:
+    self.events.emit("contactUpdate", ContactUpdateArgs(contacts: contacts))
 
-proc getAddedContacts*(): seq[Profile] =
-  result = getAllContacts().filter(c => c.systemTags.contains(contactAdded))
-
-proc getContacts*(self: ContactModel): seq[Profile] =
-  result = getAllContacts()
-  self.events.emit("contactUpdate", ContactUpdateArgs(contacts: result))
+  return contacts
 
 proc getOrCreateContact*(self: ContactModel, id: string): Profile =
   result = self.getContactByID(id)
@@ -66,7 +70,7 @@ proc getOrCreateContact*(self: ContactModel, id: string): Profile =
       systemTags: @[]
     )
 
-proc setNickName*(self: ContactModel, id: string, localNickname: string): string =
+proc setNickName*(self: ContactModel, id: string, localNickname: string, accountKeyUID: string): string =
   var contact = self.getOrCreateContact(id)
   let nickname =
     if (localNickname == ""):
@@ -76,18 +80,16 @@ proc setNickName*(self: ContactModel, id: string, localNickname: string): string
     else:
       localNickname
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-  result = status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, nickname)
+  contact.localNickname = nickname
+  result = self.saveContact(contact)
   self.events.emit("contactAdded", Args())
-  discard requestContactUpdate(contact.id)
+  discard sendContactUpdate(contact.id, accountKeyUID)
 
-
-proc addContact*(self: ContactModel, id: string): string =
+proc addContact*(self: ContactModel, id: string, accountKeyUID: string): string =
   var contact = self.getOrCreateContact(id)
   
   let updating = contact.systemTags.contains(contactAdded)
+
   if not updating:
     contact.systemTags.add(contactAdded)
     discard status_chat.createProfileChat(contact.id)
@@ -96,13 +98,9 @@ proc addContact*(self: ContactModel, id: string): string =
     if (index > -1):
       contact.systemTags.delete(index)
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  result = status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  result = self.saveContact(contact)
   self.events.emit("contactAdded", Args())
-  discard requestContactUpdate(contact.id)
+  discard sendContactUpdate(contact.id, accountKeyUID)
 
   if updating:
     let profile = Profile(
@@ -122,11 +120,7 @@ proc removeContact*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactAdded))
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  discard self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
 
 proc isAdded*(self: ContactModel, id: string): bool =
@@ -143,9 +137,5 @@ proc rejectContactRequest*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactRequest))
 
-  var thumbnail = ""
-  if contact.identityImage != nil:
-    thumbnail = contact.identityImage.thumbnail
-
-  discard status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  discard self.saveContact(contact)
   self.events.emit("contactRemoved", Args())

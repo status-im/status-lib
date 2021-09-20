@@ -1,5 +1,6 @@
 import json, strutils, sequtils, tables, chronicles, times, sugar, algorithm
 import statusgo_backend/chat as status_chat
+import statusgo_backend/contacts as status_contacts
 import statusgo_backend/chatCommands as status_chat_commands
 import types/[message, status_update, activity_center_notification, 
   sticker, removed_message]
@@ -31,7 +32,6 @@ type
     chats*: seq[Chat]
     messages*: seq[Message]
     pinnedMessages*: seq[Message]
-    contacts*: seq[Profile]
     emojiReactions*: seq[Reaction]
     communities*: seq[Community]
     communityMembershipRequests*: seq[CommunityMembershipRequest]
@@ -80,7 +80,6 @@ type ChatModel* = ref object
   events*: EventEmitter
   communitiesToFetch*: seq[string]
   mailserverReady*: bool
-  contacts*: Table[string, Profile]
   channels*: Table[string, Chat]
   msgCursor: Table[string, string]
   pinnedMsgCursor: Table[string, string]
@@ -93,12 +92,19 @@ proc newChatModel*(events: EventEmitter): ChatModel =
   result.events = events
   result.mailserverReady = false
   result.communitiesToFetch = @[]
-  result.contacts = initTable[string, Profile]()
   result.channels = initTable[string, Chat]()
   result.msgCursor = initTable[string, string]()
   result.pinnedMsgCursor = initTable[string, string]()
   result.emojiCursor = initTable[string, string]()
   result.lastMessageTimestamps = initTable[string, int64]()
+
+proc getContacts*(self: ChatModel): Table[string, Profile] =
+  let (index, usedCache) = status_contacts.getContactsIndex()
+  if not usedCache:
+    let (contacts, _) = status_contacts.getContacts()
+    self.events.emit("contactUpdate", ContactUpdateArgs(contacts: contacts))
+
+  return index
 
 proc update*(self: ChatModel, chats: seq[Chat], messages: seq[Message], emojiReactions: seq[Reaction], communities: seq[Community], communityMembershipRequests: seq[CommunityMembershipRequest], pinnedMessages: seq[Message], activityCenterNotifications: seq[ActivityCenterNotification], statusUpdates: seq[StatusUpdate], deletedMessages: seq[RemovedMessage]) =
   for chat in chats:
@@ -113,7 +119,7 @@ proc update*(self: ChatModel, chats: seq[Chat], messages: seq[Message], emojiRea
       if self.lastMessageTimestamps[chatId] > ts:
         self.lastMessageTimestamps[chatId] = ts
       
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages,chats: chats, contacts: @[], emojiReactions: emojiReactions, communities: communities, communityMembershipRequests: communityMembershipRequests, pinnedMessages: pinnedMessages, activityCenterNotifications: activityCenterNotifications, statusUpdates: statusUpdates, deletedMessages: deletedMessages))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages,chats: chats, emojiReactions: emojiReactions, communities: communities, communityMembershipRequests: communityMembershipRequests, pinnedMessages: pinnedMessages, activityCenterNotifications: activityCenterNotifications, statusUpdates: statusUpdates, deletedMessages: deletedMessages))
 
 proc parseChatResponse(self: ChatModel, response: string): (seq[Chat], seq[Message]) =
   var parsedResponse = parseJson(response)
@@ -131,7 +137,7 @@ proc parseChatResponse(self: ChatModel, response: string): (seq[Chat], seq[Messa
 
 proc emitUpdate(self: ChatModel, response: string) =
   var (chats, messages) = self.parseChatResponse(response)
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats, contacts: @[]))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats))
 
 proc removeFiltersByChatId(self: ChatModel, chatId: string, filters: JsonNode)
 
@@ -225,11 +231,6 @@ proc createPublicChat*(self: ChatModel, chatId: string) =
   self.emitTopicAndJoin(chat)
 
 
-proc updateContacts*(self: ChatModel, contacts: seq[Profile]) =
-  for c in contacts:
-    self.contacts[c.id] = c
-  self.events.emit("chatUpdate", ChatUpdateArgs(contacts: contacts))
-
 proc requestMissingCommunityInfos*(self: ChatModel) =
   if (self.communitiesToFetch.len == 0):
     return
@@ -252,7 +253,8 @@ proc sortChats(x, y: chat_type.Chat): int =
 proc init*(self: ChatModel, pubKey: string) =
   self.publicKey = pubKey
 
-  var contacts = getAddedContacts()
+  var (contacts, _) = status_contacts.getContacts()
+  contacts = contacts.filter(c => c.systemTags.contains(contactAdded))
   var chatList = status_chat.loadChats()
   chatList.sort(sortChats)
 
@@ -295,14 +297,9 @@ proc init*(self: ChatModel, pubKey: string) =
 
   self.events.emit("chatsLoaded", ChatArgs(chats: chatList))
 
-
   self.events.once("mailserverAvailable") do(a: Args):
     self.mailserverReady = true
     self.requestMissingCommunityInfos()
-
-  self.events.on("contactUpdate") do(a: Args):
-    var evArgs = ContactUpdateArgs(a)
-    self.updateContacts(evArgs.contacts)
 
 proc statusUpdates*(self: ChatModel) =
   let statusUpdates = status_chat.statusUpdates()
@@ -369,7 +366,7 @@ proc sendSticker*(self: ChatModel, chatId: string, replyTo: string, sticker: Sti
   var response = status_chat.sendStickerMessage(chatId, replyTo, sticker)
   self.events.emit("stickerSent", StickerArgs(sticker: sticker, save: true))
   var (chats, messages) = self.parseChatResponse(response)
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats, contacts: @[]))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats))
   self.events.emit("sendingMessage", MessageArgs(id: messages[0].id, channel: messages[0].chatId))
 
 proc addEmojiReaction*(self: ChatModel, chatId: string, messageId: string, emojiId: int) =
@@ -385,7 +382,7 @@ proc onMarkMessagesRead(self: ChatModel, response: string, chatId: string): Json
   if self.channels.hasKey(chatId):
     self.channels[chatId].unviewedMessagesCount = 0
     self.channels[chatId].mentionsCount = 0
-    self.events.emit("channelUpdate", ChatUpdateArgs(messages: @[], chats: @[self.channels[chatId]], contacts: @[]))
+    self.events.emit("channelUpdate", ChatUpdateArgs(messages: @[], chats: @[self.channels[chatId]]))
 
 proc onAsyncMarkMessagesRead*(self: ChatModel, response: string) =
   let parsedResponse = parseJson(response)
@@ -408,8 +405,9 @@ proc renameGroup*(self: ChatModel, chatId: string, newName: string) =
   self.emitUpdate(response)
 
 proc getUserName*(self: ChatModel, id: string, defaultUserName: string):string =
-  if(self.contacts.hasKey(id)):
-    return userNameOrAlias(self.contacts[id])
+  let contacts = self.getContacts()
+  if(contacts.hasKey(id)):
+    return userNameOrAlias(contacts[id])
   else:
     return defaultUserName
 
@@ -418,7 +416,7 @@ proc processGroupChatCreation*(self: ChatModel, result: string) =
   var (chats, messages) = formatChatUpdate(response)
   let chat = chats[0]
   self.channels[chat.id] = chat
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats, contacts: @[]))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats))
   self.events.emit("activeChannelChanged", ChatIdArg(chatId: chat.id))
 
 proc createGroup*(self: ChatModel, groupName: string, pubKeys: seq[string]) =
@@ -446,11 +444,11 @@ proc resendMessage*(self: ChatModel, messageId: string) =
 
 proc muteChat*(self: ChatModel, chat: Chat) =
   discard status_chat.muteChat(chat.id)
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: @[], chats: @[chat], contacts: @[]))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: @[], chats: @[chat]))
 
 proc unmuteChat*(self: ChatModel, chat: Chat) =
   discard status_chat.unmuteChat(chat.id)
-  self.events.emit("chatUpdate", ChatUpdateArgs(messages: @[], chats: @[chat], contacts: @[]))
+  self.events.emit("chatUpdate", ChatUpdateArgs(messages: @[], chats: @[chat]))
 
 proc processUpdateForTransaction*(self: ChatModel, messageId: string, response: string) =
   var (chats, messages) = self.processMessageUpdateAfterSend(response)
@@ -741,8 +739,9 @@ proc userNameOrAlias*(self: ChatModel, pubKey: string,
   ## Returns ens name or alias, in case if prettyForm is true and ens name
   ## ends with ".stateofus.eth" that part will be removed.
   var alias: string
-  if self.contacts.hasKey(pubKey):
-    alias = ens.userNameOrAlias(self.contacts[pubKey])
+  let contacts = self.getContacts()
+  if contacts.hasKey(pubKey):
+    alias = ens.userNameOrAlias(contacts[pubKey])
   else:
     alias = generateAlias(pubKey)
 
@@ -755,9 +754,9 @@ proc chatName*(self: ChatModel, chatItem: Chat): string =
   if (not chatItem.chatType.isOneToOne): 
     return chatItem.name
 
-  if (self.contacts.hasKey(chatItem.id) and 
-    self.contacts[chatItem.id].hasNickname()):
-    return self.contacts[chatItem.id].localNickname
+  let contacts = self.getContacts()
+  if (contacts.hasKey(chatItem.id) and contacts[chatItem.id].hasNickname()):
+    return contacts[chatItem.id].localNickname
 
   if chatItem.ensName != "":
     return "@" & userName(chatItem.ensName).userName(true)
