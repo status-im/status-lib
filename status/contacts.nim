@@ -23,11 +23,14 @@ proc newContactModel*(events: EventEmitter): ContactModel =
     result.events = events
 
 proc saveContact(self: ContactModel, contact: Profile): string = 
-  var thumbnail = ""
+  var 
+    thumbnail = ""
+    largeImage = ""
   if contact.identityImage != nil:
     thumbnail = contact.identityImage.thumbnail
+    largeImage = contact.identityImage.large    
   
-  return status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, contact.systemTags, contact.localNickname)
+  return status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, largeImage, contact.systemTags, contact.localNickname)
 
 proc getContactByID*(self: ContactModel, id: string): Profile =
   let response = status_contacts.getContactByID(id)
