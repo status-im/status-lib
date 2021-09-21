@@ -74,6 +74,7 @@ type Message* = object
   isPinned*: bool
   pinnedBy*: string
   deleted*: bool
+  hide*: bool
 
 proc `$`*(self: Message): string =
   result = fmt"Message(id:{self.id}, chatId:{self.chatId}, clock:{self.clock}, from:{self.fromAuthor}, contentType:{self.contentType})"
@@ -132,7 +133,8 @@ proc toMessage*(jsonMsg: JsonNode): Message =
       communityId: $jsonMsg{"communityId"}.getStr,
       audioDurationMs: jsonMsg{"audioDurationMs"}.getInt,
       deleted: jsonMsg{"deleted"}.getBool,
-      hasMention: false
+      hasMention: false,
+      hide: false
     )
 
   if contentType == ContentType.Gap:
