@@ -21,6 +21,9 @@ type SignalType* {.pure.} = enum
   CommunityFound = "community.found"
   Stats = "stats"
   ChroniclesLogs = "chronicles-log"
+  HistoryRequestStarted = "history.request.started"
+  HistoryRequestCompleted = "history.request.completed"
+  HistoryRequestFailed = "history.request.failed"
   Unknown
 
 proc event*(self:SignalType):string =

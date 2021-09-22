@@ -24,6 +24,9 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.CommunityFound: CommunitySignal.fromEvent(jsonSignal)
     of SignalType.Stats: StatsSignal.fromEvent(jsonSignal)
     of SignalType.ChroniclesLogs: ChroniclesLogsSignal.fromEvent(jsonSignal)
+    of SignalType.HistoryRequestCompleted: HistoryRequestCompletedSignal.fromEvent(jsonSignal)
+    of SignalType.HistoryRequestStarted: HistoryRequestStartedSignal.fromEvent(jsonSignal)
+    of SignalType.HistoryRequestFailed: HistoryRequestFailedSignal.fromEvent(jsonSignal)
     else: Signal()
   
   result.signalType = signalType
