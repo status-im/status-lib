@@ -7,7 +7,7 @@ import json_serialization
 import tables
 import strformat
 import statusgo_backend/core
-import ./types/[transaction, setting, rpc_response]
+import ./types/[transaction, setting, rpc_response, network_type, network]
 import utils
 import statusgo_backend/wallet
 import stew/byteutils
@@ -159,7 +159,8 @@ proc contenthash*(ensAddr: string): string =
 
 proc getPrice*(): Stuint[256] =
   let
-    contract = contracts.getContract("ens-usernames")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    contract = contracts.findContract(network.chainId, "ens-usernames")
     payload = %* [{
       "to": $contract.address,
       "data": contract.methods["getPrice"].encodeAbi()
@@ -176,7 +177,8 @@ proc getPrice*(): Stuint[256] =
 proc releaseEstimateGas*(username: string, address: string, success: var bool): int =
   let
     label = fromHex(FixedBytes[32], label(username))
-    ensUsernamesContract = contracts.getContract("ens-usernames")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
     release = Release(label: label)
 
   var tx = transactions.buildTokenTransaction(parseAddress(address), ensUsernamesContract.address, "", "")
@@ -190,7 +192,8 @@ proc releaseEstimateGas*(username: string, address: string, success: var bool): 
 proc release*(username: string, address: string, gas, gasPrice,  password: string, success: var bool): string =
   let
     label = fromHex(FixedBytes[32], label(username))
-    ensUsernamesContract = contracts.getContract("ens-usernames")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
     release = Release(label: label)
 
   var tx = transactions.buildTokenTransaction(parseAddress(address), ensUsernamesContract.address, "", "")
@@ -205,7 +208,8 @@ proc getExpirationTime*(username: string, success: var bool): int =
   let 
     label = fromHex(FixedBytes[32], label(username))
     expTime = ExpirationTime(label: label)
-    ensUsernamesContract = contracts.getContract("ens-usernames")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
 
   var tx = transactions.buildTransaction(parseAddress("0x0000000000000000000000000000000000000000"), 0.u256)
   tx.to = ensUsernamesContract.address.some
@@ -230,8 +234,9 @@ proc registerUsernameEstimateGas*(username: string, address: string, pubKey: str
     coordinates = extractCoordinates(pubkey)
     x = fromHex(FixedBytes[32], coordinates.x)
     y =  fromHex(FixedBytes[32], coordinates.y)
-    ensUsernamesContract = contracts.getContract("ens-usernames")
-    sntContract = contracts.getSntContract()
+    network = status_settings.getCurrentNetwork().toNetwork()
+    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
+    sntContract = contracts.findErc20Contract(network.chainId, network.sntSymbol())
     price = getPrice()
 
   let
@@ -252,8 +257,9 @@ proc registerUsername*(username, pubKey, address, gas, gasPrice: string, isEIP15
     coordinates = extractCoordinates(pubkey)
     x = fromHex(FixedBytes[32], coordinates.x)
     y =  fromHex(FixedBytes[32], coordinates.y)
-    ensUsernamesContract = contracts.getContract("ens-usernames")
-    sntContract = contracts.getSntContract()
+    network = status_settings.getCurrentNetwork().toNetwork()
+    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
+    sntContract = contracts.findErc20Contract(network.chainId, network.sntSymbol)
     price = getPrice()
 
   let
@@ -275,7 +281,8 @@ proc setPubKeyEstimateGas*(username: string, address: string, pubKey: string, su
     label = fromHex(FixedBytes[32], "0x" & hash)
     x = fromHex(FixedBytes[32], "0x" & pubkey[4..67])
     y =  fromHex(FixedBytes[32], "0x" & pubkey[68..131])
-    resolverContract = contracts.getContract("ens-resolver")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    resolverContract = contracts.findContract(network.chainId, "ens-resolver")
     setPubkey = SetPubkey(label: label, x: x, y: y)
     resolverAddress = resolver(hash)
 
@@ -296,7 +303,8 @@ proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabl
     label = fromHex(FixedBytes[32], "0x" & hash)
     x = fromHex(FixedBytes[32], "0x" & pubkey[4..67])
     y =  fromHex(FixedBytes[32], "0x" & pubkey[68..131])
-    resolverContract = contracts.getContract("ens-resolver")
+    network = status_settings.getCurrentNetwork().toNetwork()
+    resolverContract = contracts.findContract(network.chainId, "ens-resolver")
     setPubkey = SetPubkey(label: label, x: x, y: y)
     resolverAddress = resolver(hash)
 
@@ -310,7 +318,8 @@ proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabl
     raise
 
 proc statusRegistrarAddress*():string =
-  result = $contracts.getContract("ens-usernames").address
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = $contracts.findContract(network.chainId, "ens-usernames").address
 
 
 type

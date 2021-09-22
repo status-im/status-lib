@@ -5,7 +5,7 @@ import json_serialization
 
 from ./core import callPrivateRPC
 from ../types/rpc_response import RpcResponseTyped, RpcException
-from ../wallet2/network import Network, toPayload
+from ../types/network import Network, toPayload
 
 logScope:
   topics = "wallet"

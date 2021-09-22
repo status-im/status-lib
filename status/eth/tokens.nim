@@ -6,72 +6,68 @@ import
   web3/[ethtypes, conversions], json_serialization
 
 import 
-  ./statusgo_backend/settings, ./statusgo_backend/core, ./statusgo_backend/wallet, eth/contracts,
-  types/[setting, network_type, rpc_response]
-from utils import parseAddress
-
-import statusgo_backend/tokens as statusgo_backend_tokens
+  ../statusgo_backend/[core, wallet, settings],
+  ../statusgo_backend/tokens as statusgo_backend_tokens,
+  ../types/[setting, network, rpc_response],
+  ./contracts
+from ../utils import parseAddress
 
 var
   customTokens {.threadvar.}: seq[Erc20Contract]
 
-proc visibleTokensSNTDefault(): JsonNode =
-  let currentNetwork = getCurrentNetwork()
-  let SNT = if currentNetwork == NetworkType.Mainnet: "SNT" else: "STT"
+proc visibleTokensSNTDefault(network: Network): JsonNode =
+  let symbol = network.sntSymbol()
   let response = getSetting[string](Setting.VisibleTokens, "{}").parseJSON
 
-  if not response.hasKey($currentNetwork):
+  if not response.hasKey($network.chainId):
     # Set STT/SNT visible by default
-    response[$currentNetwork] = %* [SNT]
+    response[$network.chainId] = %* [symbol]
 
   return response
 
-proc convertStringSeqToERC20ContractSeq*(stringSeq: seq[string]): seq[Erc20Contract] =
+proc convertStringSeqToERC20ContractSeq*(network: Network, stringSeq: seq[string]): seq[Erc20Contract] =
   result = @[]
   for v in stringSeq:
-    let t = getErc20Contract(v)
+    let t = findErc20Contract(network.chainId, v)
     if t != nil: result.add t
-    let ct = customTokens.getErc20ContractBySymbol(v)
+    let ct = customTokens.findBySymbol(v)
     if ct != nil: result.add ct
 
-proc toggleAsset*(symbol: string): seq[Erc20Contract] =
-  let currentNetwork = getCurrentNetwork()
-  let visibleTokens = visibleTokensSNTDefault()
-  var visibleTokenList = visibleTokens[$currentNetwork].to(seq[string])
+proc toggleAsset*(network: Network, symbol: string): seq[Erc20Contract] =
+  let visibleTokens = visibleTokensSNTDefault(network)
+  var visibleTokenList = visibleTokens[$network.chainId].to(seq[string])
   let symbolIdx = visibleTokenList.find(symbol)
   if symbolIdx > -1:
     visibleTokenList.del(symbolIdx)
   else:
     visibleTokenList.add symbol
-  visibleTokens[$currentNetwork] = newJArray()
-  visibleTokens[$currentNetwork] = %* visibleTokenList
-  let saved =  saveSetting(Setting.VisibleTokens, $visibleTokens)
+  visibleTokens[$network.chainId] = newJArray()
+  visibleTokens[$network.chainId] = %* visibleTokenList
+  let saved = saveSetting(Setting.VisibleTokens, $visibleTokens)
 
-  convertStringSeqToERC20ContractSeq(visibleTokenList) 
+  convertStringSeqToERC20ContractSeq(network, visibleTokenList) 
 
-proc hideAsset*(symbol: string) =
-  let currentNetwork = getCurrentNetwork()
-  let visibleTokens = visibleTokensSNTDefault()
-  var visibleTokenList = visibleTokens[$currentNetwork].to(seq[string])
+proc hideAsset*(network: Network, symbol: string) =
+  let visibleTokens = visibleTokensSNTDefault(network)
+  var visibleTokenList = visibleTokens[$network.chainId].to(seq[string])
   var symbolIdx = visibleTokenList.find(symbol)
   if symbolIdx > -1:
     visibleTokenList.del(symbolIdx)
-  visibleTokens[$currentNetwork] = newJArray()
-  visibleTokens[$currentNetwork] = %* visibleTokenList
+  visibleTokens[$network.chainId] = newJArray()
+  visibleTokens[$network.chainId] = %* visibleTokenList
   discard saveSetting(Setting.VisibleTokens, $visibleTokens)
 
-proc getVisibleTokens*(): seq[Erc20Contract] =
-  let currentNetwork = getCurrentNetwork()
-  let visibleTokens = visibleTokensSNTDefault()
-  var visibleTokenList = visibleTokens[$currentNetwork].to(seq[string])
+proc getVisibleTokens*(network: Network): seq[Erc20Contract] =
+  let visibleTokens = visibleTokensSNTDefault(network)
+  var visibleTokenList = visibleTokens[$network.chainId].to(seq[string])
   let customTokens = statusgo_backend_tokens.getCustomTokens()
 
-  result = convertStringSeqToERC20ContractSeq(visibleTokenList)
+  result = convertStringSeqToERC20ContractSeq(network, visibleTokenList)
 
-proc getToken*(tokenAddress: string): Erc20Contract =
-  getErc20Contracts().concat(statusgo_backend_tokens.getCustomTokens()).getErc20ContractByAddress(tokenAddress.parseAddress)
+proc getToken*(network: Network, tokenAddress: string): Erc20Contract =
+  allErc20ContractsByChainId(network.chainId).concat(statusgo_backend_tokens.getCustomTokens()).findByAddress(tokenAddress.parseAddress)
 
-proc getTokenBalance*(tokenAddress: string, account: string): string = 
+proc getTokenBalance*(network: Network, tokenAddress: string, account: string): string = 
   var postfixedAccount: string = account
   postfixedAccount.removePrefix("0x")
   let payload = %* [{
@@ -82,8 +78,8 @@ proc getTokenBalance*(tokenAddress: string, account: string): string =
 
   var decimals = 18
   let address = parseAddress(tokenAddress)
-  let t = getErc20Contract(address)
-  let ct = statusgo_backend_tokens.getCustomTokens().getErc20ContractByAddress(address)
+  let t = findErc20Contract(network.chainId, address)
+  let ct = statusgo_backend_tokens.getCustomTokens().findByAddress(address)
   if t != nil: 
     decimals = t.decimals
   elif ct != nil: 
@@ -91,13 +87,12 @@ proc getTokenBalance*(tokenAddress: string, account: string): string =
 
   result = $hex2Token(balance, decimals)
 
-proc getSNTAddress*(): string =
-  let snt = contracts.getSntContract()
-  result = $snt.address
+proc getSNTAddress*(network: Network): string =
+  let contract = findErc20Contract(network.chainId, network.sntSymbol)
+  return $contract.address
 
-proc getSNTBalance*(account: string): string =
-  let snt = contracts.getSntContract()
-  result = getTokenBalance($snt.address, account)
+proc getSNTBalance*(network: Network, account: string): string =
+  result = getTokenBalance(network, getSNTAddress(network), account)
 
 proc getTokenString*(contract: Contract, methodName: string): string =
   let payload = %* [{

@@ -1,7 +1,8 @@
 import strformat, strutils, stint, httpclient, json, chronicles, net
 import ../statusgo_backend/wallet as status_wallet
-import ../tokens_backend as status_tokens
-import ../types/[rpc_response]
+import ../statusgo_backend/settings as status_settings
+import ../eth/tokens as status_tokens
+import ../types/[rpc_response, network_type]
 import ../utils/cache
 import account
 import options
@@ -48,7 +49,8 @@ proc getBalance*(symbol: string, accountAddress: string, tokenAddress: string, r
     let ethBalance = getEthBalance(accountAddress)
     return ethBalance
 
-  result = $status_tokens.getTokenBalance(tokenAddress, accountAddress)
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  result = $status_tokens.getTokenBalance(network, tokenAddress, accountAddress)
   balanceManager.tokenBalances.cacheValue(cacheKey, result)
 
 proc convertValue*(balance: string, fromCurrency: string, toCurrency: string): float =

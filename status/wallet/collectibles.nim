@@ -6,9 +6,12 @@ import # vendor libs
   stint
 
 import # status-desktop libs
-  ../statusgo_backend/core as status, ../eth/contracts as contracts,
+  ../statusgo_backend/core as status, 
+  ../statusgo_backend/settings as status_settings, 
+  ../eth/contracts as contracts,
   ../stickers as status_stickers,
   ../utils as status_utils,
+  ../types/network_type,
   web3/[conversions, ethtypes], ../utils, account
 
 const CRYPTOKITTY* = "cryptokitty"
@@ -140,9 +143,10 @@ proc getCryptoKitties*(address: string): string =
 
 proc getEthermons*(address: Address): string =
   try:
+    let network = status_settings.getCurrentNetwork().toNetwork()
     var ethermons: seq[Collectible]
     ethermons = @[]
-    let contract = getErc721Contract("ethermon")
+    let contract = findErc721Contract(network.chainId, "ethermon")
     if contract == nil: return $(%*ethermons)
 
     let tokens = tokensOfOwnerByIndex(contract, address)
@@ -180,9 +184,10 @@ proc getEthermons*(address: string): string =
 
 proc getKudos*(address: Address): string =
   try:
+    let network = status_settings.getCurrentNetwork().toNetwork()
     var kudos: seq[Collectible]
     kudos = @[]
-    let contract = getErc721Contract("kudos")
+    let contract = findErc721Contract(network.chainId, "kudos")
     if contract == nil: return  $(%*kudos)
     
     let tokens = tokensOfOwnerByIndex(contract, address)
@@ -221,9 +226,10 @@ proc getKudos*(address: string): string =
 
 proc getStickers*(address: Address, running: var Atomic[bool]): string =
   try:
+    let network = status_settings.getCurrentNetwork().toNetwork()
     var stickers: seq[Collectible]
     stickers = @[]
-    let contract = getErc721Contract("sticker-pack")
+    let contract = findErc721Contract(network.chainId, "sticker-pack")
     if contract == nil: return
     
     let tokensIds = tokensOfOwnerByIndex(contract, address)

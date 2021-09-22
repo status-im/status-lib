@@ -2,14 +2,14 @@ import json, strformat, options, chronicles, sugar, sequtils, strutils
 
 import statusgo_backend/accounts as status_accounts
 import statusgo_backend/accounts/constants as constants
-import tokens_backend as status_tokens
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/network as status_network
 import statusgo_backend/settings as status_settings
-import eth/[contracts]
-import wallet2/[balance_manager, network]
+import eth/contracts
+import wallet2/balance_manager
+import eth/tokens as tokens_backend
 import wallet2/account as wallet_account
-import ./types/[account, transaction, network_type, setting, gas_prediction, rpc_response]
+import ./types/[account, transaction, network, network_type, setting, gas_prediction, rpc_response]
 import ../eventemitter
 from web3/ethtypes import Address
 from web3/conversions import `$`
@@ -48,13 +48,13 @@ proc setup(self: StatusWalletController, events: EventEmitter) =
 proc delete*(self: StatusWalletController) =
   discard
 
-proc newStatusWalletController*(events: EventEmitter): 
-  StatusWalletController =
+proc newStatusWalletController*(events: EventEmitter): StatusWalletController =
   result = StatusWalletController()
   result.setup(events)
 
 proc initTokens(self: StatusWalletController) =
-  self.tokens = status_tokens.getVisibleTokens()
+  let network = status_settings.getCurrentNetwork().toNetwork()
+  self.tokens = tokens_backend.getVisibleTokens(network)
 
 proc initNetworks(self: StatusWalletController) =
   self.networks = status_network.getNetworks()

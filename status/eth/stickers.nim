@@ -13,14 +13,17 @@ import # vendor libs
 from nimcrypto import fromHex
 
 import # status-desktop libs
-  ./eth/transactions as transactions, types/[sticker, setting, rpc_response], 
-  eth/contracts, ./statusgo_backend/settings, ./statusgo_backend/edn_helpers, utils
+  ../types/[sticker, setting, rpc_response, network_type], 
+  ../statusgo_backend/[edn_helpers, settings], 
+  ../utils,
+  ./transactions as transactions, 
+  ./contracts
 
 # Retrieves number of sticker packs owned by user
 # See https://notes.status.im/Q-sQmQbpTOOWCQcYiXtf5g#Read-Sticker-Packs-owned-by-a-user
 # for more details
-proc getBalance*(address: Address): int =
-  let contract = contracts.getContract("sticker-pack")
+proc getBalance*(chainId: int, address: Address): int =
+  let contract = contracts.findContract(chainId, "sticker-pack")
   if contract == nil: return 0
 
   let
@@ -39,8 +42,8 @@ proc getBalance*(address: Address): int =
   result = parseHexInt(response.result)
 
 # Gets number of sticker packs
-proc getPackCount*(): int =
-  let contract = contracts.getContract("stickers")
+proc getPackCount*(chainId: int): int =
+  let contract = contracts.findContract(chainId, "stickers")
   if contract == nil: return 0
 
   let payload = %* [{
@@ -57,12 +60,12 @@ proc getPackCount*(): int =
   result = parseHexInt(response.result)
 
 # Gets sticker pack data
-proc getPackData*(id: Stuint[256], running: var Atomic[bool]): StickerPack =
+proc getPackData*(chainId: int, id: Stuint[256], running: var Atomic[bool]): StickerPack =
   let secureSSLContext = newContext()
   let client = newHttpClient(sslContext = secureSSLContext)
   try:
     let
-      contract = contracts.getContract("stickers")
+      contract = contracts.findContract(chainId, "stickers")
       contractMethod = contract.methods["getPackData"]
       getPackData = GetPackData(packId: id)
       payload = %* [{
@@ -99,9 +102,9 @@ proc getPackData*(id: Stuint[256], running: var Atomic[bool]): StickerPack =
   finally:
     client.close()
 
-proc tokenOfOwnerByIndex*(address: Address, idx: Stuint[256]): int =
+proc tokenOfOwnerByIndex*(chainId: int, address: Address, idx: Stuint[256]): int =
   let
-    contract = contracts.getContract("sticker-pack")
+    contract = contracts.findContract(chainId, "sticker-pack")
     tokenOfOwnerByIndex = TokenOfOwnerByIndex(address: address, index: idx)
     payload = %* [{
       "to": $contract.address,
@@ -115,9 +118,9 @@ proc tokenOfOwnerByIndex*(address: Address, idx: Stuint[256]): int =
     return 0
   result = parseHexInt(response.result)
 
-proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
+proc getPackIdFromTokenId*(chainId: int, tokenId: Stuint[256]): int =
   let
-    contract = contracts.getContract("sticker-pack")
+    contract = contracts.findContract(chainId, "sticker-pack")
     tokenPackId = TokenPackId(tokenId: tokenId)
     payload = %* [{
       "to": $contract.address,
@@ -168,16 +171,16 @@ proc getRecentStickers*(): seq[Sticker] =
     # inserting recent stickers at the front of the list
     result.insert(Sticker(hash: $hash, packId: packId), 0)
 
-proc getAvailableStickerPacks*(running: var Atomic[bool]): Table[int, StickerPack] =
+proc getAvailableStickerPacks*(chainId: int, running: var Atomic[bool]): Table[int, StickerPack] =
   var availableStickerPacks = initTable[int, StickerPack]()
   try:
-    let numPacks = getPackCount()
+    let numPacks = getPackCount(chainId)
     for i in 0..<numPacks:
       if not running.load():
         trace "Sticker pack task interrupted, exiting sticker pack loading"
         break
       try:
-        let stickerPack = getPackData(i.u256, running)
+        let stickerPack = getPackData(chainId, i.u256, running)
         availableStickerPacks[stickerPack.id] = stickerPack
       except:
         continue
