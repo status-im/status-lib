@@ -392,9 +392,6 @@ proc hideAsset*(self: WalletModel, symbol: string) =
 proc addCustomToken*(self: WalletModel, symbol: string, enable: bool, address: string, name: string, decimals: int, color: string) =
   statusgo_backend_tokens.addCustomToken(address, name, symbol, decimals, color)
 
-proc getTransfersByAddress*(self: WalletModel, address: string, toBlock: Uint256, limit: int, loadMore: bool): seq[Transaction] =
-  result = status_wallet.getTransfersByAddress(address, toBlock, limit, loadMore)
-
 proc validateMnemonic*(self: WalletModel, mnemonic: string): string =
   result = status_wallet.validateMnemonic(mnemonic).parseJSON()["error"].getStr
 
@@ -420,7 +417,8 @@ proc getPendingTransactions*(self: WalletModel): string =
   # result = status_wallet.getTransfersByAddress(address)
 
 proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadMore: bool): seq[Transaction] =
- result = status_wallet.getTransfersByAddress(address, toBlock, limit, loadMore)
+  var success: bool
+  result = status_wallet.getTransfersByAddress(address, toBlock, limit, loadMore, success)
 
 proc watchTransaction*(transactionHash: string): string =
   result = status_wallet.watchTransaction(transactionHash)

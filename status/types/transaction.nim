@@ -1,7 +1,8 @@
 {.used.}
 
-import strutils
+import strutils, strformat
 import web3/ethtypes, options, stint
+import ../../eventemitter
 include pending_transaction_type
 
 type
@@ -21,6 +22,11 @@ type
     value*: string
     fromAddress*: string
     to*: string
+    maxFeePerGas*: string
+    maxPriorityFeePerGas*: string
+    input*: string
+    txHash*: string
+    networkId*: int
   
 type 
   TransactionData* = object
@@ -35,9 +41,37 @@ type
     nonce*: Option[Nonce]        # (optional) integer of a nonce. This allows to overwrite your own pending transactions that use the same nonce
     txType*: string
 
+type 
+  WalletTransactionsArg* = ref object of Args
+    address*: string
+    transactions*: seq[Transaction]
+
 proc cmpTransactions*(x, y: Transaction): int =
   # Sort proc to compare transactions from a single account.
   # Compares first by block number, then by nonce
   result = cmp(x.blockNumber.parseHexInt, y.blockNumber.parseHexInt)
   if result == 0:
     result = cmp(x.nonce, y.nonce)
+
+proc `$`*(self: Transaction): string =
+  result = "Transaction("
+  result &= fmt"id:{self.id}, "
+  result &= fmt"typeValue:{self.typeValue}, "
+  result &= fmt"address:{self.address}, "
+  result &= fmt"blockNumber:{self.blockNumber}, "
+  result &= fmt"blockHash:{self.blockHash}, "
+  result &= fmt"contract:{self.contract}, "  
+  result &= fmt"timestamp:{self.timestamp}, "
+  result &= fmt"gasPrice:{self.gasPrice}, "
+  result &= fmt"gasLimit:{self.gasLimit}, "
+  result &= fmt"gasUsed:{self.gasUsed}, "
+  result &= fmt"nonce:{self.nonce}, "
+  result &= fmt"txStatus:{self.txStatus}, "
+  result &= fmt"value:{self.value}, "
+  result &= fmt"fromAddress:{self.fromAddress}, "
+  result &= fmt"maxFeePerGas:{self.maxFeePerGas}, "
+  result &= fmt"maxPriorityFeePerGas:{self.maxPriorityFeePerGas}, "
+  result &= fmt"input:{self.input}, "
+  result &= fmt"txHash:{self.txHash}, "
+  result &= fmt"networkId:{self.networkId}"
+  result &= ")"

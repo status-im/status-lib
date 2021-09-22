@@ -52,6 +52,9 @@ proc getFleet*(self: SettingsModel): Fleet =
 proc getCurrentNetwork*(): NetworkType =
     result = statusgo_backend_settings.getCurrentNetwork()
 
+proc getAllNetworks*(): seq[NetworkDetails] =
+  statusgo_backend_settings.getSetting[seq[NetworkDetails]](Setting.Networks_Networks)
+
 proc getCurrentNetwork*(self: SettingsModel): NetworkType =
     result = getCurrentNetwork()
 
