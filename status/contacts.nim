@@ -119,6 +119,7 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string): string 
 proc removeContact*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactAdded))
+  contact.systemTags.delete(contact.systemTags.find(contactRequest))
 
   discard self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
