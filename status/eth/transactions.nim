@@ -26,8 +26,8 @@ proc call*(tx: TransactionData): RpcResponse =
   if not result.error.isNil:
     raise newException(RpcException, "Error calling method: " & result.error.message)
 
-proc eth_call*(payload = %* []): RpcResponse =
-  let responseStr = core.callPrivateRPC("eth_call", payload)
+proc eth_call*(chain_id: int, payload = %* []): RpcResponse =
+  let responseStr = core.ethCallPrivateRPC(chainId, payload)
   result = Json.decode(responseStr, RpcResponse)
   if not result.error.isNil:
     raise newException(RpcException, "Error calling method: " & result.error.message)

@@ -10,6 +10,24 @@ proc callRPC*(inputJSON: string): string =
 proc callPrivateRPCRaw*(inputJSON: string): string =
   return $status_go.callPrivateRPC(inputJSON)
 
+proc ethCallPrivateRPC*(chainId: int, payload = %* []): string =
+  let methodName = "eth_call"
+  try:
+    let inputJSON = %* {
+      "jsonrpc": "2.0",
+      "chainId": chainId,
+      "method": methodName,
+      "params": %payload
+    }
+    debug "ethCallPrivateRPC", rpc_method="eth_call"
+    let response = status_go.callPrivateRPC($inputJSON)
+    result = $response
+    if parseJSON(result).hasKey("error"):
+      error "rpc response error", result, payload, methodName
+  except Exception as e:
+    error "error doing rpc request", methodName=methodName, exception=e.msg
+
+
 proc callPrivateRPC*(methodName: string, payload = %* []): string =
   try:
     let inputJSON = %* {
@@ -23,7 +41,7 @@ proc callPrivateRPC*(methodName: string, payload = %* []): string =
     if parseJSON(result).hasKey("error"):
       error "rpc response error", result, payload, methodName
   except Exception as e:
-    error "error doing rpc request", methodName = methodName, exception=e.msg
+    error "error doing rpc request", methodName=methodName, exception=e.msg
 
 proc sendTransaction*(inputJSON: string, password: string): string =
   var hashed_password = "0x" & $keccak_256.digest(password)

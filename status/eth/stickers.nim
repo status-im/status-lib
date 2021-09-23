@@ -33,7 +33,7 @@ proc getBalance*(chainId: int, address: Address): int =
       "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = transactions.eth_call(chainId, payload)
 
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
@@ -51,7 +51,7 @@ proc getPackCount*(chainId: int): int =
       "data": contract.methods["packCount"].encodeAbi()
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = transactions.eth_call(chainId, payload)
 
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
@@ -72,7 +72,7 @@ proc getPackData*(chainId: int, id: Stuint[256], running: var Atomic[bool]): Sti
         "to": $contract.address,
         "data": contractMethod.encodeAbi(getPackData)
         }, "latest"]
-    let response = transactions.eth_call(payload)
+    let response = transactions.eth_call(chainId, payload)
     if not response.error.isNil:
       raise newException(RpcException, "Error getting sticker pack data: " & response.error.message)
 
@@ -111,7 +111,7 @@ proc tokenOfOwnerByIndex*(chainId: int, address: Address, idx: Stuint[256]): int
       "data": contract.methods["tokenOfOwnerByIndex"].encodeAbi(tokenOfOwnerByIndex)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = transactions.eth_call(chainId, payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting owned tokens: " & response.error.message)
   if response.result == "0x":
@@ -127,7 +127,7 @@ proc getPackIdFromTokenId*(chainId: int, tokenId: Stuint[256]): int =
       "data": contract.methods["tokenPackId"].encodeAbi(tokenPackId)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = transactions.eth_call(chainId, payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting pack id from token id: " & response.error.message)
   if response.result == "0x":

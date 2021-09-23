@@ -71,9 +71,11 @@ proc getTokenBalance*(network: Network, tokenAddress: string, account: string): 
   var postfixedAccount: string = account
   postfixedAccount.removePrefix("0x")
   let payload = %* [{
-    "to": tokenAddress, "from": account, "data": fmt"0x70a08231000000000000000000000000{postfixedAccount}"
+    "to": tokenAddress,
+    "from": account,
+    "data": fmt"0x70a08231000000000000000000000000{postfixedAccount}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
+  let response = ethCallPrivateRPC(network.chainId, payload)
   let balance = response.parseJson["result"].getStr
 
   var decimals = 18
@@ -100,7 +102,7 @@ proc getTokenString*(contract: Contract, methodName: string): string =
       "data": contract.methods[methodName].encodeAbi()
     }, "latest"]
   
-  let responseStr = callPrivateRPC("eth_call", payload)
+  let responseStr = ethCallPrivateRPC(contract.chainId, payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting token string - " & methodName & ": " & response.error.message)
@@ -120,7 +122,7 @@ proc tokenDecimals*(contract: Contract): int =
       "data": contract.methods["decimals"].encodeAbi()
     }, "latest"]
   
-  let responseStr = callPrivateRPC("eth_call", payload)
+  let responseStr = ethCallPrivateRPC(contract.chainId, payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting token decimals: " & response.error.message)
