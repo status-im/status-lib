@@ -73,10 +73,10 @@ proc init*(self: StatusWalletController) =
   self.initAccounts()
 
 proc initEvents*(self: StatusWalletController) = 
-  self.events.on("currencyChanged") do(e: Args):
-    self.events.emit("accountsUpdated", Args())
+  self.events.on("wallet2_currencyChanged") do(e: Args):
+    self.events.emit("wallet2_accountsUpdated", Args())
 
-  self.events.on("newAccountAdded") do(e: Args):
+  self.events.on("wallet2_newAccountAdded") do(e: Args):
     self.calculateTotalFiatBalance()
 
 proc getAccounts*(self: StatusWalletController): seq[WalletAccount] =
@@ -134,7 +134,7 @@ proc addNewGeneratedAccount(self: StatusWalletController, generatedAccount: Gene
     # wallet_checkRecentHistory populates the status-go db that
     # wallet_getTransfersByAddress reads from
     discard status_wallet.checkRecentHistory(self.accounts.map(account => account.address))
-    self.events.emit("newAccountAdded", wallet_account.AccountArgs(account: account))
+    self.events.emit("wallet2_newAccountAdded", wallet_account.AccountArgs(account: account))
   except Exception as e:
     raise newException(StatusGoException, fmt"Error adding new account: {e.msg}")
 
@@ -216,7 +216,7 @@ proc onAsyncFetchCryptoServices*(self: StatusWalletController, response: string)
   let responseArray = response.parseJson
   if (responseArray.kind != JArray):
     info "received crypto services is not a json array"
-    self.events.emit("cryptoServicesFetched", CryptoServicesArg())
+    self.events.emit("wallet2_cryptoServicesFetched", CryptoServicesArg())
     return
 
-  self.events.emit("cryptoServicesFetched", CryptoServicesArg(services: responseArray))
+  self.events.emit("wallet2_cryptoServicesFetched", CryptoServicesArg(services: responseArray))
