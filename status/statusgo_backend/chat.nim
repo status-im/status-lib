@@ -324,7 +324,7 @@ proc createCommunityChannel*(communityId: string, name: string, description: str
   if rpcResult{"result"} != nil and rpcResult{"result"}.kind != JNull:
     result = rpcResult["result"]["chats"][0].toChat()
 
-proc editCommunityChannel*(communityId: string, channelId: string, name: string, description: string, categoryId: string): Chat =
+proc editCommunityChannel*(communityId: string, channelId: string, name: string, description: string, categoryId: string, position: int): Chat =
   let rpcResult = callPrivateRPC("editCommunityChat".prefix, %*[
     communityId,
     channelId.replace(communityId, ""),
@@ -345,7 +345,8 @@ proc editCommunityChannel*(communityId: string, channelId: string, name: string,
         #   }
         # ]
       },
-      "category_id": categoryId
+      "category_id": categoryId,
+      "position": position
     }]).parseJSON()
 
   if rpcResult{"error"} != nil:
