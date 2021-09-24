@@ -558,6 +558,9 @@ proc markAllActivityCenterNotificationsRead*() =
 proc markActivityCenterNotificationsRead*(ids: seq[string]) =
   discard callPrivateRPC("markActivityCenterNotificationsRead".prefix, %*[ids])
 
+proc markActivityCenterNotificationsUnread*(ids: seq[string]) =
+  discard callPrivateRPC("markActivityCenterNotificationsUnread".prefix, %*[ids])
+
 proc acceptActivityCenterNotifications*(ids: seq[string]): string =
   result =  callPrivateRPC("acceptActivityCenterNotifications".prefix, %*[ids])
 
