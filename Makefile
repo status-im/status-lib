@@ -20,6 +20,7 @@ BUILD_SYSTEM_DIR := vendor/nimbus-build-system
 	deps \
 	libstatuslib \
 	status-go \
+	keycard-go \
 	update \
 	build_ctest \
 	ctest \
