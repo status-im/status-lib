@@ -5,9 +5,7 @@ import statusgo_backend/accounts/constants as constants
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/network as status_network
 import statusgo_backend/settings as status_settings
-import eth/contracts
 import wallet2/balance_manager
-import eth/tokens as tokens_backend
 import wallet2/account as wallet_account
 import ./types/[account, transaction, network, network_type, setting, gas_prediction, rpc_response]
 import ../eventemitter
@@ -28,7 +26,6 @@ type
     events: EventEmitter
     accounts: seq[WalletAccount]
     networks*: seq[Network]
-    tokens: seq[Erc20Contract]
     totalBalance*: float
 
 # Forward declarations
@@ -40,7 +37,6 @@ proc calculateTotalFiatBalance*(self: Wallet2Model)
 proc setup(self: Wallet2Model, events: EventEmitter) = 
   self.events = events
   self.accounts = @[]
-  self.tokens = @[]
   self.networks = @[]
   self.totalBalance = 0.0
   self.initEvents()
@@ -51,10 +47,6 @@ proc delete*(self: Wallet2Model) =
 proc newWallet2Model*(events: EventEmitter): Wallet2Model =
   result = Wallet2Model()
   result.setup(events)
-
-proc initTokens(self: Wallet2Model) =
-  let network = status_settings.getCurrentNetwork().toNetwork()
-  self.tokens = tokens_backend.getVisibleTokens(network)
 
 proc initNetworks(self: Wallet2Model) =
   self.networks = status_network.getNetworks()
@@ -68,7 +60,6 @@ proc initAccounts(self: Wallet2Model) =
     self.accounts.add(walletAccount)
 
 proc init*(self: Wallet2Model) =
-  self.initTokens()
   self.initNetworks()
   self.initAccounts()
 
@@ -93,13 +84,7 @@ proc generateAccountConfiguredAssets*(self: Wallet2Model,
   var asset = Asset(name:"Ethereum", symbol: "ETH", value: "0.0", 
   fiatBalanceDisplay: "0.0", accountAddress: accountAddress)
   assets.add(asset)
-  for token in self.tokens:
-    var symbol = token.symbol
-    var existingToken = Asset(name: token.name, symbol: symbol, 
-    value: fmt"0.0", fiatBalanceDisplay: "$0.0", accountAddress: accountAddress, 
-      address: $token.address)
-    assets.add(existingToken)
-  assets
+  return assets
 
 proc calculateTotalFiatBalance*(self: Wallet2Model) =
   self.totalBalance = 0.0

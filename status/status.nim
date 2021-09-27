@@ -1,12 +1,11 @@
 import statusgo_backend/accounts as statusgo_backend_accounts
 import statusgo_backend/core as statusgo_backend_core
 import statusgo_backend/settings as statusgo_backend_settings
-import chat, accounts, wallet, wallet2, node, network, messages, contacts, profile, stickers, permissions, fleet, settings, mailservers, browser, tokens, provider
+import chat, accounts, wallet, wallet2, node, network, messages, contacts, profile, stickers, permissions, fleet, settings, mailservers, browser, tokens, tokens2, provider
 import notifications/os_notifications
 import ../eventemitter
 import bitops, stew/byteutils, chronicles
 import ./types/[setting]
-
 import ../backends/backend
 
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
@@ -30,6 +29,7 @@ type Status* = ref object
   mailservers*: MailserversModel
   browser*: BrowserModel
   tokens*: TokensModel
+  tokens2*: Tokens2Model
   provider*: ProviderModel
   osnotifications*: OsNotifications
 
@@ -55,6 +55,7 @@ proc newStatusInstance*(fleetConfig: string, backendName:string = "statusgo"): S
   result.mailservers = mailservers.newMailserversModel(result.events)
   result.browser = browser.newBrowserModel(result.events, result.backend)
   result.tokens = tokens.newTokensModel(result.events)
+  result.tokens2 = tokens2.newTokens2Model(result.events)
   result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
 

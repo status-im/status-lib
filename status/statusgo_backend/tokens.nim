@@ -1,13 +1,13 @@
 import
-  json, chronicles, strformat, stint, strutils, sequtils, tables, atomics
+  json, chronicles, stint, atomics
 
 import
   web3/[ethtypes, conversions], json_serialization
 
 import 
-  ./settings, ./core, ./wallet, ../eth/contracts,
+  ./core,
+  ../eth/contracts,
   ../types/[setting, network_type, rpc_response]
-from ../utils import parseAddress
 
 logScope:
   topics = "wallet"
@@ -46,10 +46,9 @@ proc removeCustomToken*(address: string) =
   echo callPrivateRPC("wallet_deleteCustomToken", payload)
   dirty.store(true)
 
-# doesnt seem to be used
-# proc getTokensBalances*(accounts: openArray[string], tokens: openArray[string]): JsonNode =
-#   let payload = %* [accounts, tokens]
-#   let response = callPrivateRPC("wallet_getTokensBalances", payload).parseJson
-#   if response["result"].kind == JNull:
-#     return %* {}
-#   response["result"]
+proc getTokensBalancesForChainIDs*(chainIds: seq[int], accounts: seq[string], tokens: seq[string]): JsonNode =
+  let payload = %* [chainIds, accounts, tokens]
+  let response = callPrivateRPC("wallet_getTokensBalancesForChainIDs", payload).parseJson
+  if response["result"].kind == JNull:
+    return %* {}
+  response["result"]
