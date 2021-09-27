@@ -350,6 +350,10 @@ proc editMessage*(self: ChatModel, messageId: string, msg: string) =
   var response = status_chat.editMessage(messageId, msg)
   discard self.processMessageUpdateAfterSend(response)
 
+proc sendAudio*(self: ChatModel, chatId: string, audioBase64: string, durationMs: uint64) =
+  var response = status_chat.sendAudioMessage(chatId, audioBase64, durationMs)
+  discard self.processMessageUpdateAfterSend(response)
+
 proc sendImage*(self: ChatModel, chatId: string, image: string) =
   var response = status_chat.sendImageMessage(chatId, image)
   discard self.processMessageUpdateAfterSend(response)
