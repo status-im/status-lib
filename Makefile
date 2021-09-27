@@ -118,9 +118,6 @@ KEYCARDGO := vendor/nim-keycard-go/go/keycard/build/libkeycard/libkeycard.$(LIBK
 KEYCARDGO_LIBDIR := $(shell pwd)/$(shell dirname "$(KEYCARDGO)")
 export KEYCARDGO_LIBDIR
 
-foo:
-	echo $(KEYCARDGO_LIBDIR)
-
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
 	echo -e $(BUILD_MSG) "status-go"
