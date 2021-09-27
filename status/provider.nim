@@ -7,15 +7,13 @@ import statusgo_backend/core
 import statusgo_backend/settings as status_settings
 import json, json_serialization, sets, strutils
 import chronicles
-import nbaser
 import stew/byteutils
-from base32 import nil
+from stew/base32 import nil
+from stew/base58 import nil
 
 const HTTPS_SCHEME* = "https"
 const IPFS_GATEWAY* =  ".infura.status.im"
 const SWARM_GATEWAY* = "swarm-gateways.net"
-
-const base58* = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 logScope:
   topics = "provider-model"
@@ -64,7 +62,7 @@ proc newProviderModel*(events: EventEmitter, permissions: PermissionsModel, wall
   result.permissions = permissions
   result.wallet = wallet
 
-proc requestType(message: string): RequestTypes = 
+proc requestType(message: string): RequestTypes =
   let data = message.parseJson
   result = RequestTypes.Unknown
   try:
@@ -84,7 +82,7 @@ proc toWeb3SendAsyncReadOnly(message: string): Web3SendAsyncReadOnly =
     )
   )
 
-proc toAPIRequest(message: string): APIRequest = 
+proc toAPIRequest(message: string): APIRequest =
   let data = message.parseJson
 
   result = APIRequest(
@@ -103,7 +101,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
         "code": 4100
       }
     }
-  
+
   if data.payload.rpcMethod == "eth_sendTransaction":
     try:
       let request = data.request.parseJson
@@ -170,7 +168,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
       }
 
   if SIGN_METHODS.contains(data.payload.rpcMethod):
-    try: 
+    try:
       let request = data.request.parseJson
       var params = request["params"]
       let password = hashPassword(request["password"].getStr())
@@ -186,7 +184,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
             "password": password,
             "account": dappAddress
           })
-      
+
       let jsonRpcResult = rpcResult.parseJson
       let success: bool = not jsonRpcResult.hasKey("error")
       let errorMessage = if success: "" else: jsonRpcResult["error"]{"message"}.getStr()
@@ -215,7 +213,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
         }
 
 
-  
+
   if ACC_METHODS.contains(data.payload.rpcMethod):
       let dappAddress = status_settings.getSetting[string](Setting.DappsAddress)
       return $ %* {
@@ -227,7 +225,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
           "result": if data.payload.rpcMethod == "eth_coinbase": newJString(dappAddress) else: %*[dappAddress]
           }
         }
-  
+
   let rpcResult = callRPC(data.request)
 
   return $ %* {
@@ -237,7 +235,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
     "result": rpcResult.parseJson
   }
 
-proc process*(self: ProviderModel, data: APIRequest): string =   
+proc process*(self: ProviderModel, data: APIRequest): string =
   var value:JsonNode = case data.permission
   of Permission.Web3: %* [status_settings.getSetting[string](Setting.DappsAddress, "0x0000000000000000000000000000000000000000")]
   of Permission.ContactCode: %* status_settings.getSetting[string](Setting.PublicKey, "0x0")
@@ -264,19 +262,29 @@ proc postMessage*(self: ProviderModel, message: string): string =
     of RequestTypes.APIRequest: self.process(message.toAPIRequest())
     else:  """{"type":"TODO-IMPLEMENT-THIS"}""" ##################### TODO:
 
-proc ensResourceURL*(self: ProviderModel, ens: string, url: string): (string, string, string, string, bool) =
-    let contentHash = contenthash(ens)
-    if contentHash == "": # ENS does not have a content hash
-      return (url, url, HTTPS_SCHEME, "", false)
+proc ensResourceURL*(self: ProviderModel, ens: string, url: string):
+  (string, string, string, string, bool) =
 
-    let decodedHash = contentHash.decodeENSContentHash()
-    case decodedHash[0]:
+  let contentHash = contenthash(ens)
+  if contentHash == "": # ENS does not have a content hash
+    return (url, url, HTTPS_SCHEME, "", false)
+
+  let decodedHash = contentHash.decodeENSContentHash()
+
+  case decodedHash[0]:
     of ENSType.IPFS:
-      let base32Hash = base32.encode(string.fromBytes(base58.decode(decodedHash[1]))).toLowerAscii().replace("=", "")
+      let
+        base58bytes = base58.decode(base58.BTCBase58, decodedHash[1])
+        base32Hash = base32.encode(base32.Base32Lower, base58bytes)
+
       result = (url, base32Hash & IPFS_GATEWAY, HTTPS_SCHEME, "", true)
+
     of ENSType.SWARM:
-      result = (url, SWARM_GATEWAY, HTTPS_SCHEME, "/bzz:/" & decodedHash[1] & "/", true)
+      result = (url, SWARM_GATEWAY, HTTPS_SCHEME,
+        "/bzz:/" & decodedHash[1] & "/", true)
+
     of ENSType.IPNS:
       result = (url, decodedHash[1], HTTPS_SCHEME, "", true)
-    else: 
+
+    else:
       warn "Unknown content for", ens, contentHash
