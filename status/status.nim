@@ -11,7 +11,7 @@ import ../backends/backend
 
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
 
-type Status* = ref object 
+type Status* = ref object
   backend*: Backend
   events*: EventEmitter
   fleet*: FleetModel
@@ -56,6 +56,7 @@ proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): 
   result.tokens = tokens.newTokensModel(result.events)
   result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
+  result.keycard = newKeycardModel()
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: string) =
   statusgo_backend_accounts.initNode(statusGoDir, keystoreDir)

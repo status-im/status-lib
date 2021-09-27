@@ -57,12 +57,15 @@ ifeq ($(detected_OS),Darwin)
  CGO_CFLAGS := -mmacosx-version-min=10.14
  export CGO_CFLAGS
  LIBSTATUS_EXT := dylib
+ LIBKEYCARD_EXT := dylib
  MACOSX_DEPLOYMENT_TARGET := 10.14
  export MACOSX_DEPLOYMENT_TARGET
 else ifeq ($(detected_OS),Windows)
  LIBSTATUS_EXT := dll
+ LIBKEYCARD_EXT := dll
 else
  LIBSTATUS_EXT := so
+ LIBKEYCARD_EXT := so
 endif
 
 # ifeq ($(detected_OS),Darwin)
@@ -111,16 +114,26 @@ export STATUSGO
 export STATUSGO_LIBDIR
 export LIBSTATUS_EXT
 
+KEYCARDGO := vendor/nim-status-go/go/keycard/build/libkeycard/libkeycard.$(LIBKEYCARD_EXT)
+KEYCARDGO_LIBDIR := $(shell pwd)/$(shell dirname "$(KEYCARDGO)")
+export KEYCARDGO_LIBDIR
+
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
 	echo -e $(BUILD_MSG) "status-go"
 	+ cd vendor/status-go && \
 	  $(MAKE) statusgo-shared-library $(HANDLE_OUTPUT)
 
+keycard-go: $(KEYCARDGO)
+$(KEYCARDGO): | deps
+	echo -e $(BUILD_MSG) "keycard-go"
+	+ cd vendor/nim-keycard-go && \
+	  $(MAKE) build-keycard-go $(HANDLE_OUTPUT)
+
 LIBSTATUSLIB := build/$@.$(LIBSTATUS_EXT).0
-libstatuslib: | $(STATUSGO)
+libstatuslib: | $(STATUSGO) $(KEYCARDGO)
 	echo -e $(BUILD_MSG) "$@" && \
-		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
+		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"-L$(KEYCARDGO_LIBDIR)" --passL="-lkeycard" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
 		rm -f build/$@.$(LIBSTATUS_EXT) && \
 		ln -s $@.$(LIBSTATUS_EXT).0 build/$@.so && \
 		cp nimcache/libstatuslib/*.h build/. && \
