@@ -114,9 +114,12 @@ export STATUSGO
 export STATUSGO_LIBDIR
 export LIBSTATUS_EXT
 
-KEYCARDGO := vendor/nim-status-go/go/keycard/build/libkeycard/libkeycard.$(LIBKEYCARD_EXT)
+KEYCARDGO := vendor/nim-keycard-go/go/keycard/build/libkeycard/libkeycard.$(LIBKEYCARD_EXT)
 KEYCARDGO_LIBDIR := $(shell pwd)/$(shell dirname "$(KEYCARDGO)")
 export KEYCARDGO_LIBDIR
+
+foo:
+	echo $(KEYCARDGO_LIBDIR)
 
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
@@ -132,6 +135,7 @@ $(KEYCARDGO): | deps
 
 LIBSTATUSLIB := build/$@.$(LIBSTATUS_EXT).0
 libstatuslib: | $(STATUSGO) $(KEYCARDGO)
+	echo $(KEYCARDGO_LIBDIR) && \
 	echo -e $(BUILD_MSG) "$@" && \
 		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"-L$(KEYCARDGO_LIBDIR)" --passL="-lkeycard" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
 		rm -f build/$@.$(LIBSTATUS_EXT) && \

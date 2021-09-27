@@ -6,6 +6,7 @@ import notifications/os_notifications
 import ../eventemitter
 import bitops, stew/byteutils, chronicles
 import ./types/[setting]
+import ./keycard
 
 import ../backends/backend
 
@@ -32,6 +33,7 @@ type Status* = ref object
   tokens*: TokensModel
   provider*: ProviderModel
   osnotifications*: OsNotifications
+  keycard*: KeycardModel
 
 proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): Status =
   result = Status()
