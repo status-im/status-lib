@@ -6,6 +6,12 @@ type
 proc newKeycardModel*(): KeycardModel =
   result = KeycardModel()
 
-# proc storeBookmark*(self: KeycardModel) =
-#   result = keycard_go.Select()
+proc start*(self: KeycardModel): string =
+  keycard_go.start()
+
+proc stop*(self: KeycardModel): string =
+  keycard_go.stop()
+
+proc select*(self: KeycardModel): string =
+  keycard_go.select()
 
