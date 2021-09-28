@@ -220,3 +220,7 @@ proc onAsyncFetchCryptoServices*(self: StatusWalletController, response: string)
     return
 
   self.events.emit("wallet2_cryptoServicesFetched", CryptoServicesArg(services: responseArray))
+
+proc toggleNetwork*(self: StatusWalletController, network: Network) =
+  network.enabled = not network.enabled
+  status_network.upsertNetwork(network)
