@@ -1,6 +1,5 @@
 import statusgo_backend/browser as status_browser
 import ../eventemitter
-
 import ./types/[bookmark]
 
 type
@@ -11,13 +10,13 @@ proc newBrowserModel*(events: EventEmitter): BrowserModel =
   result = BrowserModel()
   result.events = events
 
-proc storeBookmark*(self: BrowserModel, url: string, name: string): Bookmark =
-  result = status_browser.storeBookmark(url, name)
+proc storeBookmark*(self: BrowserModel, bookmark: Bookmark): Bookmark =
+  return status_browser.storeBookmark(bookmark)
 
-proc updateBookmark*(self: BrowserModel, ogUrl: string, url: string, name: string) =
-  status_browser.updateBookmark(ogUrl, url, name)
+proc updateBookmark*(self: BrowserModel, originalUrl: string, bookmark: Bookmark) =
+  status_browser.updateBookmark(originalUrl, bookmark)
 
-proc getBookmarks*(self: BrowserModel): string =
+proc getBookmarks*(self: BrowserModel): seq[Bookmark] =
   result = status_browser.getBookmarks()
 
 proc deleteBookmark*(self: BrowserModel, url: string) =
