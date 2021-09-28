@@ -2,10 +2,10 @@ import httpclient
 import json
 import strformat
 import os
-import sequtils
-import chronicles
 import uri
+import chronicles
 
+import types/gif_item
 from statusgo_backend/gif import getRecentGifs, getFavoriteGifs, setFavoriteGifs, setRecentGifs
 
 logScope:
@@ -24,44 +24,6 @@ let TENOR_API_KEY_RESOLVED =
 
 const baseUrl = "https://g.tenor.com/v1/"
 let defaultParams = fmt("&media_filter=minimal&limit=50&key={TENOR_API_KEY_RESOLVED}")
-
-type
-  GifItem* = object
-    id*: string
-    title*: string
-    url*: string
-    tinyUrl*: string
-    height*: int
-
-proc tenorToGifItem(jsonMsg: JsonNode): GifItem =
-  return GifItem(
-    id: jsonMsg{"id"}.getStr,
-    title: jsonMsg{"title"}.getStr,
-    url: jsonMsg{"media"}[0]["gif"]["url"].getStr,
-    tinyUrl: jsonMsg{"media"}[0]["tinygif"]["url"].getStr,
-    height: jsonMsg{"media"}[0]["gif"]["dims"][1].getInt
-  )
-
-proc settingToGifItem(jsonMsg: JsonNode): GifItem =
-  return GifItem(
-    id: jsonMsg{"id"}.getStr,
-    title: jsonMsg{"title"}.getStr,
-    url: jsonMsg{"url"}.getStr,
-    tinyUrl: jsonMsg{"tinyUrl"}.getStr,
-    height: jsonMsg{"height"}.getInt
-  )
-
-proc toJsonNode*(self: GifItem): JsonNode =
-  result = %* {
-    "id": self.id,
-    "title": self.title,
-    "url": self.url,
-    "tinyUrl": self.tinyUrl,
-    "height": self.height
-  }
-
-proc `$`*(self: GifItem): string =
-  return fmt"GifItem(id:{self.id}, title:{self.title}, url:{self.url}, tinyUrl:{self.tinyUrl}, height:{self.height})"
 
 type
   GifClient* = ref object
@@ -114,14 +76,14 @@ proc getTrendings*(self: GifClient): seq[GifItem] =
 proc getFavorites*(self: GifClient): seq[GifItem] =
   if not self.favoritesLoaded:
     self.favoritesLoaded = true
-    self.favorites = map(getFavoriteGifs(){"items"}.getElems(), settingToGifItem)
+    self.favorites = getFavoriteGifs()
 
   return self.favorites
 
 proc getRecents*(self: GifClient): seq[GifItem] =
   if not self.recentsLoaded:
     self.recentsLoaded = true
-    self.recents = map(getRecentGifs(){"items"}.getElems(), settingToGifItem)
+    self.recents = getRecentGifs()
 
   return self.recents
 
@@ -147,7 +109,7 @@ proc toggleFavorite*(self: GifClient, gifItem: GifItem) =
     newFavorites.add(gifItem)
 
   self.favorites = newFavorites
-  setFavoriteGifs(%*{"items": map(newFavorites, toJsonNode)})
+  setFavoriteGifs(newFavorites)
 
 proc addToRecents*(self: GifClient, gifItem: GifItem) =
   let recents = self.getRecents()
@@ -166,4 +128,4 @@ proc addToRecents*(self: GifClient, gifItem: GifItem) =
     idx += 1
 
   self.recents = newRecents
-  setRecentGifs(%*{"items": map(newRecents, toJsonNode)})
+  setRecentGifs(newRecents)
