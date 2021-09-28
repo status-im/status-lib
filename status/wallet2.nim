@@ -24,7 +24,7 @@ type
     services*: JsonNode # an array
 
 type 
-  StatusWalletController* = ref object
+  Wallet2Model* = ref object
     events: EventEmitter
     accounts: seq[WalletAccount]
     networks*: seq[Network]
@@ -32,12 +32,12 @@ type
     totalBalance*: float
 
 # Forward declarations
-proc initEvents*(self: StatusWalletController)
-proc generateAccountConfiguredAssets*(self: StatusWalletController, 
+proc initEvents*(self: Wallet2Model)
+proc generateAccountConfiguredAssets*(self: Wallet2Model, 
   accountAddress: string): seq[Asset]
-proc calculateTotalFiatBalance*(self: StatusWalletController)
+proc calculateTotalFiatBalance*(self: Wallet2Model)
 
-proc setup(self: StatusWalletController, events: EventEmitter) = 
+proc setup(self: Wallet2Model, events: EventEmitter) = 
   self.events = events
   self.accounts = @[]
   self.tokens = @[]
@@ -45,21 +45,21 @@ proc setup(self: StatusWalletController, events: EventEmitter) =
   self.totalBalance = 0.0
   self.initEvents()
 
-proc delete*(self: StatusWalletController) =
+proc delete*(self: Wallet2Model) =
   discard
 
-proc newStatusWalletController*(events: EventEmitter): StatusWalletController =
-  result = StatusWalletController()
+proc newWallet2Model*(events: EventEmitter): Wallet2Model =
+  result = Wallet2Model()
   result.setup(events)
 
-proc initTokens(self: StatusWalletController) =
+proc initTokens(self: Wallet2Model) =
   let network = status_settings.getCurrentNetwork().toNetwork()
   self.tokens = tokens_backend.getVisibleTokens(network)
 
-proc initNetworks(self: StatusWalletController) =
+proc initNetworks(self: Wallet2Model) =
   self.networks = status_network.getNetworks()
 
-proc initAccounts(self: StatusWalletController) =
+proc initAccounts(self: Wallet2Model) =
   let accounts = status_wallet.getWalletAccounts()
   for acc in accounts:
     var assets: seq[Asset] = self.generateAccountConfiguredAssets(acc.address)
@@ -67,27 +67,27 @@ proc initAccounts(self: StatusWalletController) =
     acc.path, acc.walletType, acc.publicKey, acc.wallet, acc.chat, assets)
     self.accounts.add(walletAccount)
 
-proc init*(self: StatusWalletController) =
+proc init*(self: Wallet2Model) =
   self.initTokens()
   self.initNetworks()
   self.initAccounts()
 
-proc initEvents*(self: StatusWalletController) = 
+proc initEvents*(self: Wallet2Model) = 
   self.events.on("wallet2_currencyChanged") do(e: Args):
     self.events.emit("wallet2_accountsUpdated", Args())
 
   self.events.on("wallet2_newAccountAdded") do(e: Args):
     self.calculateTotalFiatBalance()
 
-proc getAccounts*(self: StatusWalletController): seq[WalletAccount] =
+proc getAccounts*(self: Wallet2Model): seq[WalletAccount] =
   self.accounts
 
-proc getDefaultCurrency*(self: StatusWalletController): string =
+proc getDefaultCurrency*(self: Wallet2Model): string =
 # TODO: this should come from a model? It is going to be used too in the
 # profile section and ideally we should not call the settings more than once
   status_settings.getSetting[string](Setting.Currency, "usd")
 
-proc generateAccountConfiguredAssets*(self: StatusWalletController, 
+proc generateAccountConfiguredAssets*(self: Wallet2Model, 
   accountAddress: string): seq[Asset] =
   var assets: seq[Asset] = @[]
   var asset = Asset(name:"Ethereum", symbol: "ETH", value: "0.0", 
@@ -101,13 +101,13 @@ proc generateAccountConfiguredAssets*(self: StatusWalletController,
     assets.add(existingToken)
   assets
 
-proc calculateTotalFiatBalance*(self: StatusWalletController) =
+proc calculateTotalFiatBalance*(self: Wallet2Model) =
   self.totalBalance = 0.0
   for account in self.accounts:
     if account.realFiatBalance.isSome:
       self.totalBalance += account.realFiatBalance.get()
 
-proc newAccount*(self: StatusWalletController, walletType: string, derivationPath: string, 
+proc newAccount*(self: Wallet2Model, walletType: string, derivationPath: string, 
   name: string, address: string, iconColor: string, balance: string, 
   publicKey: string): WalletAccount =
   var assets: seq[Asset] = self.generateAccountConfiguredAssets(address)
@@ -117,7 +117,7 @@ proc newAccount*(self: StatusWalletController, walletType: string, derivationPat
   updateBalance(account, self.getDefaultCurrency())
   account
 
-proc addNewGeneratedAccount(self: StatusWalletController, generatedAccount: GeneratedAccount, 
+proc addNewGeneratedAccount(self: Wallet2Model, generatedAccount: GeneratedAccount, 
   password: string, accountName: string, color: string, accountType: string, 
   isADerivedAccount = true, walletIndex: int = 0) =
   try:
@@ -138,7 +138,7 @@ proc addNewGeneratedAccount(self: StatusWalletController, generatedAccount: Gene
   except Exception as e:
     raise newException(StatusGoException, fmt"Error adding new account: {e.msg}")
 
-proc generateNewAccount*(self: StatusWalletController, password: string, accountName: string, color: string) =
+proc generateNewAccount*(self: Wallet2Model, password: string, accountName: string, color: string) =
   let
     walletRootAddress = status_settings.getSetting[string](Setting.WalletRootAddress, "")
     walletIndex = status_settings.getSetting[int](Setting.LatestDerivedPath) + 1
@@ -158,7 +158,7 @@ proc generateNewAccount*(self: StatusWalletController, password: string, account
   if statusGoResult.error != "":
     error "Error storing the latest wallet index", msg=statusGoResult.error
 
-proc addAccountsFromSeed*(self: StatusWalletController, seed: string, password: string, accountName: string, color: string, keystoreDir: string) =
+proc addAccountsFromSeed*(self: Wallet2Model, seed: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let mnemonic = replace(seed, ',', ' ')
   var generatedAccount = status_accounts.multiAccountImportMnemonic(mnemonic)
   generatedAccount.derived = status_accounts.deriveAccounts(generatedAccount.id)
@@ -171,7 +171,7 @@ proc addAccountsFromSeed*(self: StatusWalletController, seed: string, password: 
 
   self.addNewGeneratedAccount(generatedAccount, password, accountName, color, constants.SEED)
 
-proc addAccountsFromPrivateKey*(self: StatusWalletController, privateKey: string, password: string, accountName: string, color: string, keystoreDir: string) =
+proc addAccountsFromPrivateKey*(self: Wallet2Model, privateKey: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let
     generatedAccount = status_accounts.MultiAccountImportPrivateKey(privateKey)
     defaultAccount = status_accounts.getDefaultAccount()
@@ -182,11 +182,11 @@ proc addAccountsFromPrivateKey*(self: StatusWalletController, privateKey: string
 
   self.addNewGeneratedAccount(generatedAccount, password, accountName, color, constants.KEY, false)
 
-proc addWatchOnlyAccount*(self: StatusWalletController, address: string, accountName: string, color: string) =
+proc addWatchOnlyAccount*(self: Wallet2Model, address: string, accountName: string, color: string) =
   let account = GeneratedAccount(address: address)
   self.addNewGeneratedAccount(account, "", accountName, color, constants.WATCH, false)
 
-proc changeAccountSettings*(self: StatusWalletController, address: string, accountName: string, color: string): string =
+proc changeAccountSettings*(self: Wallet2Model, address: string, accountName: string, color: string): string =
   var selectedAccount: WalletAccount
   for account in self.accounts:
     if (account.address == address):
@@ -200,7 +200,7 @@ proc changeAccountSettings*(self: StatusWalletController, address: string, accou
   result = status_accounts.changeAccount(selectedAccount.name, selectedAccount.address, 
   selectedAccount.publicKey, selectedAccount.walletType, selectedAccount.iconColor)
 
-proc deleteAccount*(self: StatusWalletController, address: string): string =
+proc deleteAccount*(self: Wallet2Model, address: string): string =
   result = status_accounts.deleteAccount(address)
   self.accounts = self.accounts.filter(acc => acc.address.toLowerAscii != address.toLowerAscii)
 
@@ -212,7 +212,7 @@ proc getOpenseaAssets*(address: string, collectionSlug: string, limit: int): str
   let networkId = status_settings.getCurrentNetworkDetails().config.networkId
   result = status_wallet.getOpenseaAssets(networkId, address, collectionSlug, limit)
 
-proc onAsyncFetchCryptoServices*(self: StatusWalletController, response: string) =
+proc onAsyncFetchCryptoServices*(self: Wallet2Model, response: string) =
   let responseArray = response.parseJson
   if (responseArray.kind != JArray):
     info "received crypto services is not a json array"

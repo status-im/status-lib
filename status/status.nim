@@ -16,7 +16,7 @@ type Status* = ref object
   messages*: MessagesModel
   accounts*: AccountModel
   wallet*: WalletModel
-  wallet2*: StatusWalletController
+  wallet2*: Wallet2Model
   node*: NodeModel
   profile*: ProfileModel
   contacts*: ContactModel
@@ -38,7 +38,7 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.accounts = accounts.newAccountModel(result.events)
   result.wallet = wallet.newWalletModel(result.events)
   result.wallet.initEvents()
-  result.wallet2 = wallet2.newStatusWalletController(result.events)
+  result.wallet2 = wallet2.newWallet2Model(result.events)
   result.node = node.newNodeModel()
   result.messages = messages.newMessagesModel(result.events)
   result.profile = profile.newProfileModel()
