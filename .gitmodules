@@ -81,4 +81,4 @@
 	url = https://github.com/status-im/edn.nim
 [submodule "vendor/nim-keycard-go"]
 	path = vendor/nim-keycard-go
-	url = git@github.com:status-im/nim-keycard-go.git
+	url = https://github.com/status-im/nim-keycard-go
