@@ -1,16 +1,20 @@
-import json
+import json, sequtils
 
 import ./settings
-import ../types/[setting]
+import ../types/[setting, gif_item]
 
-proc getRecentGifs*(): JsonNode =
-  return settings.getSetting[JsonNode](Setting.Gifs_Recent, %*{})
+proc getRecentGifs*(): seq[GifItem] =
+  let node = settings.getSetting[JsonNode](Setting.Gifs_Recent, %*{})
+  return map(node{"items"}.getElems(), settingToGifItem)
 
-proc getFavoriteGifs*(): JsonNode =
-  return settings.getSetting[JsonNode](Setting.Gifs_Favorite, %*{})
+proc getFavoriteGifs*(): seq[GifItem] =
+  let node = settings.getSetting[JsonNode](Setting.Gifs_Favorite, %*{})
+  return map(node{"items"}.getElems(), settingToGifItem)
 
-proc setFavoriteGifs*(items: JsonNode) =
-  discard settings.saveSetting(Setting.Gifs_Favorite, items)
+proc setFavoriteGifs*(gifItems: seq[GifItem]) =
+  let node = %*{"items": map(gifItems, toJsonNode)}
+  discard settings.saveSetting(Setting.Gifs_Favorite, node)
 
-proc setRecentGifs*(items: JsonNode) =
-  discard settings.saveSetting(Setting.Gifs_Recent, items)
+proc setRecentGifs*(gifItems: seq[GifItem]) =
+  let node = %*{"items": map(gifItems, toJsonNode)}
+  discard settings.saveSetting(Setting.Gifs_Recent, node)
