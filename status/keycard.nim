@@ -19,7 +19,7 @@ proc stop*(self: KeycardModel): string =
 proc select*(self: KeycardModel): KeycardApplicationInfo =
   let response = keycard_go.select()
   let parsedResponse = parseJson(response)
-  let info = KeycardApplicationInfo(
+  return KeycardApplicationInfo(
     installed: parsedResponse["applicationInfo"]["installed"].getBool(),
     initialized: parsedResponse["applicationInfo"]["initialized"].getBool(),
     instanceUID: parsedResponse["applicationInfo"]["instanceUID"].getStr(),
