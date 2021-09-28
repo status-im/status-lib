@@ -22,7 +22,8 @@ BUILD_SYSTEM_DIR := vendor/nimbus-build-system
 	status-go \
 	update \
 	build_ctest \
-	ctest
+	ctest \
+	test
 
 ifeq ($(NIM_PARAMS),)
 # "variables.mk" was not included, so we update the submodules.
@@ -64,7 +65,6 @@ else
  LIBSTATUS_EXT := so
 endif
 
-
 ifeq ($(detected_OS),Darwin)
 bottles/openssl:
 	./scripts/fetch-brew-bottle.sh openssl
@@ -97,7 +97,9 @@ NIM_PARAMS += --outdir:./build
 
 STATUSGO := vendor/status-go/build/bin/libstatus.$(LIBSTATUS_EXT)
 STATUSGO_LIBDIR := $(shell pwd)/$(shell dirname "$(STATUSGO)")
+export STATUSGO
 export STATUSGO_LIBDIR
+export LIBSTATUS_EXT
 
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
@@ -127,5 +129,8 @@ ctest: | build_ctest
 
 clean: | clean-common
 	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)
+
+test:
+	$(ENV_SCRIPT) nimble tests
 
 endif # "variables.mk" was not included
