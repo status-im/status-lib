@@ -16,7 +16,7 @@ proc start*(self: KeycardModel): string =
 proc stop*(self: KeycardModel): string =
   keycard_go.stop()
 
-proc select*(self: KeycardModel): string =
+proc select*(self: KeycardModel): KeycardApplicationInfo =
   let response = keycard_go.select()
   let parsedResponse = parseJson(response)
   let info = KeycardApplicationInfo(
