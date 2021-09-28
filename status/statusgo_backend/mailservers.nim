@@ -1,4 +1,4 @@
-import json, times, chronicles
+import json, times
 import core, ../utils
 
 proc ping*(mailservers: seq[string], timeoutMs: int): string =
@@ -8,23 +8,18 @@ proc ping*(mailservers: seq[string], timeoutMs: int): string =
   result = callPrivateRPC("mailservers_ping", %* [
     { "addresses": addresses, "timeoutMs": timeoutMs }
   ])
-  info "ping", topics="mailserver-interaction", rpc_method="mailservers_ping", addresses, timeoutMs, result
 
 proc update*(peer: string) =
-  let response = callPrivateRPC("updateMailservers".prefix, %* [[peer]])
-  info "update", topics="mailserver-interaction", rpc_method="wakuext_updateMailservers", peer, response
+  discard callPrivateRPC("updateMailservers".prefix, %* [[peer]])
 
 proc setMailserver*(peer: string): string =
-  result = callPrivateRPC("setMailserver".prefix, %* [peer])
-  info "setMailserver", topics="mailserver-interaction", rpc_method="wakuext_setMailserver", peer, result
+  return callPrivateRPC("setMailserver".prefix, %* [peer])
 
 proc delete*(peer: string) =
-  let response = callPrivateRPC("mailservers_deleteMailserver", %* [peer])
-  info "delete", topics="mailserver-interaction", rpc_method="mailservers_deleteMailserver", peer, response
+  discard callPrivateRPC("mailservers_deleteMailserver", %* [peer])
 
 proc requestAllHistoricMessages*(): string =
-  result = callPrivateRPC("requestAllHistoricMessages".prefix, %*[])
-  info "requestAllHistoricMessages", topics="mailserver-interaction", rpc_method="mailservers_requestAllHistoricMessages", result
+  return callPrivateRPC("requestAllHistoricMessages".prefix, %*[])
 
 proc requestStoreMessages*(topics: seq[string], symKeyID: string, peer: string, numberOfMessages: int, fromTimestamp: int64 = 0, toTimestamp: int64 = 0, force: bool = false) =
   var toValue = times.toUnix(times.getTime())
@@ -48,9 +43,7 @@ proc requestStoreMessages*(topics: seq[string], symKeyID: string, peer: string, 
   ])
 
 proc syncChatFromSyncedFrom*(chatId: string): string =
-  result = callPrivateRPC("syncChatFromSyncedFrom".prefix, %*[chatId])
-  info "syncChatFromSyncedFrom", topics="mailserver-interaction", rpc_method="wakuext_syncChatFromSyncedFrom", chatId, result
+  return callPrivateRPC("syncChatFromSyncedFrom".prefix, %*[chatId])
 
 proc fillGaps*(chatId: string, messageIds: seq[string]): string =
-  result = callPrivateRPC("fillGaps".prefix, %*[chatId, messageIds])
-  info "fillGaps", topics="mailserver-interaction", rpc_method="wakuext_fillGaps", chatId, messageIds, result
+  return callPrivateRPC("fillGaps".prefix, %*[chatId, messageIds])
