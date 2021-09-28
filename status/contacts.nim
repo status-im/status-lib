@@ -22,7 +22,7 @@ proc newContactModel*(events: EventEmitter): ContactModel =
     result = ContactModel()
     result.events = events
 
-proc saveContact(self: ContactModel, contact: Profile): string = 
+proc saveContact(self: ContactModel, contact: Profile) = 
   var 
     thumbnail = ""
     largeImage = ""
@@ -30,27 +30,21 @@ proc saveContact(self: ContactModel, contact: Profile): string =
     thumbnail = contact.identityImage.thumbnail
     largeImage = contact.identityImage.large    
   
-  return status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, largeImage, contact.systemTags, contact.localNickname)
+  status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, largeImage, contact.systemTags, contact.localNickname)
 
 proc getContactByID*(self: ContactModel, id: string): Profile =
-  let response = status_contacts.getContactByID(id)
-  # TODO: change to options
-  let responseResult = parseJSON($response)["result"]
-  if responseResult == nil or responseResult.kind == JNull:
-    result = nil
-  else:
-    result = toProfileModel(parseJSON($response)["result"])
-
-proc blockContact*(self: ContactModel, id: string): string =
+  return status_contacts.getContactByID(id)
+  
+proc blockContact*(self: ContactModel, id: string) =
   var contact = self.getContactByID(id)
   contact.systemTags.add(contactBlocked)
-  discard self.saveContact(contact)
+  self.saveContact(contact)
   self.events.emit("contactBlocked", ContactIdArgs(id: id))
 
-proc unblockContact*(self: ContactModel, id: string): string =
+proc unblockContact*(self: ContactModel, id: string) =
   var contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactBlocked))
-  discard self.saveContact(contact)
+  self.saveContact(contact)
   self.events.emit("contactUnblocked", ContactIdArgs(id: id))
 
 proc getContacts*(self: ContactModel, useCache: bool = true): seq[Profile] =
@@ -76,7 +70,7 @@ proc getOrCreateContact*(self: ContactModel, id: string): Profile =
       systemTags: @[]
     )
 
-proc setNickName*(self: ContactModel, id: string, localNickname: string, accountKeyUID: string): string =
+proc setNickName*(self: ContactModel, id: string, localNickname: string, accountKeyUID: string) =
   var contact = self.getOrCreateContact(id)
   let nickname =
     if (localNickname == ""):
@@ -87,11 +81,11 @@ proc setNickName*(self: ContactModel, id: string, localNickname: string, account
       localNickname
 
   contact.localNickname = nickname
-  result = self.saveContact(contact)
+  self.saveContact(contact)
   self.events.emit("contactAdded", Args())
-  discard sendContactUpdate(contact.id, accountKeyUID)
+  sendContactUpdate(contact.id, accountKeyUID)
 
-proc addContact*(self: ContactModel, id: string, accountKeyUID: string): string =
+proc addContact*(self: ContactModel, id: string, accountKeyUID: string) =
   var contact = self.getOrCreateContact(id)
   
   let updating = contact.systemTags.contains(contactAdded)
@@ -104,9 +98,9 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string): string 
     if (index > -1):
       contact.systemTags.delete(index)
 
-  result = self.saveContact(contact)
+  self.saveContact(contact)
   self.events.emit("contactAdded", Args())
-  discard sendContactUpdate(contact.id, accountKeyUID)
+  sendContactUpdate(contact.id, accountKeyUID)
 
   if updating:
     let profile = Profile(
@@ -124,10 +118,15 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string): string 
 
 proc removeContact*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
-  contact.systemTags.delete(contact.systemTags.find(contactAdded))
-  contact.systemTags.delete(contact.systemTags.find(contactRequest))
+  var idx = contact.systemTags.find(contactAdded)
+  if idx >= 0:
+    contact.systemTags.delete(idx)
 
-  discard self.saveContact(contact)
+  idx = contact.systemTags.find(contactRequest)
+  if idx >= 0:
+    contact.systemTags.delete(idx)
+
+  self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
 
 proc isAdded*(self: ContactModel, id: string): bool =
@@ -144,5 +143,5 @@ proc rejectContactRequest*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
   contact.systemTags.delete(contact.systemTags.find(contactRequest))
 
-  discard self.saveContact(contact)
+  self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
