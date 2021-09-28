@@ -127,6 +127,19 @@ proc sendChatMessage*(chatId: string, msg: string, replyTo: string, contentType:
     }
   ])
 
+proc sendAudioMessage*(chatId: string, audioBase64: string, durationMs: uint64): string =
+  let preferredUsername = getSetting[string](Setting.PreferredUsername, "")
+  callPrivateRPC("sendChatMessage".prefix, %* [
+    {
+      "chatId": chatId,
+      "contentType": ContentType.Audio.int,
+      "base64Audio": audioBase64,
+      "audioDurationMs": durationMs,
+      "ensName": preferredUsername,
+      "text": "Update to latest version to hear this audio!"
+    }
+  ])
+
 proc sendImageMessage*(chatId: string, image: string): string =
   let preferredUsername = getSetting[string](Setting.PreferredUsername, "")
   callPrivateRPC("sendChatMessage".prefix, %* [
