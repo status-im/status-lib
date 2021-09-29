@@ -7,6 +7,7 @@ import json_serialization
 import tables
 import strformat
 import statusgo_backend/core
+import statusgo_backend/settings as status_settings
 import ./types/[transaction, setting, rpc_response, network_type, network]
 import utils
 import statusgo_backend/wallet
@@ -19,7 +20,6 @@ import eth/contracts
 import eth/transactions as eth_transactions
 import chronicles, libp2p/[multihash, multicodec, cid]
 
-import ./settings as status_settings
 import ./wallet as status_wallet
 
 const domain* = ".stateofus.eth"
@@ -380,7 +380,7 @@ proc validateEnsName*(ens: string, isStatus: bool, usernames: seq[string]): stri
     if ownerAddr == "" and isStatus:
       result = "available"
     else:
-      let userPubKey = status_settings.getSetting2[string](Setting.PublicKey, "0x0")
+      let userPubKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
       let userWallet = status_wallet.getWalletAccounts()[0].address
       let ens_pubkey = pubkey(ens)
       if ownerAddr != "":
