@@ -1,8 +1,10 @@
-import types
-import core, ../../types/[bookmark], json, chronicles
-import ../backend_type
+import json, chronicles
 
-proc storeBookmark*(bookmark: Bookmark): Bookmark =
+import ../../types/[bookmark]
+import ../types
+import ./core
+
+method storeBookmark*(self: StatusGoBackend, bookmark: Bookmark): Bookmark =
   let payload = %* [{"url": bookmark.url, "name": bookmark.name}]
   try:
     let resp = callPrivateRPC("browsers_storeBookmark", payload).parseJson["result"]
@@ -12,7 +14,7 @@ proc storeBookmark*(bookmark: Bookmark): Bookmark =
     error "Error updating bookmark", msg = e.msg
     discard
 
-proc updateBookmark*(originalUrl: string, bookmark: Bookmark) =
+method updateBookmark*(self: StatusGoBackend, originalUrl: string, bookmark: Bookmark) =
   let payload = %* [originalUrl, {"url": bookmark.url, "name": bookmark.name}]
   try:
     discard callPrivateRPC("browsers_updateBookmark", payload)
@@ -20,7 +22,7 @@ proc updateBookmark*(originalUrl: string, bookmark: Bookmark) =
     error "Error updating bookmark", msg = e.msg
     discard
 
-proc getBookmarks*(): seq[Bookmark] =
+method getBookmarks*(self: StatusGoBackend): seq[Bookmark] =
   let payload = %* []
   try:
     let responseResult = callPrivateRPC("browsers_getBookmarks", payload).parseJson["result"]
@@ -30,6 +32,6 @@ proc getBookmarks*(): seq[Bookmark] =
   except:
     discard
 
-proc deleteBookmark*(url: string) =
+method deleteBookmark*(self: StatusGoBackend, url: string) =
   let payload = %* [url]
   discard callPrivateRPC("browsers_deleteBookmark", payload)
