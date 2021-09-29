@@ -3,13 +3,12 @@ import
 
 import
   json_serialization, chronicles, uuids
+from status_go import nil
 
 import
   ./core, ./accounts/constants, ../utils
 
 import ../types/[setting, network_type, fleet, rpc_response]
-
-from status_go import nil
 
 var
   settings {.threadvar.}: JsonNode
@@ -29,9 +28,6 @@ proc saveSetting*(key: Setting, value: string | JsonNode | bool): StatusGoError 
     dirty.store(true)
   except Exception as e:
     error "Error saving setting", key=key, value=value, msg=e.msg
-
-proc getWeb3ClientVersion*(): string =
-  parseJson(callPrivateRPC("web3_clientVersion"))["result"].getStr
 
 proc getSettings*(useCached: bool = true, keepSensitiveData: bool = false): JsonNode =
   let cacheIsDirty = (not settingsInited) or dirty.load
@@ -64,6 +60,9 @@ proc getSetting*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
 
 proc getSetting*[T](name: Setting, useCached: bool = true): T =
   result = getSetting(name, default(type(T)), useCached)
+
+proc getWeb3ClientVersion*(): string =
+  parseJson(callPrivateRPC("web3_clientVersion"))["result"].getStr
 
 proc getCurrentNetwork*(): NetworkType =
   case getSetting[string](Setting.Networks_CurrentNetwork, constants.DEFAULT_NETWORK_NAME):
@@ -100,7 +99,6 @@ proc getPinnedMailserver*(): string =
   result = pinnedMailservers{fleet}.getStr()
   info "getPinnedMailserver", topics="mailserver-interaction", fleet, result
 
-
 proc pinMailserver*(enode: string = "") =
   let pinnedMailservers = getSetting[JsonNode](Setting.PinnedMailservers, %*{})
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
@@ -108,7 +106,6 @@ proc pinMailserver*(enode: string = "") =
   pinnedMailservers[fleet] = newJString(enode)
   let response = saveSetting(Setting.PinnedMailservers, pinnedMailservers)
   info "pinMailserver", topics="mailserver-interaction", enode, response
-
 
 proc saveMailserver*(name, enode: string) =
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
@@ -124,13 +121,12 @@ proc saveMailserver*(name, enode: string) =
   let result = response.parseJSON()["result"]
   info "saveMailserver", topics="mailserver-interaction", rpc_method="mailservers_addMailserver", id, name, enode, fleet, response
 
-
-proc getMailservers*():JsonNode =
+proc getMailservers*(): JsonNode =
   let response = callPrivateRPC("mailservers_getMailservers")
   result = response.parseJSON()["result"]
   info "getMailservers", topics="mailserver-interaction", rpc_method="mailservers_getMailservers", response
 
-proc getNodeConfig*():JsonNode =
+proc getNodeConfig*(): JsonNode =
   result = status_go.getNodeConfig().parseJSON()
 
   # setting correct values in json

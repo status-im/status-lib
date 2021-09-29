@@ -1,8 +1,5 @@
 import json, json_serialization
 
-import 
-  sugar, sequtils, strutils, atomics
-
 import statusgo_backend/settings as statusgo_backend_settings
 import ../eventemitter
 import ./types/[fleet, network_type, setting, rpc_response]
@@ -24,13 +21,6 @@ proc getSetting*[T](self: SettingsModel, name: Setting, defaultValue: T, useCach
 proc getSetting*[T](self: SettingsModel, name: Setting, useCached: bool = true): T =
   result = statusgo_backend_settings.getSetting[T](name, useCached)
 
-# TODO: name with a 2 due to namespace conflicts that need to be addressed in subsquent PRs
-proc getSetting2*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
-  result = statusgo_backend_settings.getSetting(name, defaultValue, useCached)
-
-proc getSetting2*[T](name: Setting, useCached: bool = true): T =
-  result = statusgo_backend_settings.getSetting[T](name, useCached)
-
 proc getCurrentNetworkDetails*(self: SettingsModel): NetworkDetails =
   result = statusgo_backend_settings.getCurrentNetworkDetails()
 
@@ -49,11 +39,8 @@ proc saveMailserver*(self: SettingsModel, name, enode: string) =
 proc getFleet*(self: SettingsModel): Fleet =
     result = statusgo_backend_settings.getFleet()
 
-proc getCurrentNetwork*(): NetworkType =
-    result = statusgo_backend_settings.getCurrentNetwork()
-
 proc getCurrentNetwork*(self: SettingsModel): NetworkType =
-    result = getCurrentNetwork()
+    result = statusgo_backend_settings.getCurrentNetwork()
 
 proc setWakuVersion*(self: SettingsModel, newVersion: int) =
   statusgo_backend_settings.setWakuVersion(newVersion)
