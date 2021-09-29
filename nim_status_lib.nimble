@@ -35,9 +35,11 @@ proc buildAndRun(name: string,
   exec "nim " &
     lang &
     (if getEnv("RELEASE").strip != "false": release_opts else: debug_opts) &
+    (if defined(windows): " --define:usePcreHeader" else: "") &
     " --define:ssl" &
-    " --passL:" & getEnv("STATUSGO") & "" &
-    # " --passL:" & "vendor/status-go/build/bin/libstatus.dylib" & "" &
+    " --nimcache:nimcache/" & (if getEnv("RELEASE").strip != "false": "release/" else: "debug/") & name &
+    (if getEnv("PCRE_LDFLAGS").strip != "": " --passL:\"" & getEnv("PCRE_LDFLAGS") & "\"" else: "") &
+    " --passL:\"-L" & getEnv("STATUSGO_LIBDIR") & " -lstatus \"" &
     " --out:" & outDir & name &
     " " &
     srcDir & name & ".nim"

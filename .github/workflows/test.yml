@@ -1,0 +1,93 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  tests:
+    env:
+      NPROC: 2
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - {
+            icon: 🏁,
+            os: windows,
+            shell: msys2
+          }
+          - {
+            icon: 🍎,
+            os: macos,
+            shell: bash --noprofile --norc -eo pipefail
+          }
+          - {
+            icon: 🐧,
+            os: ubuntu,
+            shell: bash --noprofile --norc -eo pipefail
+          }
+    name: ${{ matrix.platform.icon }} ${{ matrix.platform.os }}
+    runs-on: ${{ matrix.platform.os }}-latest
+    defaults:
+      run:
+        shell: ${{ matrix.platform.shell }} {0}
+
+    steps:
+
+      - name: Install tools and libraries via Homebrew
+        if: matrix.platform.os == 'macos'
+        run: |
+          brew install coreutils gawk openssl@1.1 pcre
+          rm -f /usr/local/opt/openssl
+          ln -s /usr/local/opt/openssl@1.1 /usr/local/opt/openssl
+
+      - name: Install tools and libraries via MSYS2
+        uses: msys2/setup-msys2@v2
+        if: matrix.platform.os == 'windows'
+        with:
+          msystem: UCRT64
+          update: true
+          install: >
+            base-devel
+            git
+            unzip
+            mingw-w64-ucrt-x86_64-go
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-pcre
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Calculate cache key from submodules tree
+        id: calc-cache-key
+        run: |
+          echo "::set-output name=hash::$(git submodule foreach --quiet --recursive 'git rev-parse $(git rev-parse --abbrev-ref HEAD)' | sha1sum | awk '{print $1}')"
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            vendor/nimbus-build-system/vendor/Nim/bin
+            vendor/status-go/build/bin
+          key: ${{ matrix.platform.os }}-${{ steps.calc-cache-key.outputs.hash }}
+
+      - name: Install and build dependencies
+        run: |
+          make -j${NPROC} NIMFLAGS="--parallelBuild:${NPROC}" V=1 update
+          make -j${NPROC} NIMFLAGS="--parallelBuild:${NPROC}" V=1 deps
+
+      - name: Build and run tests
+        # using `llvm-ar` instead of `ar` on macOS is a workaround for:
+        # https://github.com/nim-lang/Nim/issues/15589
+        run: |
+          if [[ ${{ matrix.platform.os }} = macos ]]; then
+            mkdir -p "${HOME}/.local/bin"
+            ln -f -s /usr/local/Cellar/llvm/*/bin/llvm-ar "${HOME}/.local/bin/ar"
+            export PATH="${HOME}/.local/bin:${PATH}"
+          fi
+          make -j${NPROC} NIMFLAGS="--parallelBuild:${NPROC}" V=1 test

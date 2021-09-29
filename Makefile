@@ -65,15 +65,25 @@ else
  LIBSTATUS_EXT := so
 endif
 
-ifeq ($(detected_OS),Darwin)
-bottles/openssl:
-	./scripts/fetch-brew-bottle.sh openssl
-
-bottles/pcre: bottles/openssl
-	./scripts/fetch-brew-bottle.sh pcre
-
-bottles: bottles/openssl bottles/pcre
-endif
+# ifeq ($(detected_OS),Darwin)
+# BOTTLES_DIR := $(shell pwd)/bottles
+# BOTTLES := $(addprefix $(BOTTLES_DIR)/,openssl@1.1 pcre)
+#
+# $(BOTTLES): | $(BOTTLES_DIR)
+# 	echo -e "\e[92mFetching:\e[39m $(notdir $@) bottle"
+# 	./scripts/fetch-brew-bottle.sh $(notdir $@)
+#
+# $(BOTTLES_DIR):
+# 	echo -e "\e[92mUpdating:\e[39m macOS Homebrew"
+# 	if [[ $$(stat -f %u /usr/local/var/homebrew) -ne "$${UID}" ]]; then \
+# 		echo "Missing permissions to update Homebrew formulae!" >&2; \
+# 	else \
+# 		brew update >/dev/null; \
+# 		mkdir -p $(BOTTLES_DIR); \
+# 	fi
+#
+# bottles: $(BOTTLES)
+# endif
 
 deps: | deps-common bottles
 
@@ -108,7 +118,7 @@ $(STATUSGO): | deps
 	  $(MAKE) statusgo-shared-library $(HANDLE_OUTPUT)
 
 LIBSTATUSLIB := build/$@.$(LIBSTATUS_EXT).0
-libstatuslib: | $(STATUSGO) 
+libstatuslib: | $(STATUSGO)
 	echo -e $(BUILD_MSG) "$@" && \
 		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
 		rm -f build/$@.$(LIBSTATUS_EXT) && \
@@ -122,15 +132,37 @@ build_ctest: | $(LIBSTATUSLIB) build deps
 	echo -e $(BUILD_MSG) "build/ctest" && \
 		 $(CC) test/main.c -Wl,-rpath,'$$ORIGIN' -I./vendor/nimbus-build-system/vendor/Nim/lib $(EXTRA_LIBS_DYNAMIC) -g -o build/ctest
 
+LD_LIBRARY_PATH_NIMBLE := $${LD_LIBRARY_PATH}
+ifneq ($(detected_OS),Windows)
+ ifneq ($(detected_OS),Darwin)
+  LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
+ endif
+endif
+
+PATH_NIMBLE := $${PATH}
+ifeq ($(detected_OS),Windows)
+ PATH_NIMBLE := $(STATUSGO_LIBDIR):$(PATH_NIMBLE)
+endif
+
+NIMBLE_ENV = \
+	RELEASE=$(RELEASE)
+ifeq ($(detected_OS),Windows)
+ NIMBLE_ENV += PATH="$(PATH_NIMBLE)"
+ PCRE_LDFLAGS := -L$(shell cygpath -m /ucrt64/lib) -lpcre
+ NIMBLE_ENV += PCRE_LDFLAGS="$(PCRE_LDFLAGS)"
+else ifneq ($(detected_OS),Darwin)
+ NIMBLE_ENV += LD_LIBRARY_PATH="$(LD_LIBRARY_PATH_NIMBLE)"
+endif
+
 ctest: | build_ctest
 	echo -e "Running ctest:" && \
 	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR)" \
 	./build/ctest
 
+test: | $(STATUSGO)
+	$(NIMBLE_ENV) $(ENV_SCRIPT) nimble tests
+
 clean: | clean-common
 	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)
-
-test:
-	$(ENV_SCRIPT) nimble tests
 
 endif # "variables.mk" was not included
