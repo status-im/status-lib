@@ -6,11 +6,11 @@ import ../types/[bookmark]
 import ../backends/backend
 
 type
-    BrowserModel* = ref object
-        events*: EventEmitter
-        backend*: BackendWrapper
+  BrowserModel* = ref object
+    events*: EventEmitter
+    backend*: Backend
 
-proc newBrowserModel*(events: EventEmitter, backend: BackendWrapper): BrowserModel =
+proc newBrowserModel*(events: EventEmitter, backend: Backend): BrowserModel =
   result = BrowserModel()
   result.events = events
   result.backend = backend

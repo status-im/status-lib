@@ -12,7 +12,7 @@ import ../backends/backend
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
 
 type Status* = ref object 
-  backend*: BackendWrapper
+  backend*: Backend
   events*: EventEmitter
   fleet*: FleetModel
   chat*: ChatModel
@@ -33,10 +33,9 @@ type Status* = ref object
   provider*: ProviderModel
   osnotifications*: OsNotifications
 
-proc newStatusInstance*(fleetConfig: string, backendName:string = "statusgo"): Status =
+proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): Status =
   result = Status()
-  result.backend = newBackendWrapperInstance()
-  result.backend.loadBackend(backendName)
+  result.backend = newBackend(backendName)
   result.events = createEventEmitter()
   result.fleet = fleet.newFleetModel(fleetConfig)
   result.chat = chat.newChatModel(result.events)

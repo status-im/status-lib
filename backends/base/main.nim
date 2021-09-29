@@ -1,2 +1,0 @@
-import bookmark
-export bookmark

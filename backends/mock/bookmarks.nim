@@ -1,7 +1,7 @@
-import tables, sequtils
-import types
-import ../../types/[bookmark], json, chronicles
-import ../backend_type
+import tables, sequtils, json, chronicles
+
+import ../types
+import ../../types/[bookmark]
 
 var bookmarks_storage_mock = initTable[string, Bookmark]()
 
