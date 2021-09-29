@@ -5,7 +5,6 @@ import # std libs
   json, json_serialization, chronicles, web3/ethtypes,
   stint, strutils
 from strutils import parseHexInt, parseInt
-import nbaser
 
 import # vendor libs
   json_serialization, chronicles, libp2p/[multihash, multicodec, cid], stint,
@@ -13,10 +12,10 @@ import # vendor libs
 from nimcrypto import fromHex
 
 import # status-desktop libs
-  ../types/[sticker, setting, rpc_response, network_type], 
-  ../statusgo_backend/[edn_helpers, settings], 
+  ../types/[sticker, setting, rpc_response, network_type],
+  ../statusgo_backend/[edn_helpers, settings],
   ../utils,
-  ./transactions as transactions, 
+  ./transactions as transactions,
   ./contracts
 
 # Retrieves number of sticker packs owned by user
