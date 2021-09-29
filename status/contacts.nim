@@ -1,8 +1,8 @@
 import json, chronicles
-import statusgo_backend/contacts as status_contacts
-import statusgo_backend/accounts as status_accounts
-import statusgo_backend/chat as status_chat
-import profile/profile
+import ./statusgo_backend/contacts as status_contacts
+import ./statusgo_backend/accounts as status_accounts
+import ./statusgo_backend/chat as status_chat
+import ./types/profile
 import ../eventemitter
 
 const DELETE_CONTACT* = "__deleteThisContact__"

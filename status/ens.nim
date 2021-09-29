@@ -1,25 +1,24 @@
 import sequtils
+import strformat
 import strutils
-import profile/profile
 import nimcrypto
 import json
 import json_serialization
 import tables
-import strformat
-import statusgo_backend/core
-import statusgo_backend/settings as status_settings
-import ./types/[transaction, setting, rpc_response, network_type, network]
-import utils
-import statusgo_backend/wallet
 import stew/byteutils
 import unicode
-import transactions
 import algorithm
 import web3/[ethtypes, conversions], stew/byteutils, stint
-import eth/contracts
-import eth/transactions as eth_transactions
 import chronicles, libp2p/[multihash, multicodec, cid]
 
+import ./statusgo_backend/core
+import ./statusgo_backend/eth as eth
+import ./statusgo_backend/wallet
+import ./statusgo_backend/settings as status_settings
+import ./types/[transaction, setting, rpc_response, network_type, network, profile]
+import ./utils
+import ./transactions
+import ./eth/contracts
 import ./wallet as status_wallet
 
 const domain* = ".stateofus.eth"
@@ -52,8 +51,7 @@ proc userNameOrAlias*(contact: Profile, removeSuffix: bool = false): string =
     result = contact.alias
 
 proc label*(username:string): string =
-  let name = username.toLower()
-  var node:array[32, byte] = keccak_256.digest(username).data
+  var node:array[32, byte] = keccak_256.digest(username.toLower()).data
   result = "0x" & node.toHex()
 
 proc namehash*(ensName:string): string =
@@ -155,6 +153,7 @@ proc contenthash*(ensAddr: string): string =
 
   let size = fromHex(Stuint[256], bytesResponse[66..129]).truncate(int)
   result = bytesResponse[130..129+size*2]
+  result = bytesResponse[130..129+size*2]
 
 
 proc getPrice*(): Stuint[256] =
@@ -173,6 +172,7 @@ proc getPrice*(): Stuint[256] =
   if response.result == "0x":
     raise newException(RpcException, "Error getting ens username price: 0x")
   result = fromHex(Stuint[256], response.result)
+  result = fromHex(Stuint[256], response.result)
 
 proc releaseEstimateGas*(username: string, address: string, success: var bool): int =
   let
@@ -187,6 +187,7 @@ proc releaseEstimateGas*(username: string, address: string, success: var bool): 
     if success:
       result = fromHex[int](response)
   except RpcException as e:
+    error "Could not estimate gas for ens release", err=e.msg
     error "Could not estimate gas for ens release", err=e.msg
 
 proc release*(username: string, address: string, gas, gasPrice,  password: string, success: var bool): string =
@@ -204,6 +205,7 @@ proc release*(username: string, address: string, gas, gasPrice,  password: strin
   except RpcException as e:
     error "Could not estimate gas for ens release", err=e.msg
 
+
 proc getExpirationTime*(username: string, success: var bool): int =
   let 
     label = fromHex(FixedBytes[32], label(username))
@@ -216,7 +218,7 @@ proc getExpirationTime*(username: string, success: var bool): int =
   tx.data = ensUsernamesContract.methods["getExpirationTime"].encodeAbi(expTime)
   var response = ""
   try:
-    response = eth_transactions.call(tx).result
+    response = eth.call(tx).result
     success = true
   except RpcException as e:
     success = false
@@ -277,6 +279,7 @@ proc setPubKeyEstimateGas*(username: string, address: string, pubKey: string, su
   var hash = namehash(username)
   hash.removePrefix("0x")
 
+
   let
     label = fromHex(FixedBytes[32], "0x" & hash)
     x = fromHex(FixedBytes[32], "0x" & pubkey[4..67])
@@ -320,7 +323,6 @@ proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabl
 proc statusRegistrarAddress*():string =
   let network = status_settings.getCurrentNetwork().toNetwork()
   result = $contracts.findContract(network.chainId, "ens-usernames").address
-
 
 type
   ENSType* {.pure.} = enum

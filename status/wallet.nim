@@ -8,8 +8,9 @@ import statusgo_backend/tokens as statusgo_backend_tokens
 import statusgo_backend/settings as status_settings
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/accounts/constants as constants
-import eth/[eth, contracts]
-import eth/tokens as status_tokens
+import statusgo_backend/eth
+import eth/contracts
+import eth/tokens as eth_tokens
 from statusgo_backend/core import getBlockByNumber
 from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]
@@ -260,7 +261,7 @@ proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
 
 proc initAccounts*(self: WalletModel) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  self.tokens = status_tokens.getVisibleTokens(network)
+  self.tokens = eth_tokens.getVisibleTokens(network)
   let accounts = status_wallet.getWalletAccounts()
   for account in accounts:
     var acc = WalletAccount(account)
@@ -374,7 +375,7 @@ proc deleteAccount*(self: WalletModel, address: string): string =
 
 proc toggleAsset*(self: WalletModel, symbol: string) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  self.tokens = status_tokens.toggleAsset(network, symbol)
+  self.tokens = eth_tokens.toggleAsset(network, symbol)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())
@@ -382,8 +383,8 @@ proc toggleAsset*(self: WalletModel, symbol: string) =
 
 proc hideAsset*(self: WalletModel, symbol: string) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  status_tokens.hideAsset(network, symbol)
-  self.tokens = status_tokens.getVisibleTokens(network)
+  eth_tokens.hideAsset(network, symbol)
+  self.tokens = eth_tokens.getVisibleTokens(network)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())

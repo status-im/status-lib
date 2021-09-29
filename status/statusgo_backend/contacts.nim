@@ -14,7 +14,7 @@ proc getContactByID*(id: string): Profile =
   if responseResult == nil or responseResult.kind == JNull:
     return nil
 
-  return toProfileModel(parseJSON($response)["result"])
+  return toProfile(parseJSON($response)["result"])
 
 
 proc getContacts*(useCache: bool = true): (seq[Profile], bool) =
@@ -32,7 +32,7 @@ proc getContacts*(useCache: bool = true): (seq[Profile], bool) =
     contacts = @[]
     return (contacts, false)
 
-  contacts = map(response["result"].getElems(), proc(x: JsonNode): Profile = x.toProfileModel())
+  contacts = map(response["result"].getElems(), proc(x: JsonNode): Profile = x.toProfile())
   for contact in contacts:
     contactsIndex[contact.id] = contact
 

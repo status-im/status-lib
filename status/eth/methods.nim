@@ -5,7 +5,9 @@ import
   nimcrypto, web3/[encoding, ethtypes]
 
 import 
-  ../types/[rpc_response, transaction], ../statusgo_backend/coder, eth, transactions
+  ../types/[rpc_response, transaction],
+  ../statusgo_backend/coder,
+  ../statusgo_backend/eth as eth
 
 export sendTransaction
 
@@ -42,7 +44,7 @@ proc estimateGas*(self: Method, tx: var TransactionData, methodDescriptor: objec
   success = true
   tx.data = self.encodeAbi(methodDescriptor)
   try:
-    let response = transactions.estimateGas(tx)
+    let response = eth.estimateGas(tx)
     result = response.result # gas estimate in hex
   except RpcException as e:
     success = false
@@ -57,7 +59,7 @@ proc call*[T](self: Method, tx: var TransactionData, methodDescriptor: object, s
   tx.data = self.encodeAbi(methodDescriptor)
   let response: RpcResponse
   try:
-    response = transactions.call(tx)
+    response = eth.call(tx)
   except RpcException as e:
     success = false
     result = e.msg

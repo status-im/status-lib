@@ -2,14 +2,13 @@ import json, strutils, sequtils, tables, chronicles, times, sugar, algorithm
 import statusgo_backend/chat as status_chat
 import statusgo_backend/contacts as status_contacts
 import statusgo_backend/chatCommands as status_chat_commands
-import types/[message, status_update, activity_center_notification, 
-  sticker, removed_message]
+import types/[message, status_update, activity_center_notification, sticker, removed_message, profile]
 import types/chat as chat_type
+
 import utils as status_utils
 import stickers
 import ../eventemitter
 
-import profile/profile
 import contacts
 import chat/[chat, utils]
 import ens, accounts
