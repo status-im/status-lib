@@ -6,10 +6,10 @@ import ../types
 import ./core
 
 method keycardStart*(self: StatusGoBackend): string =
-  result = "Hello Keycard"
+  result = keycard_go.start()
 
 method keycardStop*(self: StatusGoBackend): string =
-  result = "Hello Keycard"
+  result = keycard_go.stop()
 
 method keycardSelect*(self: StatusGoBackend): KeycardApplicationInfo =
   let response = keycard_go.select()
