@@ -3,9 +3,9 @@ import json
 import base
 import signal_type
 
-type KeycardStartedSignal* = ref object of Signal
+type KeycardConnectedSignal* = ref object of Signal
   started*: string
 
-proc fromEvent*(T: type KeycardStartedSignal, event: JsonNode): KeycardStartedSignal =
-  result = KeycardStartedSignal()
+proc fromEvent*(T: type KeycardConnectedSignal, event: JsonNode): KeycardConnectedSignal =
+  result = KeycardConnectedSignal()
   result.started = event["event"].getStr()
