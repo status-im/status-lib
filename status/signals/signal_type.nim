@@ -25,6 +25,7 @@ type SignalType* {.pure.} = enum
   HistoryRequestStarted = "history.request.started"
   HistoryRequestCompleted = "history.request.completed"
   HistoryRequestFailed = "history.request.failed"
+  KeycardStarted = "keycard.started"
   Unknown
 
 proc event*(self:SignalType):string =
