@@ -43,9 +43,6 @@ proc buildAndRun(name: string,
     " --out:" & outDir & name &
     " " &
     srcDir & name & ".nim"
-  if defined(macosx):
-    exec "install_name_tool -add_rpath " & getEnv("STATUSGO_LIBDIR") & " " & outDir & name
-    exec "install_name_tool -change " & "libstatus." & getEnv("LIBSTATUS_EXT") & " @rpath/libstatus." & getEnv("LIBSTATUS_EXT") & " " & outDir & name
   if getEnv("RUN_AFTER_BUILD").strip != "false":
     exec outDir & name
 
