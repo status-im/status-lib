@@ -40,6 +40,7 @@ proc buildAndRun(name: string,
     " --nimcache:nimcache/" & (if getEnv("RELEASE").strip != "false": "release/" else: "debug/") & name &
     (if getEnv("PCRE_LDFLAGS").strip != "": " --passL:\"" & getEnv("PCRE_LDFLAGS") & "\"" else: "") &
     " --passL:\"-L" & getEnv("STATUSGO_LIBDIR") & " -lstatus \"" &
+    " --passL:\"-L" & getEnv("KEYCARDGO_LIBDIR") & " -lkeycard \"" &
     " --out:" & outDir & name &
     " " &
     srcDir & name & ".nim"
