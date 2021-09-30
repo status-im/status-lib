@@ -58,7 +58,7 @@ proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): 
   result.tokens = tokens.newTokensModel(result.events)
   result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
-  result.keycard = newKeycardModel()
+  result.keycard = newKeycardModel(result.backend)
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: string) =
   statusgo_backend_accounts.initNode(statusGoDir, keystoreDir)

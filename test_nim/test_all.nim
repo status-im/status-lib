@@ -1,2 +1,3 @@
 import
-    ./bookmarks
+    ./bookmarks,
+    ./keycard

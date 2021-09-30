@@ -1,32 +1,22 @@
 import keycard_go
-import json
 import types/keycard
+import ../backends/backend
 
 include utils/json_utils
 
 type
     KeycardModel* = ref object
+      backend*: Backend
 
-proc newKeycardModel*(): KeycardModel =
+proc newKeycardModel*(backend: Backend): KeycardModel =
   result = KeycardModel()
+  result.backend = backend
 
 proc start*(self: KeycardModel): string =
-  keycard_go.start()
+  result = self.backend.keycardStart()
 
 proc stop*(self: KeycardModel): string =
-  keycard_go.stop()
+  result = self.backend.keycardStop()
 
 proc select*(self: KeycardModel): KeycardApplicationInfo =
-  let response = keycard_go.select()
-  let parsedResponse = parseJson(response)
-  return KeycardApplicationInfo(
-    installed: parsedResponse["applicationInfo"]["installed"].getBool(),
-    initialized: parsedResponse["applicationInfo"]["initialized"].getBool(),
-    instanceUID: parsedResponse["applicationInfo"]["instanceUID"].getStr(),
-    secureChannelPublicKey: parsedResponse["applicationInfo"]["secureChannelPublicKey"].getStr(),
-    version: parsedResponse["applicationInfo"]["version"].getInt(),
-    availableSlots: parsedResponse["applicationInfo"]["availableSlots"].getInt(),
-    keyUID: parsedResponse["applicationInfo"]["keyUID"].getStr(),
-    capabilities: parsedResponse["applicationInfo"]["capabilities"].getInt()
-  )
-
+  result = self.backend.keycardSelect()
