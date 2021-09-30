@@ -141,7 +141,7 @@ libstatuslib: | $(STATUSGO) $(KEYCARDGO)
 		[[ $$? = 0 ]]
 
 # libraries for dynamic linking of non-Nim objects
-EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus
+EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus -L"$(KEYCARDGO_LIBDIR)" -lkeycard
 build_ctest: | $(LIBSTATUSLIB) build deps
 	echo -e $(BUILD_MSG) "build/ctest" && \
 		 $(CC) test/main.c -Wl,-rpath,'$$ORIGIN' -I./vendor/nimbus-build-system/vendor/Nim/lib $(EXTRA_LIBS_DYNAMIC) -g -o build/ctest
@@ -149,13 +149,13 @@ build_ctest: | $(LIBSTATUSLIB) build deps
 LD_LIBRARY_PATH_NIMBLE := $${LD_LIBRARY_PATH}
 ifneq ($(detected_OS),Windows)
  ifneq ($(detected_OS),Darwin)
-  LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
+	LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
  endif
 endif
 
 PATH_NIMBLE := $${PATH}
 ifeq ($(detected_OS),Windows)
- PATH_NIMBLE := $(STATUSGO_LIBDIR):$(PATH_NIMBLE)
+	PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(PATH_NIMBLE)
 endif
 
 NIMBLE_ENV = \
@@ -170,13 +170,13 @@ endif
 
 ctest: | build_ctest
 	echo -e "Running ctest:" && \
-	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR)" \
+	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR)" \
 	./build/ctest
 
-test: | $(STATUSGO)
+test: | $(STATUSGO) $(KEYCARDGO)
 	$(NIMBLE_ENV) $(ENV_SCRIPT) nimble tests
 
 clean: | clean-common
-	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)
+	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO) $(KEYCARDGO)
 
 endif # "variables.mk" was not included
