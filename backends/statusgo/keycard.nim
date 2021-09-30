@@ -1,7 +1,9 @@
-import ../types
-import ../../status/types/[keycard]
 import json
 import keycard_go
+
+import ../../status/types/[keycard]
+import ../types
+import ./core
 
 method keycardStart*(self: StatusGoBackend): string =
   result = "Hello Keycard"
