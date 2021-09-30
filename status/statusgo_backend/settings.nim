@@ -212,8 +212,13 @@ proc setFleet*(fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
   nodeConfig["ClusterConfig"]["TrustedMailServers"] = %* fleetConfig.getNodes(fleet, FleetNodes.Mailservers)
   nodeConfig["ClusterConfig"]["StaticNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Whisper)
   nodeConfig["ClusterConfig"]["RendezvousNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Rendezvous)
-  nodeConfig["ClusterConfig"]["WakuNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-  nodeConfig["ClusterConfig"]["WakuStoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-
+  nodeConfig["ClusterConfig"]["RelayNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+  nodeConfig["ClusterConfig"]["StoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+  nodeConfig["ClusterConfig"]["FilterNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+  nodeConfig["ClusterConfig"]["LightpushNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   return saveSetting(Setting.NodeConfig, nodeConfig)
 
+proc setV2LightMode*(enabled: bool): StatusGoError =
+  var nodeConfig = getNodeConfig()
+  nodeConfig["WakuV2Config"]["LightClient"] = newJBool(enabled)
+  return saveSetting(Setting.NodeConfig, nodeConfig)

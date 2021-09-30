@@ -45,11 +45,17 @@ proc getCurrentNetwork*(self: SettingsModel): NetworkType =
 proc setWakuVersion*(self: SettingsModel, newVersion: int) =
   statusgo_backend_settings.setWakuVersion(newVersion)
 
+proc getWakuVersion*(self: SettingsModel): int =
+  statusgo_backend_settings.getWakuVersion()
+
 proc setBloomFilterMode*(self: SettingsModel, bloomFilterMode: bool): StatusGoError =
   statusgo_backend_settings.setBloomFilterMode(bloomFilterMode)
 
 proc setFleet*(self: SettingsModel, fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
   statusgo_backend_settings.setFleet(fleetConfig, fleet)
+
+proc setV2LightMode*(self: SettingsModel, enabled: bool): StatusGoError =
+  statusgo_backend_settings.setV2LightMode(enabled)
 
 proc getNodeConfig*(self: SettingsModel): JsonNode =
   statusgo_backend_settings.getNodeConfig()
