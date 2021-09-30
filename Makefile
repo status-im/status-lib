@@ -117,7 +117,9 @@ export LIBSTATUS_EXT
 
 KEYCARDGO := vendor/nim-keycard-go/go/keycard/build/libkeycard/libkeycard.$(LIBKEYCARD_EXT)
 KEYCARDGO_LIBDIR := $(shell pwd)/$(shell dirname "$(KEYCARDGO)")
+export KEYCARDGO
 export KEYCARDGO_LIBDIR
+export LIBKEYCARD_EXT
 
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
