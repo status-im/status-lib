@@ -93,7 +93,6 @@ deps: | deps-common bottles
 
 update: | update-common
 
-
 RELEASE ?= false
 ifeq ($(RELEASE),false)
  # We need `-d:debug` to get Nim's default stack traces
@@ -151,17 +150,20 @@ build_ctest: | $(LIBSTATUSLIB) build deps
 LD_LIBRARY_PATH_NIMBLE := $${LD_LIBRARY_PATH}
 ifneq ($(detected_OS),Windows)
  ifneq ($(detected_OS),Darwin)
-	LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
+  LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
  endif
 endif
 
 PATH_NIMBLE := $${PATH}
 ifeq ($(detected_OS),Windows)
-	PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(PATH_NIMBLE)
+ PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(PATH_NIMBLE)
 endif
 
+RUN_AFTER_BUILD ?= true
+
 NIMBLE_ENV = \
-	RELEASE=$(RELEASE)
+ RELEASE=$(RELEASE) \
+ RUN_AFTER_BUILD=$(RUN_AFTER_BUILD)
 ifeq ($(detected_OS),Windows)
  NIMBLE_ENV += PATH="$(PATH_NIMBLE)"
  PCRE_LDFLAGS := -L$(shell cygpath -m /ucrt64/lib) -lpcre
