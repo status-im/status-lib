@@ -7,7 +7,7 @@ import statusgo_backend/accounts as status_accounts
 import statusgo_backend/tokens as statusgo_backend_tokens
 import statusgo_backend/settings as status_settings
 import statusgo_backend/wallet as status_wallet
-import statusgo_backend/accounts/constants as constants
+import statusgo_backend/constants as constants
 import eth/[eth, contracts]
 import eth/tokens as status_tokens
 from statusgo_backend/core import getBlockByNumber

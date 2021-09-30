@@ -1,7 +1,7 @@
 import json, strformat, options, chronicles, sugar, sequtils, strutils
 
 import statusgo_backend/accounts as status_accounts
-import statusgo_backend/accounts/constants as constants
+import statusgo_backend/constants as constants
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/network as status_network
 import statusgo_backend/settings as status_settings

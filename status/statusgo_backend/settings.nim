@@ -6,7 +6,7 @@ import
 from status_go import nil
 
 import
-  ./core, ./accounts/constants, ../utils
+  ./core, ./constants, ../utils
 
 import ../types/[setting, network_type, fleet, rpc_response]
 

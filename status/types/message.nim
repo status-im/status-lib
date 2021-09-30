@@ -4,7 +4,7 @@ import json, strutils, sequtils, sugar, chronicles
 import json_serialization
 import ../utils
 import ../wallet/account
-import ../statusgo_backend/accounts/constants as constants
+import ../statusgo_backend/constants as constants
 import ../statusgo_backend/wallet as status_wallet
 import ../statusgo_backend/settings as status_settings
 import ../statusgo_backend/tokens as status_tokens

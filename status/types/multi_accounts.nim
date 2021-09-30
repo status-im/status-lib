@@ -1,7 +1,7 @@
 {.used.}
 
 import json_serialization
-import ../statusgo_backend/accounts/constants
+import ../statusgo_backend/constants
 
 include derived_account
 
