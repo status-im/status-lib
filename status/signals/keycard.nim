@@ -7,5 +7,5 @@ type KeycardStartedSignal* = ref object of Signal
   started*: string
 
 proc fromEvent*(T: type KeycardStartedSignal, event: JsonNode): KeycardStartedSignal =
-  result = KeycardSignal()
-  result.started = event["event"]
+  result = KeycardStartedSignal()
+  result.started = event["event"].getStr()
