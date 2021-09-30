@@ -47,6 +47,8 @@ proc buildAndRun(name: string,
   if defined(macosx):
     exec "install_name_tool -add_rpath " & getEnv("STATUSGO_LIBDIR") & " " & outDir & name
     exec "install_name_tool -change " & "libstatus." & getEnv("LIBSTATUS_EXT") & " @rpath/libstatus." & getEnv("LIBSTATUS_EXT") & " " & outDir & name
+    exec "install_name_tool -add_rpath " & getEnv("KEYCARDGO_LIBDIR") & " " & outDir & name
+    exec "install_name_tool -change " & "libkeycard." & getEnv("LIBKEYCARD_EXT") & " @rpath/libkeycard." & getEnv("LIBKEYCARD_EXT") & " " & outDir & name
   if getEnv("RUN_AFTER_BUILD").strip != "false":
     exec outDir & name
 
