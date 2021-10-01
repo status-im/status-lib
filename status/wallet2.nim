@@ -5,6 +5,7 @@ import statusgo_backend/accounts/constants as constants
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/network as status_network
 import statusgo_backend/settings as status_settings
+import statusgo_backend/eth as eth
 import eth/contracts
 import wallet2/balance_manager
 import eth/tokens as tokens_backend
@@ -164,7 +165,7 @@ proc addAccountsFromSeed*(self: Wallet2Model, seed: string, password: string, ac
   generatedAccount.derived = status_accounts.deriveAccounts(generatedAccount.id)
 
   let
-    defaultAccount = status_accounts.getDefaultAccount()
+    defaultAccount = eth.getDefaultAccount()
     isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
   if not isPasswordOk:
     raise newException(StatusGoException, "Error generating new account: invalid password")
@@ -174,7 +175,7 @@ proc addAccountsFromSeed*(self: Wallet2Model, seed: string, password: string, ac
 proc addAccountsFromPrivateKey*(self: Wallet2Model, privateKey: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let
     generatedAccount = status_accounts.MultiAccountImportPrivateKey(privateKey)
-    defaultAccount = status_accounts.getDefaultAccount()
+    defaultAccount = eth.getDefaultAccount()
     isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
 
   if not isPasswordOk:

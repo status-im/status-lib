@@ -41,9 +41,6 @@ proc callPrivateRPC*(methodName: string, payload = %* []): string =
 # proc markTrustedPeer*(peer: string) =
 #   discard callPrivateRPC("markTrustedPeer".prefix(false), %* [peer])
 
-# proc getBlockByNumber*(blockNumber: string): string =
-#   result = callPrivateRPC("eth_getBlockByNumber", %* [blockNumber, false])
-
 # proc getTransfersByAddress*(address: string, toBlock: string, limit: string, fetchMore: bool = false): string =
 #   let toBlockParsed = if not fetchMore: newJNull() else: %toBlock
 #   result = callPrivateRPC("wallet_getTransfersByAddress", %* [address, toBlockParsed, limit, fetchMore])

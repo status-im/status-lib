@@ -28,9 +28,6 @@ proc getWalletAccounts*(): seq[WalletAccount] =
     let msg = getCurrentExceptionMsg()
     error "Failed getting wallet accounts", msg
 
-proc getTransactionReceipt*(transactionHash: string): string =
-  result = callPrivateRPC("eth_getTransactionReceipt", %* [transactionHash])
-
 proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadMore: bool = false): seq[Transaction] =
   try:
     let
@@ -62,14 +59,6 @@ proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadM
   except:
     let msg = getCurrentExceptionMsg()
     error "Failed getting wallet account transactions", msg
-
-proc getBalance*(address: string): string =
-  let payload = %* [address, "latest"]
-  let response = parseJson(callPrivateRPC("eth_getBalance", payload))
-  if response.hasKey("error"):
-    raise newException(RpcException, "Error getting balance: " & $response["error"])
-  else:
-    result = response["result"].str
 
 proc hex2Eth*(input: string): string =
   var value = fromHex(Stuint[256], input)
@@ -146,21 +135,9 @@ proc fetchCryptoServices*(success: var bool): string =
     error "Error getting crypto services: ", msg = e.msg
     result = ""
 
-proc maxPriorityFeePerGas*(): string =
-  let payload = %* []
-  result = callPrivateRPC("eth_maxPriorityFeePerGas", payload)
-
 proc suggestFees*(): string =
   let payload = %* []
   result = callPrivateRPC("wallet_suggestFees", payload)
-
-proc feeHistory*(n: int): string =
-  let payload = %* [n, "latest", nil]
-  result = callPrivateRPC("eth_feeHistory", payload)
-
-proc getGasPrice*(): string =
-  let payload = %* []
-  result = callPrivateRPC("eth_gasPrice", payload)
 
 proc addSavedAddress*(name, address: string): string =
   let

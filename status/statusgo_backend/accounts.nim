@@ -43,10 +43,6 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
 proc hashPassword*(password: string): string =
   result = "0x" & $keccak_256.digest(password)
 
-proc getDefaultAccount*(): string =
-  var response = callPrivateRPC("eth_accounts")
-  result = parseJson(response)["result"][0].getStr()
-
 proc generateAddresses*(n = 5): seq[GeneratedAccount] =
   let multiAccountConfig = %* {
     "n": n,
