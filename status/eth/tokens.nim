@@ -5,9 +5,10 @@ import
 import
   web3/[ethtypes, conversions], json_serialization
 
-import 
+import
   ../statusgo_backend/[core, wallet, settings],
   ../statusgo_backend/tokens as statusgo_backend_tokens,
+  ../statusgo_backend/eth as eth,
   ../types/[setting, network, rpc_response],
   ./contracts
 from ../utils import parseAddress
@@ -45,7 +46,7 @@ proc toggleAsset*(network: Network, symbol: string): seq[Erc20Contract] =
   visibleTokens[$network.chainId] = %* visibleTokenList
   let saved = saveSetting(Setting.VisibleTokens, $visibleTokens)
 
-  convertStringSeqToERC20ContractSeq(network, visibleTokenList) 
+  convertStringSeqToERC20ContractSeq(network, visibleTokenList)
 
 proc hideAsset*(network: Network, symbol: string) =
   let visibleTokens = visibleTokensSNTDefault(network)
@@ -67,22 +68,22 @@ proc getVisibleTokens*(network: Network): seq[Erc20Contract] =
 proc getToken*(network: Network, tokenAddress: string): Erc20Contract =
   allErc20ContractsByChainId(network.chainId).concat(statusgo_backend_tokens.getCustomTokens()).findByAddress(tokenAddress.parseAddress)
 
-proc getTokenBalance*(network: Network, tokenAddress: string, account: string): string = 
+proc getTokenBalance*(network: Network, tokenAddress: string, account: string): string =
   var postfixedAccount: string = account
   postfixedAccount.removePrefix("0x")
   let payload = %* [{
     "to": tokenAddress, "from": account, "data": fmt"0x70a08231000000000000000000000000{postfixedAccount}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
-  let balance = response.parseJson["result"].getStr
+  let response = eth.call(payload)
+  let balance = response.result
 
   var decimals = 18
   let address = parseAddress(tokenAddress)
   let t = findErc20Contract(network.chainId, address)
   let ct = statusgo_backend_tokens.getCustomTokens().findByAddress(address)
-  if t != nil: 
+  if t != nil:
     decimals = t.decimals
-  elif ct != nil: 
+  elif ct != nil:
     decimals = ct.decimals
 
   result = $hex2Token(balance, decimals)
@@ -99,9 +100,8 @@ proc getTokenString*(contract: Contract, methodName: string): string =
       "to": $contract.address,
       "data": contract.methods[methodName].encodeAbi()
     }, "latest"]
-  
-  let responseStr = callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+
+  let response = eth.call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting token string - " & methodName & ": " & response.error.message)
   if response.result == "0x":
@@ -119,9 +119,8 @@ proc tokenDecimals*(contract: Contract): int =
       "to": $contract.address,
       "data": contract.methods["decimals"].encodeAbi()
     }, "latest"]
-  
-  let responseStr = callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+
+  let response = eth.call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting token decimals: " & response.error.message)
   if response.result == "0x":

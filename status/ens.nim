@@ -11,7 +11,6 @@ import algorithm
 import web3/[ethtypes, conversions], stew/byteutils, stint
 import chronicles, libp2p/[multihash, multicodec, cid]
 
-import ./statusgo_backend/core
 import ./statusgo_backend/eth as eth
 import ./statusgo_backend/wallet
 import ./statusgo_backend/settings as status_settings
@@ -77,9 +76,9 @@ proc resolver*(usernameHash: string): string =
     "from": "0x0000000000000000000000000000000000000000",
     "data": fmt"{resolver_signature}{userNameHash}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
+  let response = eth.call(payload)
   # TODO: error handling
-  var resolverAddr = response.parseJson["result"].getStr
+  var resolverAddr = response.result
   resolverAddr.removePrefix("0x000000000000000000000000")
   result = "0x" & resolverAddr
 
@@ -92,9 +91,9 @@ proc owner*(username: string): string =
     "from": "0x0000000000000000000000000000000000000000",
     "data": fmt"{owner_signature}{userNameHash}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
+  let response = eth.call(payload)
   # TODO: error handling
-  let ownerAddr = response.parseJson["result"].getStr;
+  let ownerAddr = response.result
   if ownerAddr == "0x0000000000000000000000000000000000000000000000000000000000000000":
     return ""
   result = "0x" & ownerAddr.substr(26)
@@ -109,9 +108,9 @@ proc pubkey*(username: string): string =
     "from": "0x0000000000000000000000000000000000000000",
     "data": fmt"{pubkey_signature}{userNameHash}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
+  let response = eth.call(payload)
   # TODO: error handling
-  var pubkey = response.parseJson["result"].getStr
+  var pubkey = response.result
   if pubkey == "0x" or pubkey == "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
     result = ""
   else:
@@ -128,9 +127,9 @@ proc address*(username: string): string =
     "from": "0x0000000000000000000000000000000000000000",
     "data": fmt"{address_signature}{userNameHash}"
   }, "latest"]
-  let response = callPrivateRPC("eth_call", payload)
+  let response = eth.call(payload)
   # TODO: error handling
-  let address = response.parseJson["result"].getStr;
+  let address = response.result
   if address == "0x0000000000000000000000000000000000000000000000000000000000000000":
     return ""
   result = "0x" & address.substr(26)
@@ -146,8 +145,8 @@ proc contenthash*(ensAddr: string): string =
     "data": fmt"{contenthash_signature}{ensHash}"
   }, "latest"]
 
-  let response = callPrivateRPC("eth_call", payload)
-  let bytesResponse = response.parseJson["result"].getStr;
+  let response = eth.call(payload)
+  let bytesResponse = response.result
   if bytesResponse == "0x":
     return ""
 
@@ -165,8 +164,7 @@ proc getPrice*(): Stuint[256] =
       "data": contract.methods["getPrice"].encodeAbi()
     }, "latest"]
 
-  let responseStr = callPrivateRPC("eth_call", payload)
-  let response = Json.decode(responseStr, RpcResponse)
+  let response = eth.call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting ens username price: " & response.error.message)
   if response.result == "0x":
