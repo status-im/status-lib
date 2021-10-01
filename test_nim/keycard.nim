@@ -46,9 +46,6 @@ suite "#Keycard":
     except KeycardStopException as ex:
       echo "keycard stop exception"
       echo repr(ex)
-    except KeycardSelectException as ex:
-      echo "keycard select exception"
-      echo repr(ex)
     except KeycardException as ex:
       echo "keycard exception"
       echo repr(ex)
