@@ -1,4 +1,4 @@
-import ../../status/types/[keycard]
+import ../../types/[keycard]
 import ../types
 
 method keycardStart*(self: Backend) =

@@ -1,5 +1,5 @@
 import ../types
-import ../../status/types/[keycard]
+import ../../types/[keycard]
 
 method keycardStart*(self: MockBackend) = discard
 

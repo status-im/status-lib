@@ -1,7 +1,7 @@
 import json
 import keycard_go
 
-import ../../status/types/[keycard]
+import ../../types/[keycard]
 import ../types
 import ./core
 

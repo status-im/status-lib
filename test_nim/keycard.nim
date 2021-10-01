@@ -2,7 +2,7 @@ import # std libs
   std/[json, options, os, unittest]
 
 import ../status/status
-import ../status/types/[keycard]
+import ../types/[keycard]
 import ../status/keycard as keycard_module
 
 suite "#Keycard":

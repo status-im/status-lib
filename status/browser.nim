@@ -1,7 +1,7 @@
 # import statusgo_backend/browser as status_browser
 import ../eventemitter
 
-import ../types/[bookmark]
+import ../../types/[bookmark]
 
 import ../backends/backend
 

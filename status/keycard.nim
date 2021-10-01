@@ -1,5 +1,5 @@
 import keycard_go
-import types/keycard
+import ../types/keycard
 import ../backends/backend
 
 include utils/json_utils
