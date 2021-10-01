@@ -10,7 +10,6 @@ type KeycardModel* = ref object
 proc newKeycardModel*(backend: Backend): KeycardModel =
   result = KeycardModel()
   result.backend = backend
-  return result
 
 proc start*(self: KeycardModel) =
   self.backend.keycardStart()
