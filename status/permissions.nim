@@ -1,16 +1,9 @@
 import json
-import strutils
 import sets
-import statusgo_backend/core
 import chronicles
+import ./statusgo_backend/permissions as status_permissions
+import ./types/permission
 import ../eventemitter
-import sequtils
-
-type
-  Permission* {.pure.} = enum
-    Web3 = "web3",
-    ContactCode = "contact-code"
-    Unknown = "unknown"
 
 logScope:
   topics = "permissions-model"
@@ -19,13 +12,6 @@ type
     PermissionsModel* = ref object
       events*: EventEmitter
 
-proc toPermission*(value: string): Permission =
-  result = Permission.Unknown
-  try:
-    result = parseEnum[Permission](value)
-  except:
-    warn "Unknown permission requested", value
-
 proc newPermissionsModel*(events: EventEmitter): PermissionsModel =
   result = PermissionsModel()
   result.events = events
@@ -33,73 +19,27 @@ proc newPermissionsModel*(events: EventEmitter): PermissionsModel =
 proc init*(self: PermissionsModel) =
   discard
 
-type Dapp* = object
-  name*: string
-  permissions*: HashSet[Permission]
-
 proc getDapps*(self: PermissionsModel): seq[Dapp] =
-  let response = callPrivateRPC("permissions_getDappPermissions")
-  result = @[]
-  for dapps in response.parseJson["result"].getElems():
-    var dapp = Dapp(
-      name: dapps["dapp"].getStr(),
-      permissions: initHashSet[Permission]()
-    )
-    for permission in dapps["permissions"].getElems():
-        dapp.permissions.incl(permission.getStr().toPermission())
-    result.add(dapp)
+  return status_permissions.getDapps()
 
 proc getPermissions*(self: PermissionsModel, dapp: string): HashSet[Permission] =
-  let response = callPrivateRPC("permissions_getDappPermissions")
-  result = initHashSet[Permission]()
-  for dappPermission in response.parseJson["result"].getElems():
-    if dappPermission["dapp"].getStr() == dapp:
-      if not dappPermission.hasKey("permissions"): return
-      for permission in dappPermission["permissions"].getElems():
-        result.incl(permission.getStr().toPermission())
+  return status_permissions.getPermissions(dapp)
 
 proc revoke*(self: PermissionsModel, permission: Permission) =
-  let response = callPrivateRPC("permissions_getDappPermissions")
-  var permissions = initHashSet[Permission]()
-
-  for dapps in response.parseJson["result"].getElems():
-    for currPerm in dapps["permissions"].getElems():
-      let p = currPerm.getStr().toPermission()
-      if p != permission:
-        permissions.incl(p)
-
-    discard callPrivateRPC("permissions_addDappPermissions", %*[{
-      "dapp": dapps["dapp"].getStr(),
-      "permissions": permissions.toSeq()
-    }])
+  status_permissions.revoke(permission)
 
 proc hasPermission*(self: PermissionsModel, dapp: string, permission: Permission): bool =
-  result = self.getPermissions(dapp).contains(permission)
+  return self.getPermissions(dapp).contains(permission)
 
 proc addPermission*(self: PermissionsModel, dapp: string, permission: Permission) =
-  var permissions = self.getPermissions(dapp)
-  permissions.incl(permission)
-  discard callPrivateRPC("permissions_addDappPermissions", %*[{
-    "dapp": dapp,
-    "permissions": permissions.toSeq()
-  }])
+  status_permissions.addPermission(dapp, permission)
 
 proc revokePermission*(self: PermissionsModel, dapp: string, permission: Permission) =
-  var permissions = self.getPermissions(dapp)
-  permissions.excl(permission)
-
-  if permissions.len == 0:
-    discard callPrivateRPC("permissions_deleteDappPermissions", %*[dapp])
-  else:
-    discard callPrivateRPC("permissions_addDappPermissions", %*[{
-      "dapp": dapp,
-      "permissions": permissions.toSeq()
-    }])
+  status_permissions.revokePermission(dapp, permission)
 
 proc clearPermissions*(self: PermissionsModel, dapp: string) =
-  discard callPrivateRPC("permissions_deleteDappPermissions", %*[dapp])
+  status_permissions.clearPermissions(dapp)
 
 proc clearPermissions*(self: PermissionsModel) =
-  let response = callPrivateRPC("permissions_getDappPermissions")
-  for dapps in response.parseJson["result"].getElems():
-    discard callPrivateRPC("permissions_deleteDappPermissions", %*[dapps["dapp"].getStr()])
+  for dapps in status_permissions.getDapps():
+    status_permissions.clearPermissions(dapps.name)
