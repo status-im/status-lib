@@ -12,10 +12,19 @@ proc newKeycardModel*(backend: Backend): KeycardModel =
   result.backend = backend
 
 proc start*(self: KeycardModel) =
-  self.backend.keycardStart()
+  try:
+    self.backend.keycardStart()
+  except:
+    raise
 
 proc stop*(self: KeycardModel) =
-  self.backend.keycardStop()
+  try:
+    self.backend.keycardStop()
+  except:
+    raise
 
 proc select*(self: KeycardModel): KeycardApplicationInfo =
-  result = self.backend.keycardSelect()
+  try:
+    result = self.backend.keycardSelect()
+  except:
+    raise
