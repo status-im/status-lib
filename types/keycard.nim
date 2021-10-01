@@ -1,5 +1,3 @@
-import options
-
 type KeycardException* = ref object of Exception
   error*: string
 
