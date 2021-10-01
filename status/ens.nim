@@ -13,12 +13,12 @@ import chronicles, libp2p/[multihash, multicodec, cid]
 
 import ./statusgo_backend/eth as eth
 import ./statusgo_backend/wallet
+import ./statusgo_backend/accounts as status_accounts
 import ./statusgo_backend/settings as status_settings
 import ./types/[transaction, setting, rpc_response, network_type, network, profile]
 import ./utils
 import ./transactions
 import ./eth/contracts
-import ./wallet as status_wallet
 
 const domain* = ".stateofus.eth"
 
@@ -381,7 +381,7 @@ proc validateEnsName*(ens: string, isStatus: bool, usernames: seq[string]): stri
       result = "available"
     else:
       let userPubKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
-      let userWallet = status_wallet.getWalletAccounts()[0].address
+      let userWallet = status_accounts.getWalletAccounts()[0].address
       let ens_pubkey = pubkey(ens)
       if ownerAddr != "":
         if ens_pubkey == "" and ownerAddr == userWallet:

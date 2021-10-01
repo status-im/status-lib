@@ -4,29 +4,6 @@ from status_go import validateMnemonic#, startWallet
 import ../wallet/account
 import web3/conversions as web3_conversions, web3/ethtypes
 
-proc getWalletAccounts*(): seq[WalletAccount] =
-  try:
-    var response = callPrivateRPC("accounts_getAccounts")
-    let accounts = parseJson(response)["result"]
-
-    var walletAccounts:seq[WalletAccount] = @[]
-    for account in accounts:
-      if (account["chat"].to(bool) == false): # Might need a better condition
-        walletAccounts.add(WalletAccount(
-          address: $account["address"].getStr,
-          path: $account["path"].getStr,
-          walletType: if (account.hasKey("type")): $account["type"].getStr else: "",
-          # Watch accoutns don't have a public key
-          publicKey: if (account.hasKey("public-key")): $account["public-key"].getStr else: "",
-          name: $account["name"].getStr,
-          iconColor: $account["color"].getStr,
-          wallet: account["wallet"].getBool,
-          chat: account["chat"].getBool,
-        ))
-    result = walletAccounts
-  except:
-    let msg = getCurrentExceptionMsg()
-    error "Failed getting wallet accounts", msg
 
 proc getTransfersByAddress*(address: string, toBlock: Uint256, limit: int, loadMore: bool = false): seq[Transaction] =
   try:

@@ -260,7 +260,7 @@ proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
 proc initAccounts*(self: WalletModel) =
   let network = status_settings.getCurrentNetwork().toNetwork()
   self.tokens = eth_tokens.getVisibleTokens(network)
-  let accounts = status_wallet.getWalletAccounts()
+  let accounts = status_accounts.getWalletAccounts()
   for account in accounts:
     var acc = WalletAccount(account)
     self.populateAccount(acc, "") 
@@ -404,10 +404,7 @@ proc setInitialBlocksRange*(self: WalletModel): string =
   result = status_wallet.setInitialBlocksRange()
 
 proc getWalletAccounts*(self: WalletModel): seq[WalletAccount] =
-  result = status_wallet.getWalletAccounts()
-
-proc getWalletAccounts*(): seq[WalletAccount] =
-  result = status_wallet.getWalletAccounts()
+  result = status_accounts.getWalletAccounts()
 
 proc watchTransaction*(self: WalletModel, transactionHash: string): string =
   result = status_wallet.watchTransaction(transactionHash)

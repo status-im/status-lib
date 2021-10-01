@@ -5,7 +5,7 @@ import json_serialization
 import ../utils
 import ../wallet/account
 import ../statusgo_backend/accounts/constants as constants
-import ../statusgo_backend/wallet as status_wallet
+import ../statusgo_backend/accounts as status_accounts
 import ../statusgo_backend/settings as status_settings
 import ../statusgo_backend/tokens as status_tokens
 import ../eth/contracts as status_contracts
@@ -83,7 +83,7 @@ proc currentUserWalletContainsAddress(address: string): bool =
   if (address.len == 0):
     return false
 
-  let accounts = status_wallet.getWalletAccounts()
+  let accounts = status_accounts.getWalletAccounts()
   for acc in accounts:
     if (acc.address == address):
       return true

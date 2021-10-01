@@ -61,7 +61,7 @@ proc initNetworks(self: Wallet2Model) =
   self.networks = status_network.getNetworks()
 
 proc initAccounts(self: Wallet2Model) =
-  let accounts = status_wallet.getWalletAccounts()
+  let accounts = status_accounts.getWalletAccounts()
   for acc in accounts:
     var assets: seq[Asset] = self.generateAccountConfiguredAssets(acc.address)
     var walletAccount = newWalletAccount(acc.name, acc.address, acc.iconColor, 
