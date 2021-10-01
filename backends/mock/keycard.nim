@@ -1,11 +1,9 @@
 import ../types
 import ../../status/types/[keycard]
 
-method keycardStart*(self: MockBackend): string =
-  result = "Hello Keycard"
+method keycardStart*(self: MockBackend) = discard
 
-method keycardStop*(self: MockBackend): string =
-  result = "Hello Keycard"
+method keycardStop*(self: MockBackend) = discard
 
 method keycardSelect*(self: MockBackend): KeycardApplicationInfo =
-  result = KeycardApplicationInfo()
+  result = KeycardApplicationInfo(installed: true)
