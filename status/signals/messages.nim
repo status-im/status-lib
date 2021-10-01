@@ -25,7 +25,7 @@ proc fromEvent*(T: type MessageSignal, event: JsonNode): MessageSignal =
 
   if event["event"]{"contacts"} != nil:
     for jsonContact in event["event"]["contacts"]:
-      signal.contacts.add(jsonContact.toProfileModel())
+      signal.contacts.add(jsonContact.toProfile())
 
   var chatsWithMentions: seq[string] = @[]
 

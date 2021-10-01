@@ -7,15 +7,15 @@ import # std libs
 from strutils import parseHexInt, parseInt
 
 import # vendor libs
-  json_serialization, chronicles, libp2p/[multihash, multicodec, cid], stint,
+  json_serialization, chronicles, libp2p/[multicodec, cid], stint,
   web3/[ethtypes, conversions]
-from nimcrypto import fromHex
 
 import # status-desktop libs
-  ../types/[sticker, setting, rpc_response, network_type],
-  ../statusgo_backend/[edn_helpers, settings],
+  ../types/[sticker, setting, rpc_response, network_type], 
+  ../statusgo_backend/settings,
+  ../statusgo_backend/eth as eth,
   ../utils,
-  ./transactions as transactions,
+  ./edn_helpers,
   ./contracts
 
 # Retrieves number of sticker packs owned by user
@@ -32,7 +32,7 @@ proc getBalance*(chainId: int, address: Address): int =
       "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = eth.call(payload)
 
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
@@ -50,7 +50,7 @@ proc getPackCount*(chainId: int): int =
       "data": contract.methods["packCount"].encodeAbi()
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = eth.call(payload)
 
   if not response.error.isNil:
     raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
@@ -71,7 +71,7 @@ proc getPackData*(chainId: int, id: Stuint[256], running: var Atomic[bool]): Sti
         "to": $contract.address,
         "data": contractMethod.encodeAbi(getPackData)
         }, "latest"]
-    let response = transactions.eth_call(payload)
+    let response = eth.call(payload)
     if not response.error.isNil:
       raise newException(RpcException, "Error getting sticker pack data: " & response.error.message)
 
@@ -110,7 +110,7 @@ proc tokenOfOwnerByIndex*(chainId: int, address: Address, idx: Stuint[256]): int
       "data": contract.methods["tokenOfOwnerByIndex"].encodeAbi(tokenOfOwnerByIndex)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = eth.call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting owned tokens: " & response.error.message)
   if response.result == "0x":
@@ -126,7 +126,7 @@ proc getPackIdFromTokenId*(chainId: int, tokenId: Stuint[256]): int =
       "data": contract.methods["tokenPackId"].encodeAbi(tokenPackId)
     }, "latest"]
 
-  let response = transactions.eth_call(payload)
+  let response = eth.call(payload)
   if not response.error.isNil:
     raise newException(RpcException, "Error getting pack id from token id: " & response.error.message)
   if response.result == "0x":

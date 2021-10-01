@@ -2,15 +2,14 @@ import json, strformat, strutils, chronicles, sequtils, sugar, httpclient, table
 import json_serialization, stint, stew/byteutils, algorithm
 from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
-from statusgo_backend/core import getBlockByNumber
 import statusgo_backend/accounts as status_accounts
 import statusgo_backend/tokens as statusgo_backend_tokens
 import statusgo_backend/settings as status_settings
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/accounts/constants as constants
-import eth/[eth, contracts]
-import eth/tokens as status_tokens
-from statusgo_backend/core import getBlockByNumber
+import statusgo_backend/eth as eth
+import eth/contracts
+import eth/tokens as eth_tokens
 from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, collectibles]
 import wallet/account as wallet_account
@@ -90,7 +89,7 @@ proc estimateGas*(self: WalletModel, source, to, value, data: string, success: v
   result = eth.estimateGas(tx, success)
 
 proc getTransactionReceipt*(self: WalletModel, transactionHash: string): JsonNode =
-  result = status_wallet.getTransactionReceipt(transactionHash).parseJSON()["result"]
+  result = eth.getTransactionReceipt(transactionHash).parseJSON()["result"]
 
 proc confirmTransactionStatus(self: WalletModel, pendingTransactions: JsonNode, blockNumber: int) =
   for trx in pendingTransactions.getElems():
@@ -228,7 +227,7 @@ proc newAccount*(self: WalletModel, walletType: string, derivationPath: string, 
   account
 
 proc maxPriorityFeePerGas*(self: WalletModel):string =
-  let response = status_wallet.maxPriorityFeePerGas().parseJson()
+  let response = eth.maxPriorityFeePerGas().parseJson()
   if response.hasKey("result"):
     return $fromHex(Stuint[256], response["result"].getStr)
   else:
@@ -249,7 +248,7 @@ proc cmpUint256(x, y: Uint256): int =
   else: -1
 
 proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
-  let response = status_wallet.feeHistory(101).parseJson()
+  let response = eth.feeHistory(101).parseJson()
   if response.hasKey("result"):
     for it in response["result"]["baseFeePerGas"]:
       result.add(fromHex(Stuint[256], it.getStr))
@@ -260,8 +259,8 @@ proc feeHistory*(self: WalletModel, n:int):seq[Uint256] =
 
 proc initAccounts*(self: WalletModel) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  self.tokens = status_tokens.getVisibleTokens(network)
-  let accounts = status_wallet.getWalletAccounts()
+  self.tokens = eth_tokens.getVisibleTokens(network)
+  let accounts = status_accounts.getWalletAccounts()
   for account in accounts:
     var acc = WalletAccount(account)
     self.populateAccount(acc, "") 
@@ -329,7 +328,7 @@ proc addAccountsFromSeed*(self: WalletModel, seed: string, password: string, acc
   generatedAccount.derived = status_accounts.deriveAccounts(generatedAccount.id)
  
   let
-    defaultAccount = status_accounts.getDefaultAccount()
+    defaultAccount = eth.getDefaultAccount()
     isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
   if not isPasswordOk:
     raise newException(StatusGoException, "Error generating new account: invalid password")
@@ -339,7 +338,7 @@ proc addAccountsFromSeed*(self: WalletModel, seed: string, password: string, acc
 proc addAccountsFromPrivateKey*(self: WalletModel, privateKey: string, password: string, accountName: string, color: string, keystoreDir: string) =
   let
     generatedAccount = status_accounts.MultiAccountImportPrivateKey(privateKey)
-    defaultAccount = status_accounts.getDefaultAccount()
+    defaultAccount = eth.getDefaultAccount()
     isPasswordOk = status_accounts.verifyAccountPassword(defaultAccount, password, keystoreDir)
 
   if not isPasswordOk:
@@ -374,7 +373,7 @@ proc deleteAccount*(self: WalletModel, address: string): string =
 
 proc toggleAsset*(self: WalletModel, symbol: string) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  self.tokens = status_tokens.toggleAsset(network, symbol)
+  self.tokens = eth_tokens.toggleAsset(network, symbol)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())
@@ -382,8 +381,8 @@ proc toggleAsset*(self: WalletModel, symbol: string) =
 
 proc hideAsset*(self: WalletModel, symbol: string) =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  status_tokens.hideAsset(network, symbol)
-  self.tokens = status_tokens.getVisibleTokens(network)
+  eth_tokens.hideAsset(network, symbol)
+  self.tokens = eth_tokens.getVisibleTokens(network)
   for account in self.accounts:
     account.assetList = self.generateAccountConfiguredAssets(account.address)
     updateBalance(account, self.getDefaultCurrency())
@@ -405,10 +404,7 @@ proc setInitialBlocksRange*(self: WalletModel): string =
   result = status_wallet.setInitialBlocksRange()
 
 proc getWalletAccounts*(self: WalletModel): seq[WalletAccount] =
-  result = status_wallet.getWalletAccounts()
-
-proc getWalletAccounts*(): seq[WalletAccount] =
-  result = status_wallet.getWalletAccounts()
+  result = status_accounts.getWalletAccounts()
 
 proc watchTransaction*(self: WalletModel, transactionHash: string): string =
   result = status_wallet.watchTransaction(transactionHash)
@@ -429,7 +425,7 @@ proc hex2Token*(self: WalletModel, input: string, decimals: int): string =
   result = status_wallet.hex2Token(input, decimals)
 
 proc getGasPrice*(self: WalletModel): string =
-  let response = status_wallet.getGasPrice().parseJson
+  let response = eth.getGasPrice().parseJson
   if response.hasKey("result"):
     return $fromHex(Stuint[256], response["result"].getStr)
   else:

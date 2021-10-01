@@ -5,7 +5,12 @@ import
   web3/ethtypes, stew/byteutils, nimcrypto, json_serialization, chronicles
 
 import
-  ../types/network, ../statusgo_backend/settings, ../statusgo_backend/coder, transactions, methods, ../utils
+  ../types/network,
+  ../statusgo_backend/settings,
+  ../statusgo_backend/coder,
+  ../statusgo_backend/eth,
+  ./methods,
+  ../utils
 
 export
   GetPackData, PackData, BuyToken, ApproveAndCall, Transfer, BalanceOf, Register, SetPubkey,

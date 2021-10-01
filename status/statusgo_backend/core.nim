@@ -45,10 +45,6 @@ proc markTrustedPeer*(peer: string) =
   let response = callPrivateRPC("markTrustedPeer".prefix(false), %* [peer])
   info "markTrustedPeer", topics="mailserver-interaction", rpc_method="waku_markTrustedPeer", peer, response
 
-
-proc getBlockByNumber*(blockNumber: string): string =
-  result = callPrivateRPC("eth_getBlockByNumber", %* [blockNumber, false])
-
 proc getTransfersByAddress*(address: string, toBlock: string, limit: string, fetchMore: bool = false): string =
   let toBlockParsed = if not fetchMore: newJNull() else: %toBlock
   result = callPrivateRPC("wallet_getTransfersByAddress", %* [address, toBlockParsed, limit, fetchMore])

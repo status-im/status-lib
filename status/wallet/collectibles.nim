@@ -6,8 +6,8 @@ import # vendor libs
   stint
 
 import # status-desktop libs
-  ../statusgo_backend/core as status, 
   ../statusgo_backend/settings as status_settings, 
+  ../statusgo_backend/eth as eth, 
   ../eth/contracts as contracts,
   ../stickers as status_stickers,
   ../utils as status_utils,
@@ -31,8 +31,8 @@ proc getTokenUri(contract: Erc721Contract, tokenId: Stuint[256]): string =
         "to": $contract.address,
         "data": contract.methods["tokenURI"].encodeAbi(tokenUri)
       }, "latest"]
-      response = callPrivateRPC("eth_call", payload)
-    var postfixedResult: string = parseJson($response)["result"].str
+      response = eth.call(payload)
+    var postfixedResult = response.result
     postfixedResult.removeSuffix('0')
     postfixedResult.removePrefix("0x")
     postfixedResult = parseHexStr(postfixedResult)
@@ -51,14 +51,15 @@ proc tokenOfOwnerByIndex(contract: Erc721Contract, address: Address, index: Stui
       "to": $contract.address,
       "data": contract.methods["tokenOfOwnerByIndex"].encodeAbi(tokenOfOwnerByIndex)
     }, "latest"]
-    response = callPrivateRPC("eth_call", payload)
-    jsonResponse = parseJson($response)
-  if (not jsonResponse.hasKey("result")):
+    response = eth.call(payload)
+
+  if not response.error.isNil:
     return -1
-  let res = jsonResponse["result"].getStr
-  if (res == "0x"):
+
+  if (response.result == "0x"):
     return -1
-  result = fromHex[int](res)
+
+  result = fromHex[int](response.result)
 
 proc balanceOf(contract: Erc721Contract, address: Address): int =
   let
@@ -67,14 +68,15 @@ proc balanceOf(contract: Erc721Contract, address: Address): int =
       "to": $contract.address,
       "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
     }, "latest"]
-    response = callPrivateRPC("eth_call", payload)
-    jsonResponse = parseJson($response)
-  if (not jsonResponse.hasKey("result")):
+    response = eth.call(payload)
+
+  if not response.error.isNil:
     return 0
-  let res = jsonResponse["result"].getStr
-  if (res == "0x"):
+
+  if (response.result == "0x"):
     return 0
-  result = fromHex[int](res)
+
+  result = fromHex[int](response.result)
 
 proc tokensOfOwnerByIndex(contract: Erc721Contract, address: Address): seq[int] =
   var index = 0

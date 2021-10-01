@@ -1,6 +1,6 @@
 import ens, wallet, permissions, utils
 import ../eventemitter
-import ./types/[setting]
+import ./types/[setting, permission]
 import utils
 import statusgo_backend/accounts
 import statusgo_backend/core

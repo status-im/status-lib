@@ -1,6 +1,5 @@
 import json
 import ./types/[identity_image]
-import profile/profile
 import statusgo_backend/core as statusgo_backend_core
 import statusgo_backend/accounts as status_accounts
 import statusgo_backend/settings as status_settings

@@ -3,6 +3,7 @@ import json, os, nimcrypto, uuids, json_serialization, chronicles, strutils
 from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, identicon, saveAccountAndLogin, login, openAccounts, getNodeConfig
 import core
 import ../utils as utils
+from ../wallet/account as walletAccount import WalletAccount
 import ../types/[account, fleet, rpc_response]
 import accounts/constants
 
@@ -14,7 +15,7 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
   let networkConfig = getNetworkConfig(constants.DEFAULT_NETWORK_NAME)
   let upstreamUrl = networkConfig["config"]["UpstreamConfig"]["URL"]
   let fleet = Fleet.PROD
-  
+
   var newDataDir = networkConfig["config"]["DataDir"].getStr
   newDataDir.removeSuffix("_rpc")
   result = constants.NODE_CONFIG.copy()
@@ -43,10 +44,6 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
 proc hashPassword*(password: string): string =
   result = "0x" & $keccak_256.digest(password)
 
-proc getDefaultAccount*(): string =
-  var response = callPrivateRPC("eth_accounts")
-  result = parseJson(response)["result"][0].getStr()
-
 proc generateAddresses*(n = 5): seq[GeneratedAccount] =
   let multiAccountConfig = %* {
     "n": n,
@@ -56,6 +53,30 @@ proc generateAddresses*(n = 5): seq[GeneratedAccount] =
   }
   let generatedAccounts = $status_go.multiAccountGenerateAndDeriveAddresses($multiAccountConfig)
   result = Json.decode(generatedAccounts, seq[GeneratedAccount])
+
+proc getWalletAccounts*(): seq[WalletAccount] =
+  try:
+    var response = callPrivateRPC("accounts_getAccounts")
+    let accounts = parseJson(response)["result"]
+
+    var walletAccounts:seq[WalletAccount] = @[]
+    for account in accounts:
+      if (account["chat"].to(bool) == false): # Might need a better condition
+        walletAccounts.add(WalletAccount(
+          address: $account["address"].getStr,
+          path: $account["path"].getStr,
+          walletType: if (account.hasKey("type")): $account["type"].getStr else: "",
+          # Watch accoutns don't have a public key
+          publicKey: if (account.hasKey("public-key")): $account["public-key"].getStr else: "",
+          name: $account["name"].getStr,
+          iconColor: $account["color"].getStr,
+          wallet: account["wallet"].getBool,
+          chat: account["chat"].getBool,
+        ))
+        result = walletAccounts
+  except:
+    let msg = getCurrentExceptionMsg()
+    error "Failed getting wallet accounts", msg
 
 proc generateAlias*(publicKey: string): string =
   result = $status_go.generateAlias(publicKey)

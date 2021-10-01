@@ -1,5 +1,6 @@
 import strformat, strutils, stint, httpclient, json, chronicles, net
 import ../statusgo_backend/wallet as status_wallet
+import ../statusgo_backend/eth as eth
 import ../statusgo_backend/settings as status_settings
 import ../eth/tokens as status_tokens
 import ../types/[rpc_response, network_type]
@@ -37,7 +38,7 @@ proc getPrice(crypto: string, fiat: string): string =
     client.close()
 
 proc getEthBalance(address: string): string =
-  var balance = status_wallet.getBalance(address)
+  var balance = eth.getBalance(address)
   result = status_wallet.hex2token(balance, 18)
 
 proc getBalance*(symbol: string, accountAddress: string, tokenAddress: string, refreshCache: bool): string =

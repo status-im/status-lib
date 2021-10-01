@@ -1,12 +1,12 @@
 {.used.}
 
-import json_serialization
+import json_serialization, json
 
 import ../../eventemitter
-import identity_image
+import ./identity_image
+import ./profile
 
-include multi_accounts
-
+include ./multi_accounts
 export identity_image
 
 type
@@ -44,3 +44,15 @@ proc toAccount*(account: NodeAccount): Account =
 
 type AccountArgs* = ref object of Args
     account*: Account
+
+proc toProfile*(account: Account): Profile =
+  result = Profile(
+    id: "",
+    username: account.name,
+    identicon: account.identicon,
+    alias: account.name,
+    ensName: "",
+    ensVerified: false,
+    appearance: 0,
+    systemTags: @[]
+  )
