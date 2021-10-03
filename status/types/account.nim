@@ -53,6 +53,5 @@ proc toProfile*(account: Account): Profile =
     alias: account.name,
     ensName: "",
     ensVerified: false,
-    appearance: 0,
-    systemTags: @[]
+    appearance: 0
   )

@@ -253,7 +253,7 @@ proc init*(self: ChatModel, pubKey: string) =
   self.publicKey = pubKey
 
   var (contacts, _) = status_contacts.getContacts()
-  contacts = contacts.filter(c => c.systemTags.contains(contactAdded))
+  contacts = contacts.filter(c => c.added)
   var chatList = status_chat.loadChats()
   chatList.sort(sortChats)
 

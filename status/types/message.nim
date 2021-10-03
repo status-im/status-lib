@@ -1,6 +1,6 @@
 {.used.}
 
-import json, strutils, sequtils, sugar, chronicles
+import json, strutils, sequtils, sugar, chronicles, tables
 import json_serialization
 import ../utils
 import ../wallet/account
@@ -90,6 +90,11 @@ proc currentUserWalletContainsAddress(address: string): bool =
 
   return false
 
+
+var identiconIndex = initTable[string, string]()
+var aliasIndex = initTable[string, string]()
+
+
 proc toMessage*(jsonMsg: JsonNode): Message =
   let publicChatKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
 
@@ -100,17 +105,34 @@ proc toMessage*(jsonMsg: JsonNode): Message =
     warn "Unknown content type received", type = jsonMsg{"contentType"}.getInt
     contentType = ContentType.Message
 
+  let publicKey = jsonMsg{"from"}.getStr
+
+  # TODO: THIS IIS A TEMPORARY SOLUTION. 
+  # IDENTICONS ARE GOING TO BE HANDLED VIA AN HTTP SERVER
+  # AND ALIAS ARE GOING TO BE REMOVED
+  var identicon = ""
+  if identiconIndex.hasKey(publicKey):
+    identicon = identiconIndex[publicKey]
+  else:
+    identicon = generateIdenticon(publicKey)
+
+  var alias = ""
+  if aliasIndex.hasKey(publicKey):
+    alias = aliasIndex[publicKey]
+  else:
+    alias = generateAlias(publicKey)
+
   var message = Message(
-      alias: jsonMsg{"alias"}.getStr,
+      alias: alias,
       userName: "",
       localName: "",
       chatId: jsonMsg{"localChatId"}.getStr,
       clock: jsonMsg{"clock"}.getInt,
       contentType: contentType,
       ensName: jsonMsg{"ensName"}.getStr,
-      fromAuthor: jsonMsg{"from"}.getStr,
+      fromAuthor: publicKey,
       id: jsonMsg{"id"}.getStr,
-      identicon: jsonMsg{"identicon"}.getStr,
+      identicon: identicon,
       lineCount: jsonMsg{"lineCount"}.getInt,
       localChatId: jsonMsg{"localChatId"}.getStr,
       messageType: jsonMsg{"messageType"}.getStr,
