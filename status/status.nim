@@ -6,12 +6,13 @@ import notifications/os_notifications
 import ../eventemitter
 import bitops, stew/byteutils, chronicles
 import ./types/[setting]
+import ./keycard
 
 import ../backends/backend
 
 export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
 
-type Status* = ref object 
+type Status* = ref object
   backend*: Backend
   events*: EventEmitter
   fleet*: FleetModel
@@ -32,6 +33,7 @@ type Status* = ref object
   tokens*: TokensModel
   provider*: ProviderModel
   osnotifications*: OsNotifications
+  keycard*: KeycardModel
 
 proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): Status =
   result = Status()
@@ -56,6 +58,7 @@ proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): 
   result.tokens = tokens.newTokensModel(result.events)
   result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
   result.osnotifications = newOsNotifications(result.events)
+  result.keycard = newKeycardModel(result.backend)
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: string) =
   statusgo_backend_accounts.initNode(statusGoDir, keystoreDir)

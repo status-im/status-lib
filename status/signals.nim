@@ -1,5 +1,5 @@
 import json, json_serialization, strutils
-import signals/[base, chronicles_logs, community, discovery_summary, envelope, expired, mailserver, messages, peerstats, signal_type, stats, wallet, whisper_filter]
+import signals/[base, chronicles_logs, community, discovery_summary, envelope, expired, mailserver, messages, peerstats, signal_type, stats, wallet, whisper_filter, keycard]
 
 export base, chronicles_logs, community, discovery_summary, envelope, expired, mailserver, messages, peerstats, signal_type, stats, wallet, whisper_filter
 
@@ -28,6 +28,7 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.HistoryRequestCompleted: HistoryRequestCompletedSignal.fromEvent(jsonSignal)
     of SignalType.HistoryRequestStarted: HistoryRequestStartedSignal.fromEvent(jsonSignal)
     of SignalType.HistoryRequestFailed: HistoryRequestFailedSignal.fromEvent(jsonSignal)
+    of SignalType.KeycardConnected: KeycardConnectedSignal.fromEvent(jsonSignal)
     else: Signal()
-  
+
   result.signalType = signalType

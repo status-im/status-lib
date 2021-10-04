@@ -40,12 +40,15 @@ proc buildAndRun(name: string,
     " --nimcache:nimcache/" & (if getEnv("RELEASE").strip != "false": "release/" else: "debug/") & name &
     (if getEnv("PCRE_LDFLAGS").strip != "": " --passL:\"" & getEnv("PCRE_LDFLAGS") & "\"" else: "") &
     " --passL:\"-L" & getEnv("STATUSGO_LIBDIR") & " -lstatus \"" &
+    " --passL:\"-L" & getEnv("KEYCARDGO_LIBDIR") & " -lkeycard \"" &
     " --out:" & outDir & name &
     " " &
     srcDir & name & ".nim"
   if defined(macosx):
     exec "install_name_tool -add_rpath " & getEnv("STATUSGO_LIBDIR") & " " & outDir & name
     exec "install_name_tool -change " & "libstatus." & getEnv("LIBSTATUS_EXT") & " @rpath/libstatus." & getEnv("LIBSTATUS_EXT") & " " & outDir & name
+    exec "install_name_tool -add_rpath " & getEnv("KEYCARDGO_LIBDIR") & " " & outDir & name
+    exec "install_name_tool -change " & "libkeycard." & getEnv("LIBKEYCARD_EXT") & " @rpath/libkeycard." & getEnv("LIBKEYCARD_EXT") & " " & outDir & name
   if getEnv("RUN_AFTER_BUILD").strip != "false":
     exec outDir & name
 

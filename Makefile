@@ -20,6 +20,7 @@ BUILD_SYSTEM_DIR := vendor/nimbus-build-system
 	deps \
 	libstatuslib \
 	status-go \
+	keycard-go \
 	update \
 	build_ctest \
 	ctest \
@@ -57,12 +58,15 @@ ifeq ($(detected_OS),Darwin)
  CGO_CFLAGS := -mmacosx-version-min=10.14
  export CGO_CFLAGS
  LIBSTATUS_EXT := dylib
+ LIBKEYCARD_EXT := dylib
  MACOSX_DEPLOYMENT_TARGET := 10.14
  export MACOSX_DEPLOYMENT_TARGET
 else ifeq ($(detected_OS),Windows)
  LIBSTATUS_EXT := dll
+ LIBKEYCARD_EXT := dll
 else
  LIBSTATUS_EXT := so
+ LIBKEYCARD_EXT := so
 endif
 
 # ifeq ($(detected_OS),Darwin)
@@ -89,7 +93,6 @@ deps: | deps-common bottles
 
 update: | update-common
 
-
 RELEASE ?= false
 ifeq ($(RELEASE),false)
  # We need `-d:debug` to get Nim's default stack traces
@@ -111,23 +114,35 @@ export STATUSGO
 export STATUSGO_LIBDIR
 export LIBSTATUS_EXT
 
+KEYCARDGO := vendor/nim-keycard-go/go/keycard/build/libkeycard/libkeycard.$(LIBKEYCARD_EXT)
+KEYCARDGO_LIBDIR := $(shell pwd)/$(shell dirname "$(KEYCARDGO)")
+export KEYCARDGO
+export KEYCARDGO_LIBDIR
+export LIBKEYCARD_EXT
+
 status-go: $(STATUSGO)
 $(STATUSGO): | deps
 	echo -e $(BUILD_MSG) "status-go"
 	+ cd vendor/status-go && \
 	  $(MAKE) statusgo-shared-library $(HANDLE_OUTPUT)
 
+keycard-go: $(KEYCARDGO)
+$(KEYCARDGO): | deps
+	echo -e $(BUILD_MSG) "keycard-go"
+	+ cd vendor/nim-keycard-go && \
+	  $(MAKE) build-keycard-go $(HANDLE_OUTPUT)
+
 LIBSTATUSLIB := build/$@.$(LIBSTATUS_EXT).0
-libstatuslib: | $(STATUSGO)
+libstatuslib: | $(STATUSGO) $(KEYCARDGO)
 	echo -e $(BUILD_MSG) "$@" && \
-		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
+		$(ENV_SCRIPT) nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"-L$(KEYCARDGO_LIBDIR)" --passL="-lkeycard" -o:build/$@.$(LIBSTATUS_EXT).0 -d:ssl --app:lib --noMain --header --nimcache:nimcache/libstatuslib statuslib.nim && \
 		rm -f build/$@.$(LIBSTATUS_EXT) && \
 		ln -s $@.$(LIBSTATUS_EXT).0 build/$@.so && \
 		cp nimcache/libstatuslib/*.h build/. && \
 		[[ $$? = 0 ]]
 
 # libraries for dynamic linking of non-Nim objects
-EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus
+EXTRA_LIBS_DYNAMIC := -L"$(CURDIR)/build" -lstatuslib -lm -L"$(STATUSGO_LIBDIR)" -lstatus -L"$(KEYCARDGO_LIBDIR)" -lkeycard
 build_ctest: | $(LIBSTATUSLIB) build deps
 	echo -e $(BUILD_MSG) "build/ctest" && \
 		 $(CC) test/main.c -Wl,-rpath,'$$ORIGIN' -I./vendor/nimbus-build-system/vendor/Nim/lib $(EXTRA_LIBS_DYNAMIC) -g -o build/ctest
@@ -135,17 +150,20 @@ build_ctest: | $(LIBSTATUSLIB) build deps
 LD_LIBRARY_PATH_NIMBLE := $${LD_LIBRARY_PATH}
 ifneq ($(detected_OS),Windows)
  ifneq ($(detected_OS),Darwin)
-  LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
+  LD_LIBRARY_PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(LD_LIBRARY_PATH_NIMBLE)
  endif
 endif
 
 PATH_NIMBLE := $${PATH}
 ifeq ($(detected_OS),Windows)
- PATH_NIMBLE := $(STATUSGO_LIBDIR):$(PATH_NIMBLE)
+ PATH_NIMBLE := $(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR):$(PATH_NIMBLE)
 endif
 
+RUN_AFTER_BUILD ?= true
+
 NIMBLE_ENV = \
-	RELEASE=$(RELEASE)
+ RELEASE=$(RELEASE) \
+ RUN_AFTER_BUILD=$(RUN_AFTER_BUILD)
 ifeq ($(detected_OS),Windows)
  NIMBLE_ENV += PATH="$(PATH_NIMBLE)"
  PCRE_LDFLAGS := -L$(shell cygpath -m /ucrt64/lib) -lpcre
@@ -156,13 +174,13 @@ endif
 
 ctest: | build_ctest
 	echo -e "Running ctest:" && \
-	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR)" \
+	LD_LIBRARY_PATH="$(STATUSGO_LIBDIR):$(KEYCARDGO_LIBDIR)" \
 	./build/ctest
 
-test: | $(STATUSGO)
+test: | $(STATUSGO) $(KEYCARDGO)
 	$(NIMBLE_ENV) $(ENV_SCRIPT) nimble tests
 
 clean: | clean-common
-	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)
+	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO) $(KEYCARDGO)
 
 endif # "variables.mk" was not included
