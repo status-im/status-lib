@@ -28,16 +28,16 @@ proc generateAddresses*(self: AccountModel): seq[GeneratedAccount] =
 proc openAccounts*(self: AccountModel, statusGoDir: string): seq[NodeAccount] =
   result = status_accounts.openAccounts(statusGoDir)
 
-proc login*(self: AccountModel, selectedAccountIndex: int, password: string): NodeAccount =
+proc login*(self: AccountModel, selectedAccountIndex: int, password: string, keycardWhisperKey = ""): NodeAccount =
   let currentNodeAccount = self.nodeAccounts[selectedAccountIndex]
-  result = status_accounts.login(currentNodeAccount, password)
+  result = status_accounts.login(currentNodeAccount, password, keycardWhisperKey)
 
-proc storeAccountAndLogin*(self: AccountModel, fleetConfig: FleetConfig, selectedAccountIndex: int, password: string): Account =
+proc storeAccountAndLogin*(self: AccountModel, fleetConfig: FleetConfig, selectedAccountIndex: int, password: string, keycardWhisperKey = ""): Account =
   let generatedAccount: GeneratedAccount = self.generatedAddresses[selectedAccountIndex]
-  result = status_accounts.setupAccount(fleetConfig, generatedAccount, password)
+  result = status_accounts.setupAccount(fleetConfig, generatedAccount, password, keycardWhisperKey)
 
-proc storeDerivedAndLogin*(self: AccountModel, fleetConfig: FleetConfig, importedAccount: GeneratedAccount, password: string): Account =
-  result = status_accounts.setupAccount(fleetConfig, importedAccount, password)
+proc storeDerivedAndLogin*(self: AccountModel, fleetConfig: FleetConfig, importedAccount: GeneratedAccount, password: string, keycardWhisperKey = ""): Account =
+  result = status_accounts.setupAccount(fleetConfig, importedAccount, password, keycardWhisperKey)
 
 proc importMnemonic*(self: AccountModel, mnemonic: string): GeneratedAccount =
   let importedAccount = status_accounts.multiAccountImportMnemonic(mnemonic)
