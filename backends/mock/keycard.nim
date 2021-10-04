@@ -13,7 +13,7 @@ method keycardPair*(self: MockBackend, pairingPassword: string): KeycardPairingI
 
 method keycardOpenSecureChannel*(self: MockBackend, index: int, key: string) = discard
 
-method keycardVerifyPIN*(self: MockBackend, pin: string) = discard
+method keycardVerifyPin*(self: MockBackend, pin: string) = discard
 
 method keycardExportKey*(self: MockBackend): string =
   result = "0x00"

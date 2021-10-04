@@ -35,7 +35,10 @@ method keycardSelect*(self: StatusGoBackend): KeycardApplicationInfo =
   )
 
 method keycardPair*(self: StatusGoBackend, pairingPassword: string): KeycardPairingInfo =
-  let response = keycard_go.select()
+  let inputJSON = %* {
+      "pairingPassword": pairingPassword
+    }
+  let response = keycard_go.pair($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
     raise KeycardPairException(error: parsedResponse{"error"}.getStr())
@@ -46,13 +49,20 @@ method keycardPair*(self: StatusGoBackend, pairingPassword: string): KeycardPair
   )
 
 method keycardOpenSecureChannel*(self: StatusGoBackend, index: int, key: string) =
-  let response = keycard_go.select()
+  let inputJSON = %* {
+      "key": key,
+      "index": index
+    }
+  let response = keycard_go.openSecureChannel($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
     raise KeycardOpenSecureChannelException(error: parsedResponse{"error"}.getStr())
 
-method keycardVerifyPIN*(self: StatusGoBackend, pin: string) =
-  let response = keycard_go.select()
+method keycardVerifyPin*(self: StatusGoBackend, pin: string) =
+  let inputJSON = %* {
+      "pin": pin
+    }
+  let response = keycard_go.verifyPin($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
     raise KeycardVerifyPINException(error: parsedResponse{"error"}.getStr())

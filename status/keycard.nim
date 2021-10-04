@@ -41,9 +41,9 @@ proc openSecureChannel*(self: KeycardModel, index: int, key: string) =
   except:
     raise
 
-proc verifyPIN*(self: KeycardModel, pin: string) =
+proc verifyPin*(self: KeycardModel, pin: string) =
   try:
-    self.backend.keycardVerifyPIN(pin)
+    self.backend.keycardVerifyPin(pin)
   except:
     raise
 

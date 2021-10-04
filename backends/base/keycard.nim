@@ -16,7 +16,7 @@ method keycardPair*(self: Backend, pairingPassword: string): KeycardPairingInfo 
 method keycardOpenSecureChannel*(self: Backend, index: int, key: string) =
   raise newException(ValueError, "No implementation available")
 
-method keycardVerifyPIN*(self: Backend, pin: string) =
+method keycardVerifyPin*(self: Backend, pin: string) =
   raise newException(ValueError, "No implementation available")
 
 method keycardExportKey*(self: Backend): string =
