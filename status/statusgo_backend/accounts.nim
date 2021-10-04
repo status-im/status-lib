@@ -1,6 +1,6 @@
 import json, os, nimcrypto, uuids, json_serialization, chronicles, strutils
 
-from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, identicon, saveAccountAndLogin, login, openAccounts, getNodeConfig
+from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, identicon, saveAccountAndLogin, login, openAccounts, getNodeConfig, saveAccountAndLoginWithKeycard, loginWithKeycard
 import core
 import ../utils as utils
 from ../wallet/account as walletAccount import WalletAccount
@@ -117,13 +117,13 @@ proc openAccounts*(STATUSGODIR: string): seq[NodeAccount] =
 
       result.add(nodeAccount)
 
-
 proc saveAccountAndLogin*(
   account: GeneratedAccount,
   accountData: string,
   password: string,
   configJSON: string,
-  settingsJSON: string): Account =
+  settingsJSON: string,
+  keycardWhisperKey: string): Account =
   let hashedPassword = hashPassword(password)
   let subaccountData = %* [
     {
@@ -144,7 +144,12 @@ proc saveAccountAndLogin*(
     }
   ]
 
-  var savedResult = $status_go.saveAccountAndLogin(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData)
+  var savedResult =
+    if account.isKeycard:
+      $status_go.saveAccountAndLogin(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData)
+    else:
+      $status_go.saveAccountAndLoginWithKeycard(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData, keycardWhisperKey)
+
   let parsedSavedResult = savedResult.parseJson
   let error = parsedSavedResult["error"].getStr
 
@@ -179,6 +184,9 @@ proc getAccountData*(account: GeneratedAccount): JsonNode =
     "keycard-pairing": nil
   }
 
+  if account.isKeycard:
+    result["keycard-pairing"] = %* "yes"
+
 proc getAccountSettings*(account: GeneratedAccount, defaultNetworks: JsonNode, installationId: string): JsonNode =
   result = %* {
     "key-uid": account.keyUid,
@@ -205,14 +213,22 @@ proc getAccountSettings*(account: GeneratedAccount, defaultNetworks: JsonNode, i
     "installation-id": installationId
   }
 
-proc setupAccount*(fleetConfig: FleetConfig, account: GeneratedAccount, password: string): Account =
+  # actual pairing info has no reason to be in the account, but keycard-pairing is used as a sort of boolean
+  if account.isKeycard:
+    result["keycard-instance-uid"] = %* "unused"
+    result["keycard-paired-on"] = %* 0
+    result["keycard-pairing"] = %* "yes"
+
+
+proc setupAccount*(fleetConfig: FleetConfig, account: GeneratedAccount, password: string, keycardWhisperKey: string): Account =
   try:
-    let storeDerivedResult = storeDerivedAccounts(account, password)
+    if not account.isKeycard:
+      let storeDerivedResult = storeDerivedAccounts(account, password)
     let accountData = getAccountData(account)
     let installationId = $genUUID()
     var settingsJSON = getAccountSettings(account, constants.DEFAULT_NETWORKS, installationId)
     var nodeConfig = getDefaultNodeConfig(fleetConfig, installationId)
-    result = saveAccountAndLogin(account, $accountData, password, $nodeConfig, $settingsJSON)
+    result = saveAccountAndLogin(account, $accountData, password, $nodeConfig, $settingsJSON, keycardWhisperKey)
 
   except StatusGoException as e:
     raise newException(StatusGoException, "Error setting up account: " & e.msg)
@@ -222,10 +238,15 @@ proc setupAccount*(fleetConfig: FleetConfig, account: GeneratedAccount, password
     let peer = "enode://44160e22e8b42bd32a06c1532165fa9e096eebedd7fa6d6e5f8bbef0440bc4a4591fe3651be68193a7ec029021cdb496cfe1d7f9f1dc69eb99226e6f39a7a5d4@35.225.221.245:443"
     discard status_go.addPeer(peer)
 
-proc login*(nodeAccount: NodeAccount, password: string): NodeAccount =
+proc login*(nodeAccount: NodeAccount, password: string, keycardWhisperKey: string): NodeAccount =
   let hashedPassword = hashPassword(password)
   let account = nodeAccount.toAccount
-  let loginResult = $status_go.login($toJson(account), hashedPassword)
+  let loginResult =
+    if account.isKeycard:
+      $status_go.login($toJson(account), hashedPassword)
+    else:
+      $status_go.loginWithKeycard($toJson(account), hashedPassword, keycardWhisperKey)
+
   let error = parseJson(loginResult)["error"].getStr
 
   if error == "":
