@@ -67,8 +67,14 @@ method keycardVerifyPin*(self: StatusGoBackend, pin: string) =
   if not parsedResponse{"ok"}.getBool():
     raise KeycardVerifyPINException(error: parsedResponse{"error"}.getStr())
 
-method keycardExportKey*(self: StatusGoBackend): string =
-  let response = keycard_go.select()
+method keycardExportKey*(self: StatusGoBackend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
+  let inputJSON = %* {
+      "derive": derive,
+      "makeCurrent": makeCurrent,
+      "onlyPublic": onlyPublic,
+      "path": path
+    }
+  let response = keycard_go.exportKey($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
     raise KeycardSelectException(error: parsedResponse{"error"}.getStr())

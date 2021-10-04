@@ -19,5 +19,5 @@ method keycardOpenSecureChannel*(self: Backend, index: int, key: string) =
 method keycardVerifyPin*(self: Backend, pin: string) =
   raise newException(ValueError, "No implementation available")
 
-method keycardExportKey*(self: Backend): string =
+method keycardExportKey*(self: Backend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
   raise newException(ValueError, "No implementation available")
