@@ -7,8 +7,14 @@ type KeycardStopException* = ref object of KeycardException
 
 type KeycardSelectException* = ref object of KeycardException
 
-type KeycardPINException* = ref object of KeycardException
+type KeycardPairException* = ref object of KeycardException
+
+type KeycardOpenSecureChannelException* = ref object of KeycardException
+
+type KeycardVerifyPINException* = ref object of KeycardException
   pinRetry*: int64
+
+type KeycardExportKeyException* = ref object of KeycardException
 
 type KeycardApplicationInfo* = ref object
   installed*: bool
@@ -19,3 +25,7 @@ type KeycardApplicationInfo* = ref object
   availableSlots*: int64
   keyUID*: string
   capabilities*: int64
+
+type KeycardPairingInfo* = ref object
+  key*: string
+  index*: int64

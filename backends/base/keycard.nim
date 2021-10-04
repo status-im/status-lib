@@ -9,3 +9,15 @@ method keycardStop*(self: Backend) =
 
 method keycardSelect*(self: Backend): KeycardApplicationInfo =
   raise newException(ValueError, "No implementation available")
+
+method keycardPair*(self: Backend, pairingPassword: string): KeycardPairingInfo =
+  raise newException(ValueError, "No implementation available")
+
+method keycardOpenSecureChannel*(self: Backend, index: int, key: string) =
+  raise newException(ValueError, "No implementation available")
+
+method keycardVerifyPIN*(self: Backend, pin: string) =
+  raise newException(ValueError, "No implementation available")
+
+method keycardExportKey*(self: Backend): string =
+  raise newException(ValueError, "No implementation available")
