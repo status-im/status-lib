@@ -76,7 +76,10 @@ proc estimateGas*(packId: int, address: string, price: string, success: var bool
   if success:
     result = fromHex[int](response)
 
-proc buyPack*(self: StickersModel, packId: int, address, price, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string, maxFeePerGas: string, password: string, success: var bool): string =
+proc buyPack*(self: StickersModel, packId: int, address, price, gas,
+  gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string,
+  maxFeePerGas: string, password: string): PendingTransaction =
+
   var
     sntContract: Erc20Contract
     approveAndCall: ApproveAndCall[100]
@@ -93,9 +96,22 @@ proc buyPack*(self: StickersModel, packId: int, address, price, gas, gasPrice: s
       maxFeePerGas
     )
 
-  result = sntContract.methods["approveAndCall"].send(tx, approveAndCall, password, success)
+  var success: bool
+  let hash = sntContract.methods["approveAndCall"].send(tx, approveAndCall,
+    password, success)
+
+  result = PendingTransaction(hash: hash, success: success,
+    txType: PendingTransactionType.BuyStickerPack)
+
   if success:
-    trackPendingTransaction(result, address, $sntContract.address, PendingTransactionType.BuyStickerPack, $packId)
+    # `proc trackPendingTransaction*` in `statusgo_backend/wallet.nim` can be
+    # refactored to accept an instance of `type PendingTransaction` as its
+    # first argument, allowing its signature to be simplified. However, that
+    # will also require changes re: usage of `trackPendingTransaction` in
+    # `./wallet.nim` and `./ens.nim`, and complementary changes in
+    # status-desktop
+    trackPendingTransaction(result.hash, address, $sntContract.address,
+      result.txType, $packId)
 
 proc getStickerMarketAddress*(self: StickersModel): Address =
   let network = status_settings.getCurrentNetwork().toNetwork()
@@ -147,7 +163,7 @@ proc uninstallStickerPack*(self: StickersModel, packId: int) =
   eth_stickers.saveInstalledStickerPacks(self.installedStickerPacks)
 
 proc decodeContentHash*(value: string): string =
-  result = status_utils.decodeContentHash(value)
+  status_utils.decodeContentHash(value)
 
 proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
   let network = status_settings.getCurrentNetwork().toNetwork()

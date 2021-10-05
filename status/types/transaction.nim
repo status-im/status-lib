@@ -5,6 +5,11 @@ import web3/ethtypes, options, stint
 include pending_transaction_type
 
 type
+  PendingTransaction* = ref object
+    hash*: string
+    success*: bool
+    txType*: PendingTransactionType
+
   Transaction* = ref object
     id*: string
     typeValue*: string
@@ -21,8 +26,8 @@ type
     value*: string
     fromAddress*: string
     to*: string
-  
-type 
+
+type
   TransactionData* = object
     source*: Address             # the address the transaction is send from.
     to*: Option[Address]         # (optional when creating new contract) the address the transaction is directed to.
