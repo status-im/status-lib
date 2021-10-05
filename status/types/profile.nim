@@ -17,16 +17,14 @@ type Profile* = ref object
   currentUserStatus*: int
   identityImage*: IdentityImage
   appearance*: int
-  systemTags*: seq[string]
+  added*: bool
+  blocked*: bool
+  hasAddedUs*: bool
 
 proc `$`*(self: Profile): string =
-  return fmt"Profile(id:{self.id}, username:{self.username}, systemTags: {self.systemTags}, ensName: {self.ensName})"
+  return fmt"Profile(id:{self.id}, username:{self.username}, added: {self.added}, blocked: {self.blocked}, hasAddedUs: {self.hasAddedUs}, ensName: {self.ensName})"
 
 proc toProfile*(jsonNode: JsonNode): Profile =
-  var systemTags: seq[string] = @[]
-  if jsonNode["systemTags"].kind != JNull:
-    systemTags = jsonNode["systemTags"].to(seq[string])
-
   result = Profile(
     id: jsonNode["id"].str,
     username: jsonNode["alias"].str,
@@ -37,7 +35,9 @@ proc toProfile*(jsonNode: JsonNode): Profile =
     ensName: "",
     ensVerified: jsonNode["ensVerified"].getBool,
     appearance: 0,
-    systemTags: systemTags
+    added: jsonNode["added"].getBool,
+    blocked: jsonNode["blocked"].getBool,
+    hasAddedUs: jsonNode["hasAddedUs"].getBool,
   )
   
   if jsonNode.hasKey("name"):
@@ -53,10 +53,10 @@ proc toProfile*(jsonNode: JsonNode): Profile =
       result.identityImage.large = jsonNode["images"]["large"]["uri"].str
 
 proc isContact*(self: Profile): bool =
-  result = self.systemTags.contains(contactAdded)
+  result = self.added
 
 proc isBlocked*(self: Profile): bool =
-  result = self.systemTags.contains(contactBlocked)
+  result = self.blocked
 
 proc requestReceived*(self: Profile): bool =
-  result = self.systemTags.contains(contactRequest)
+  result = self.hasAddedUs

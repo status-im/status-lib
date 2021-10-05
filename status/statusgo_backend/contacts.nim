@@ -48,8 +48,8 @@ proc getContactsIndex*(): (Table[string, Profile], bool)=
   return (contactsIndex, false)
 
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
-  identicon: string, thumbnail: string, largeImage: string, systemTags: seq[string], 
-  localNickname: string) =
+  identicon: string, thumbnail: string, largeImage: string, added: bool, blocked: bool, 
+  hasAddedUs: bool, localNickname: string) =
   let payload = %* [{
       "id": id,
       "name": ensName,
@@ -60,7 +60,9 @@ proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string,
         "thumbnail": {"Payload": thumbnail.partition(",")[2]},
         "large": {"Payload": largeImage.partition(",")[2]}
         },
-      "systemTags": systemTags,
+      "added": added,
+      "blocked": blocked,
+      "hasAddedUs": hasAddedUs,
       "localNickname": localNickname
     }]
   discard callPrivateRPC("saveContact".prefix, payload)

@@ -30,20 +30,20 @@ proc saveContact(self: ContactModel, contact: Profile) =
     thumbnail = contact.identityImage.thumbnail
     largeImage = contact.identityImage.large    
   
-  status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, largeImage, contact.systemTags, contact.localNickname)
+  status_contacts.saveContact(contact.id, contact.ensVerified, contact.ensName, contact.alias, contact.identicon, thumbnail, largeImage, contact.added, contact.blocked, contact.hasAddedUs, contact.localNickname)
 
 proc getContactByID*(self: ContactModel, id: string): Profile =
   return status_contacts.getContactByID(id)
   
 proc blockContact*(self: ContactModel, id: string) =
   var contact = self.getContactByID(id)
-  contact.systemTags.add(contactBlocked)
+  contact.blocked = true
   self.saveContact(contact)
   self.events.emit("contactBlocked", ContactIdArgs(id: id))
 
 proc unblockContact*(self: ContactModel, id: string) =
   var contact = self.getContactByID(id)
-  contact.systemTags.delete(contact.systemTags.find(contactBlocked))
+  contact.blocked = false
   self.saveContact(contact)
   self.events.emit("contactUnblocked", ContactIdArgs(id: id))
 
@@ -67,7 +67,9 @@ proc getOrCreateContact*(self: ContactModel, id: string): Profile =
       ensName: "",
       ensVerified: false,
       appearance: 0,
-      systemTags: @[]
+      added: false,
+      blocked: false,
+      hasAddedUs: false
     )
 
 proc setNickName*(self: ContactModel, id: string, localNickname: string, accountKeyUID: string) =
@@ -88,15 +90,13 @@ proc setNickName*(self: ContactModel, id: string, localNickname: string, account
 proc addContact*(self: ContactModel, id: string, accountKeyUID: string) =
   var contact = self.getOrCreateContact(id)
   
-  let updating = contact.systemTags.contains(contactAdded)
+  let updating = contact.added
 
   if not updating:
-    contact.systemTags.add(contactAdded)
+    contact.added = true
     discard status_chat.createProfileChat(contact.id)
   else:
-    let index = contact.systemTags.find(contactBlocked)
-    if (index > -1):
-      contact.systemTags.delete(index)
+    contact.blocked = false
 
   self.saveContact(contact)
   self.events.emit("contactAdded", Args())
@@ -111,20 +111,17 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string) =
       ensName: contact.ensName,
       ensVerified: contact.ensVerified,
       appearance: 0,
-      systemTags: contact.systemTags,
+      added: contact.added,
+      blocked: contact.blocked,
+      hasAddedUs: contact.hasAddedUs,
       localNickname: contact.localNickname
     )
     self.events.emit("contactUpdate", ContactUpdateArgs(contacts: @[profile]))
 
 proc removeContact*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
-  var idx = contact.systemTags.find(contactAdded)
-  if idx >= 0:
-    contact.systemTags.delete(idx)
-
-  idx = contact.systemTags.find(contactRequest)
-  if idx >= 0:
-    contact.systemTags.delete(idx)
+  contact.added = false
+  contact.hasAddedUs = false
 
   self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
@@ -132,16 +129,15 @@ proc removeContact*(self: ContactModel, id: string) =
 proc isAdded*(self: ContactModel, id: string): bool =
   var contact = self.getContactByID(id)
   if contact.isNil: return false
-  contact.systemTags.contains(contactAdded)
-
+  return contact.added
 proc contactRequestReceived*(self: ContactModel, id: string): bool =
   var contact = self.getContactByID(id)
   if contact.isNil: return false
-  contact.systemTags.contains(contactRequest)
+  return contact.hasAddedUs
 
 proc rejectContactRequest*(self: ContactModel, id: string) =
   let contact = self.getContactByID(id)
-  contact.systemTags.delete(contact.systemTags.find(contactRequest))
+  contact.hasAddedUs = false
 
   self.saveContact(contact)
   self.events.emit("contactRemoved", Args())
