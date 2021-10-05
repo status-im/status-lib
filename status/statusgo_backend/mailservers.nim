@@ -25,7 +25,7 @@ proc delete*(peer: string) =
 
 proc requestAllHistoricMessages*(): string =
   result = callPrivateRPC("requestAllHistoricMessages".prefix, %*[])
-  info "requestAllHistoricMessages", topics="mailserver-interaction", rpc_method="mailservers_requestAllHistoricMessages", result
+  info "requestAllHistoricMessages", topics="mailserver-interaction", rpc_method="mailservers_requestAllHistoricMessages"
 
 proc requestStoreMessages*(topics: seq[string], symKeyID: string, peer: string, numberOfMessages: int, fromTimestamp: int64 = 0, toTimestamp: int64 = 0, force: bool = false) =
   var toValue = times.toUnix(times.getTime())

@@ -28,6 +28,7 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.HistoryRequestCompleted: HistoryRequestCompletedSignal.fromEvent(jsonSignal)
     of SignalType.HistoryRequestStarted: HistoryRequestStartedSignal.fromEvent(jsonSignal)
     of SignalType.HistoryRequestFailed: HistoryRequestFailedSignal.fromEvent(jsonSignal)
+    of SignalType.HistoryRequestBatchProcessed: HistoryRequestBatchProcessedSignal.fromEvent(jsonSignal)
     of SignalType.KeycardConnected: KeycardConnectedSignal.fromEvent(jsonSignal)
     else: Signal()
 
