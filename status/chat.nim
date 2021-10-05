@@ -497,8 +497,8 @@ proc editCommunity*(self: ChatModel, id: string, name: string, description: stri
 proc createCommunityChannel*(self: ChatModel, communityId: string, name: string, description: string): Chat =
   result = status_chat.createCommunityChannel(communityId, name, description)
 
-proc editCommunityChannel*(self: ChatModel, communityId: string, channelId: string, name: string, description: string, categoryId: string): Chat =
-  result = status_chat.editCommunityChannel(communityId, channelId, name, description, categoryId)
+proc editCommunityChannel*(self: ChatModel, communityId: string, channelId: string, name: string, description: string, categoryId: string, position: int): Chat =
+  result = status_chat.editCommunityChannel(communityId, channelId, name, description, categoryId, position)
 
 proc deleteCommunityChat*(self: ChatModel, communityId: string, channelId: string) =
   status_chat.deleteCommunityChat(communityId, channelId)
