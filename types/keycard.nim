@@ -11,6 +11,8 @@ type KeycardPairException* = ref object of KeycardException
 
 type KeycardOpenSecureChannelException* = ref object of KeycardException
 
+type KeycardGetStatusException* = ref object of KeycardException
+
 type KeycardVerifyPINException* = ref object of KeycardException
   pinRetry*: int64
 
@@ -29,3 +31,9 @@ type KeycardApplicationInfo* = ref object
 type KeycardPairingInfo* = ref object
   key*: string
   index*: int64
+
+type KeycardStatus* = ref object
+  pinRetryCount*: int64
+  pukRetryCount *: int64
+  keyInitialized*: bool
+  path*: string

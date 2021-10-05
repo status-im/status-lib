@@ -52,3 +52,9 @@ proc exportKey*(self: KeycardModel, derive: bool, makeCurrent: bool, onlyPublic:
     result = self.backend.keycardExportKey(derive, makeCurrent, onlyPublic, path)
   except:
     raise
+
+proc getStatusApplication*(self: KeycardModel): KeycardStatus =
+  try:
+    result = self.backend.keycardGetStatusApplication()
+  except:
+    raise

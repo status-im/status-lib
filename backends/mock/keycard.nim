@@ -17,3 +17,6 @@ method keycardVerifyPin*(self: MockBackend, pin: string) = discard
 
 method keycardExportKey*(self: MockBackend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
   result = "0x00"
+
+method keycardGetStatusApplication*(self: MockBackend): KeycardStatus =
+  result = KeycardStatus()

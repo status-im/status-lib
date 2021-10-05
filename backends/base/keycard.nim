@@ -21,3 +21,6 @@ method keycardVerifyPin*(self: Backend, pin: string) =
 
 method keycardExportKey*(self: Backend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
   raise newException(ValueError, "No implementation available")
+
+method keycardGetStatusApplication*(self: Backend): KeycardStatus =
+  raise newException(ValueError, "No implementation available")

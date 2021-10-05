@@ -80,3 +80,14 @@ method keycardExportKey*(self: StatusGoBackend, derive: bool, makeCurrent: bool,
     raise KeycardSelectException(error: parsedResponse{"error"}.getStr())
 
   result = parsedResponse["key"].getStr()
+
+method keycardGetStatusApplication*(self: StatusGoBackend): KeycardStatus =
+  let response = keycard_go.getStatusApplication()
+  let parsedResponse = parseJson(response)
+  if not parsedResponse{"ok"}.getBool():
+    raise KeycardGetStatusException(error: parsedResponse{"error"}.getStr())
+  result = KeycardStatus(
+    pinRetryCount: parsedResponse["status"]["pinRetryCount"].getInt(),
+    pukRetryCount: parsedResponse["status"]["pukRetryCount"].getInt(),
+    keyInitialized: parsedResponse["status"]["keyInitialized"].getBool()
+  )
