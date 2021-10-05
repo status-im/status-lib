@@ -49,3 +49,18 @@ suite "#Keycard":
     except KeycardException as ex:
       echo "keycard exception"
       echo repr(ex)
+
+  test "getStatusApplication":
+    try:
+      statuslib_instance.keycard.start()
+      discard statuslib_instance.keycard.select()
+      statuslib_instance.keycard.openSecureChannel(0, "000000")
+      let info = statuslib_instance.keycard.getStatusApplication()
+      # echo repr(info)
+      statuslib_instance.keycard.stop()
+    except KeycardGetStatusException as ex:
+      echo "keycard get status exception"
+      echo repr(ex)
+    except KeycardException as ex:
+      echo "keycard exception"
+      echo repr(ex)
