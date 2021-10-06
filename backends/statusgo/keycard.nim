@@ -91,3 +91,19 @@ method keycardGetStatusApplication*(self: StatusGoBackend): KeycardStatus =
     pukRetryCount: parsedResponse["status"]["pukRetryCount"].getInt(),
     keyInitialized: parsedResponse["status"]["keyInitialized"].getBool()
   )
+
+method keycardUnpair*(self: StatusGoBackend, index: int) =
+  let inputJSON = %* {
+      "index": index,
+    }
+  let response = keycard_go.unpair($inputJSON)
+  let parsedResponse = parseJson(response)
+  if not parsedResponse{"ok"}.getBool():
+    raise KeycardUnpairException(error: parsedResponse{"error"}.getStr())
+
+method keycardGenerateKey*(self: StatusGoBackend): string =
+  let response = keycard_go.generateKey()
+  let parsedResponse = parseJson(response)
+  if not parsedResponse{"ok"}.getBool():
+    raise KeycardGenerateKeyException(error: parsedResponse{"error"}.getStr())
+  result = parsedResponse["keyUID"].getStr()

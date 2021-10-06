@@ -13,6 +13,10 @@ type KeycardOpenSecureChannelException* = ref object of KeycardException
 
 type KeycardGetStatusException* = ref object of KeycardException
 
+type KeycardUnpairException* = ref object of KeycardException
+
+type KeycardGenerateKeyException* = ref object of KeycardException
+
 type KeycardVerifyPINException* = ref object of KeycardException
   pinRetry*: int64
 

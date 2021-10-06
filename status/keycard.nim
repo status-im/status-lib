@@ -58,3 +58,15 @@ proc getStatusApplication*(self: KeycardModel): KeycardStatus =
     result = self.backend.keycardGetStatusApplication()
   except:
     raise
+
+proc unpair*(self: KeycardModel, index: int) =
+  try:
+    self.backend.keycardUnpair(index)
+  except:
+    raise
+
+proc generateKey*(self: KeycardModel): string =
+  try:
+    result = self.backend.keycardGenerateKey()
+  except:
+    raise

@@ -5,9 +5,11 @@ from base/bookmarks as bookmarks_methods import storeBookmark, updateBookmark, g
 export storeBookmark, updateBookmark, getBookmarks, deleteBookmark
 
 from base/keycard as keycard_methods import keycardStart, keycardStop, keycardSelect, keycardPair,
-  keycardOpenSecureChannel, keycardVerifyPin, keycardExportKey, keycardGetStatusApplication
+  keycardOpenSecureChannel, keycardVerifyPin, keycardExportKey, keycardGetStatusApplication,
+  keycardUnpair, keycardGenerateKey
 export keycardStart, keycardStop, keycardSelect, keycardPair,
-  keycardOpenSecureChannel, keycardVerifyPin, keycardExportKey, keycardGetStatusApplication
+  keycardOpenSecureChannel, keycardVerifyPin, keycardExportKey, keycardGetStatusApplication,
+  keycardUnpair, keycardGenerateKey
 
 import statusgo/bookmarks as statusgo_bookmarks
 import mock/bookmarks as mock_bookmarks
