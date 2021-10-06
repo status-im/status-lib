@@ -41,3 +41,8 @@ type KeycardStatus* = ref object
   pukRetryCount *: int64
   keyInitialized*: bool
   path*: string
+
+type KeycardExportedKey* = ref object
+  privKey*: string
+  pubKey*: string
+
