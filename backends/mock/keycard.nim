@@ -20,3 +20,8 @@ method keycardExportKey*(self: MockBackend, derive: bool, makeCurrent: bool, onl
 
 method keycardGetStatusApplication*(self: MockBackend): KeycardStatus =
   result = KeycardStatus()
+
+method keycardUnpair*(self: MockBackend, index: int) = discard
+
+method keycardGenerateKey*(self: MockBackend): string =
+  result = "0x00"

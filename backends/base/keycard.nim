@@ -24,3 +24,10 @@ method keycardExportKey*(self: Backend, derive: bool, makeCurrent: bool, onlyPub
 
 method keycardGetStatusApplication*(self: Backend): KeycardStatus =
   raise newException(ValueError, "No implementation available")
+
+method keycardUnpair*(self: Backend, index: int) =
+  raise newException(ValueError, "No implementation available")
+
+method keycardGenerateKey*(self: Backend): string =
+  raise newException(ValueError, "No implementation available")
+
