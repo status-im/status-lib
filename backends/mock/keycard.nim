@@ -15,8 +15,8 @@ method keycardOpenSecureChannel*(self: MockBackend, index: int, key: string) = d
 
 method keycardVerifyPin*(self: MockBackend, pin: string) = discard
 
-method keycardExportKey*(self: MockBackend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
-  result = "0x00"
+method keycardExportKey*(self: MockBackend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): KeycardExportedKey =
+  result = KeycardExportedKey()
 
 method keycardGetStatusApplication*(self: MockBackend): KeycardStatus =
   result = KeycardStatus()

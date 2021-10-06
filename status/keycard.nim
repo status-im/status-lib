@@ -47,7 +47,7 @@ proc verifyPin*(self: KeycardModel, pin: string) =
   except:
     raise
 
-proc exportKey*(self: KeycardModel, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): string =
+proc exportKey*(self: KeycardModel, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): KeycardExportedKey =
   try:
     result = self.backend.keycardExportKey(derive, makeCurrent, onlyPublic, path)
   except:
