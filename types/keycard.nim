@@ -18,7 +18,7 @@ type KeycardUnpairException* = ref object of KeycardException
 type KeycardGenerateKeyException* = ref object of KeycardException
 
 type KeycardVerifyPINException* = ref object of KeycardException
-  pinRetry*: int64
+  remainingAttempts*: int64
 
 type KeycardExportKeyException* = ref object of KeycardException
 
