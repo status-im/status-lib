@@ -65,7 +65,7 @@ method keycardVerifyPin*(self: StatusGoBackend, pin: string) =
   let response = keycard_go.verifyPin($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
-    raise KeycardVerifyPINException(error: parsedResponse{"error"}.getStr())
+    raise KeycardVerifyPINException(error: parsedResponse{"error"}.getStr(), remainingAttempts: parsedResponse{"remainingAttempts"}.getInt())
 
 method keycardExportKey*(self: StatusGoBackend, derive: bool, makeCurrent: bool, onlyPublic: bool, path: string): KeycardExportedKey =
   let inputJSON = %* {
