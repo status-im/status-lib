@@ -146,9 +146,9 @@ proc saveAccountAndLogin*(
 
   var savedResult =
     if account.isKeycard:
-      $status_go.saveAccountAndLogin(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData)
-    else:
       $status_go.saveAccountAndLoginWithKeycard(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData, keycardWhisperKey)
+    else:
+      $status_go.saveAccountAndLogin(accountData, hashedPassword, settingsJSON, configJSON, $subaccountData)
 
   let parsedSavedResult = savedResult.parseJson
   let error = parsedSavedResult["error"].getStr
@@ -243,9 +243,9 @@ proc login*(nodeAccount: NodeAccount, password: string, keycardWhisperKey: strin
   let account = nodeAccount.toAccount
   let loginResult =
     if account.isKeycard:
-      $status_go.login($toJson(account), hashedPassword)
-    else:
       $status_go.loginWithKeycard($toJson(account), hashedPassword, keycardWhisperKey)
+    else:
+      $status_go.login($toJson(account), hashedPassword)
 
   let error = parseJson(loginResult)["error"].getStr
 
