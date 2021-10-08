@@ -4,6 +4,9 @@ import ../types/[chat, message, community, activity_center_notification,
   status_update, rpc_response, setting, sticker]
 import ./settings as status_settings
 
+
+from status_go/chat as status_go_chat import nil
+
 proc loadFilters*(filters: seq[JsonNode]): string =
   result =  callPrivateRPC("loadFilters".prefix, %* [filter(filters, proc(x:JsonNode):bool = x.kind != JNull)])
 
@@ -45,13 +48,34 @@ proc createProfileChat*(pubKey: string):string =
   callPrivateRPC("createProfileChat".prefix, %* [{ "ID": pubKey }])
 
 proc loadChats*(): seq[Chat] =
+  echo "ACCESING CHATS VIA CALLRPC ==============="
   result = @[]
+  let time2 = cpuTime()
   let jsonResponse = parseJson($callPrivateRPC("chats".prefix))
   if jsonResponse["result"].kind != JNull:
     for jsonChat in jsonResponse{"result"}:
       let chat = jsonChat.toChat
       if chat.isActive and chat.chatType != ChatType.Unknown:
         result.add(chat)
+  let resTime2 = cpuTime() - time2
+  echo "Time taken: ", resTime2
+
+  echo "ACCESSING CHATS DIRECTLY ==============="
+  let time = cpuTime()
+  let chats = status_go_chat.chats().filterIt(it.active and it.chatType != status_go_chat.ChatType.Unknown)
+  let resTime1 = cpuTime() - time
+  echo "Time taken: ", resTime1
+
+  for c in chats:
+    echo "Chat: ......"
+    echo "- id: ", c.id
+    echo "- timestamp: ", c.timestamp
+    echo "- active: ", c.active
+    echo "- name: ", c.name
+    echo "- type: ", c.chatType
+
+
+  echo "Speedup improvement: ", resTime2 / resTime1 * 100, "%"
 
 proc statusUpdates*(): seq[StatusUpdate] =
   let rpcResult = callPrivateRPC("statusUpdates".prefix, %* []).parseJson()["result"]
