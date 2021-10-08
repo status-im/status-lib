@@ -77,7 +77,7 @@ method keycardExportKey*(self: StatusGoBackend, derive: bool, makeCurrent: bool,
   let response = keycard_go.exportKey($inputJSON)
   let parsedResponse = parseJson(response)
   if not parsedResponse{"ok"}.getBool():
-    raise KeycardSelectException(error: parsedResponse{"error"}.getStr())
+    raise KeycardExportKeyException(error: parsedResponse{"error"}.getStr())
 
   result = KeycardExportedKey(
     privKey: parsedResponse["privateKey"].getStr(),
