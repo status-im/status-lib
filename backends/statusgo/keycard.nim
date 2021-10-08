@@ -81,7 +81,8 @@ method keycardExportKey*(self: StatusGoBackend, derive: bool, makeCurrent: bool,
 
   result = KeycardExportedKey(
     privKey: parsedResponse["privateKey"].getStr(),
-    pubKey: parsedResponse["publicKey"].getStr()
+    pubKey: parsedResponse["publicKey"].getStr(),
+    address: parsedResponse["address"].getStr()
   )
 
 method keycardGetStatusApplication*(self: StatusGoBackend): KeycardStatus =
