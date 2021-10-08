@@ -45,4 +45,5 @@ type KeycardStatus* = ref object
 type KeycardExportedKey* = ref object
   privKey*: string
   pubKey*: string
+  address*: string
 
