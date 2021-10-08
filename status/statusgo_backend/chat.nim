@@ -62,17 +62,17 @@ proc loadChats*(): seq[Chat] =
 
   echo "ACCESSING CHATS DIRECTLY ==============="
   let time = cpuTime()
-  let chats = status_go_chat.chats()
+  let chats = status_go_chat.chats().filterIt(it.active and it.chatType != status_go_chat.ChatType.Unknown)
   let resTime1 = cpuTime() - time
   echo "Time taken: ", resTime1
 
-  # for c in chats:
-  #  echo "Chat: ......"
-  #  echo "- id: ", c.id
-  #  echo "- timestamp: ", c.timestamp
-  #  echo "- active: ", c.active
-  #  echo "- name: ", c.name
-  #  echo "- type: ", c.chatType
+  for c in chats:
+    echo "Chat: ......"
+    echo "- id: ", c.id
+    echo "- timestamp: ", c.timestamp
+    echo "- active: ", c.active
+    echo "- name: ", c.name
+    echo "- type: ", c.chatType
 
 
   echo "Speedup improvement: ", resTime2 / resTime1 * 100, "%"
