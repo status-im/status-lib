@@ -9,7 +9,7 @@ proc getContacts*(): RpcResponse[JsonNode] {.raises: [Exception].} =
   result = callPrivateRPC("contacts".prefix, payload)
 
 proc getContactById*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} =
-  let payload = %* []
+  let payload = %* [id]
   result = callPrivateRPC("getContactByID".prefix, payload)
 
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
