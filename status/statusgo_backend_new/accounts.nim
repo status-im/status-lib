@@ -118,3 +118,24 @@ proc saveAccountAndLogin*(hashedPassword: string, account, subaccounts, settings
   except RpcException as e:
     error "error doing rpc request", methodName = "saveAccountAndLogin", exception=e.msg
     raise newException(RpcException, e.msg)
+
+proc login*(name, keyUid, hashedPassword, identicon, thumbnail, large: string): 
+  RpcResponse[JsonNode] 
+  {.raises: [Exception].} =
+  try:
+    var payload = %* {
+      "name": name,
+      "key-uid": keyUid,
+      "identityImage": newJNull(),
+      "identicon": identicon
+    }
+
+    if(thumbnail.len>0 and large.len > 0):
+      payload["identityImage"] = %* {"thumbnail": thumbnail, "large": large}
+
+    let response = status_go.login($payload, hashedPassword)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "login", exception=e.msg
+    raise newException(RpcException, e.msg)
