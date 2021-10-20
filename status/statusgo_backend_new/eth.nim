@@ -3,6 +3,10 @@ import ./core, ./response_type
 
 export response_type
 
+proc getBlockByNumber*(blockNumber: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [blockNumber, false]
+  return core.callPrivateRPC("eth_getBlockByNumber", payload)
+
 proc getEthBalance*(address: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [address, "latest"]
   return core.callPrivateRPC("eth_getBalance", payload)
