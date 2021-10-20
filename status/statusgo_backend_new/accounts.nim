@@ -1,6 +1,6 @@
 import json, json_serialization, chronicles
-import core, utils
-import response_type
+import ./core, ./utils
+import ./response_type
 
 import status_go
 
@@ -11,6 +11,9 @@ logScope:
 
 const NUMBER_OF_ADDRESSES_TO_GENERATE = 5
 const MNEMONIC_PHRASE_LENGTH = 12
+
+proc getAccounts*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("accounts_getAccounts")
 
 proc generateAddresses*(paths: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* {
