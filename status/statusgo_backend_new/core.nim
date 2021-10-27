@@ -38,4 +38,8 @@ proc callPrivateRPC*(methodName: string, payload = %* []): RpcResponse[JsonNode]
     error "error doing rpc request", methodName = methodName, exception=e.msg
     raise newException(RpcException, e.msg)
     
+proc signMessage*(rpcParams: string): string =
+  return $status_go.signMessage(rpcParams)
 
+proc signTypedData*(data: string, address: string, password: string): string =
+  return $status_go.signTypedData(data, address, password)
