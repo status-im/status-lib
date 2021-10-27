@@ -21,3 +21,6 @@ proc getTokenBalance*(tokenAddress: string, accountAddress: string): RpcResponse
     "to": tokenAddress, "from": accountAddress, "data": fmt"0x70a08231000000000000000000000000{postfixedAccount}"
   }, "latest"]
   return core.callPrivateRPC("eth_call", payload)
+
+proc call*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("eth_call", payload)
