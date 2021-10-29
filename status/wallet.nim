@@ -8,6 +8,7 @@ import statusgo_backend/settings as status_settings
 import statusgo_backend/wallet as status_wallet
 import statusgo_backend/accounts/constants as constants
 import statusgo_backend/eth as eth
+import statusgo_backend/network as status_network
 import eth/contracts
 import eth/tokens as eth_tokens
 from utils as statusgo_backend_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
