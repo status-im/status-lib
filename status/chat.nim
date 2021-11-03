@@ -210,7 +210,9 @@ proc join*(self: ChatModel, chatId: string, chatType: ChatType, ensName: string 
   self.emitTopicAndJoin(chat)
 
 proc createOneToOneChat*(self: ChatModel, publicKey: string, ensName: string = "") =
-  if self.hasChannel(publicKey): 
+  if self.hasChannel(publicKey):
+    # We want to show the chat to the user and for that we activate the chat
+    status_chat.saveChat(publicKey, ChatType.OneToOne, color=self.channels[publicKey].color, ensName=ensName)
     self.emitTopicAndJoin(self.channels[publicKey])
     return
 
