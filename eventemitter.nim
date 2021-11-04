@@ -34,8 +34,16 @@ proc once*(this:EventEmitter, name:string, handler:Handler): void =
 
 proc emit*(this:EventEmitter, name:string, args:Args): void  =
   if this.events.hasKey(name):
+    # collect the handlers before executing them
+    # because of 'once' proc, we also mutate
+    # this.events. This can cause unexpected behaviour
+    # while having an iterator on this.events
+    var handlers: seq[Handler] = @[]
     for (id, handler) in this.events[name].pairs:
-      handler(args)
+      handlers.add(handler)
+
+    for i in 0..len(handlers)-1:
+      handlers[i](args)
 
 when isMainModule:
   block:
