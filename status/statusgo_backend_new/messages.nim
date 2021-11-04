@@ -15,3 +15,11 @@ proc fetchPinnedMessages*(chatId: string, cursorVal: string, limit: int): RpcRes
 proc fetchReactions*(chatId: string, cursorVal: string, limit: int): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [chatId, cursorVal, limit]
   result = callPrivateRPC("emojiReactionsByChatID".prefix, payload)
+
+proc addReaction*(chatId: string, messageId: string, emojiId: int): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageId, emojiId]
+  result = callPrivateRPC("sendEmojiReaction".prefix, payload)
+
+proc removeReaction*(reactionId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [reactionId]
+  result = callPrivateRPC("sendEmojiReactionRetraction".prefix, payload)
