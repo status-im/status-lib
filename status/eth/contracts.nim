@@ -285,7 +285,7 @@ proc findContract*(chainId: int, name: string): Contract =
   result = if found.len > 0: found[0] else: nil
 
 proc allErc20Contracts*(): seq[Erc20Contract] =
-  result = allContracts().map(contract => Erc20Contract(contract))
+  result = allContracts().filter(contract => contract of Erc20Contract).map(contract => Erc20Contract(contract))
 
 proc allErc20ContractsByChainId*(chainId: int): seq[Erc20Contract] =
   result = allContracts().filter(contract => contract of Erc20Contract and contract.chainId == chainId).map(contract => Erc20Contract(contract))
