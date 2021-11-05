@@ -23,3 +23,19 @@ proc addReaction*(chatId: string, messageId: string, emojiId: int): RpcResponse[
 proc removeReaction*(reactionId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [reactionId]
   result = callPrivateRPC("sendEmojiReactionRetraction".prefix, payload)
+
+proc pinUnpinMessage*(chatId: string, messageId: string, pin: bool): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %*[{
+    "message_id": messageId,
+    "pinned": pin,
+    "chat_id": chatId
+  }]
+  result = callPrivateRPC("sendPinMessage".prefix, payload)
+
+proc fetchMessageByMessageId*(messageId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [messageId]
+  result = callPrivateRPC("messageByMessageID".prefix, payload)
+
+proc fetchReactionsForMessageWithId*(chatId: string, messageId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageId]
+  result = callPrivateRPC("emojiReactionsByChatIDMessageID".prefix, payload)
