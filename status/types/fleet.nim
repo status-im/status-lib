@@ -9,13 +9,16 @@ type
     Test = "eth.test",
     WakuV2Prod = "wakuv2.prod"
     WakuV2Test = "wakuv2.test"
-
+    GoWakuTest = "go-waku.test"
+    
   FleetNodes* {.pure.} = enum
     Bootnodes = "boot",
     Mailservers = "mail",
     Rendezvous = "rendezvous",
     Whisper = "whisper",
     Waku = "waku"
+    LibP2P = "libp2p"
+    Websocket = "websocket"
 
   FleetMeta* = object
     hostname*: string

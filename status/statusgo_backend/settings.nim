@@ -159,8 +159,10 @@ proc setWakuVersion*(newVersion: int) =
   else:
     nodeConfig["WakuConfig"]["Enabled"] = newJBool(false)
     nodeConfig["WakuV2Config"]["Enabled"] = newJBool(true)
+    nodeConfig["WakuV2Config"]["DiscoveryLimit"] = newJInt(20)
     nodeConfig["NoDiscovery"] = newJBool(true)
     nodeConfig["Rendezvous"] = newJBool(false)
+    nodeConfig["WakuV2Config"]["Rendezvous"] = newJBool(true)
   discard saveSetting(Setting.NodeConfig, nodeConfig)
 
 proc setNetwork*(network: string): StatusGoError =
@@ -205,7 +207,6 @@ proc setFleet*(fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
   let statusGoResult = saveSetting(Setting.Fleet, $fleet)
   if statusGoResult.error != "":
     return statusGoResult
-
   var nodeConfig = getNodeConfig()
   nodeConfig["ClusterConfig"]["Fleet"] = newJString($fleet)
   nodeConfig["ClusterConfig"]["BootNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Bootnodes)
@@ -216,6 +217,11 @@ proc setFleet*(fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
   nodeConfig["ClusterConfig"]["StoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   nodeConfig["ClusterConfig"]["FilterNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   nodeConfig["ClusterConfig"]["LightpushNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+
+  #TODO: in the meantime we're using the go-waku test fleet for rendezvous.
+  #      once we have a prod fleet this code needs to be updated
+  nodeConfig["ClusterConfig"]["WakuRendezvousNodes"] =  %* fleetConfig.getNodes(Fleet.GoWakuTest, FleetNodes.LibP2P)
+
   return saveSetting(Setting.NodeConfig, nodeConfig)
 
 proc setV2LightMode*(enabled: bool): StatusGoError =

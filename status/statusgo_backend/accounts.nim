@@ -30,12 +30,11 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
 
-  # TODO: fleet.status.im should have different sections depending on the node type
-  #       or maybe it's not necessary because a node has the identify protocol
   result["ClusterConfig"]["RelayNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   result["ClusterConfig"]["StoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   result["ClusterConfig"]["FilterNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
   result["ClusterConfig"]["LightpushNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+  result["ClusterConfig"]["WakuRendezvousNodes"] =  %* @[]
 
   # TODO: commented since it's not necessary (we do the connections thru C bindings). Enable it thru an option once status-nodes are able to be configured in desktop
   # result["ListenAddr"] = if existsEnv("STATUS_PORT"): newJString("0.0.0.0:" & $getEnv("STATUS_PORT")) else: newJString("0.0.0.0:30305")

@@ -168,7 +168,8 @@ var NODE_CONFIG* = %* {
     "Enabled": false,
     "Host": "0.0.0.0",
     "Port": 0,
-    "LightClient": false
+    "LightClient": false,
+    "DiscoveryLimit": 20
   },
   "WalletConfig": {
     "Enabled": true
