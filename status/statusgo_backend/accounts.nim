@@ -30,11 +30,15 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
 
-  result["ClusterConfig"]["RelayNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-  result["ClusterConfig"]["StoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-  result["ClusterConfig"]["FilterNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-  result["ClusterConfig"]["LightpushNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
-  result["ClusterConfig"]["WakuRendezvousNodes"] =  %* @[]
+  result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
+  result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
+  result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
+  result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
+  
+  #TODO: in the meantime we're using the go-waku test fleet for rendezvous.
+  #      once we have a prod fleet this code needs to be updated
+  result["ClusterConfig"]["WakuRendezvousNodes"] =  %* fleetConfig.getNodes(Fleet.GoWakuTest, FleetNodes.LibP2P)
+
 
   # TODO: commented since it's not necessary (we do the connections thru C bindings). Enable it thru an option once status-nodes are able to be configured in desktop
   # result["ListenAddr"] = if existsEnv("STATUS_PORT"): newJString("0.0.0.0:" & $getEnv("STATUS_PORT")) else: newJString("0.0.0.0:30305")
