@@ -207,7 +207,8 @@ proc toMessage*(jsonMsg: JsonNode): Message =
     # the "Message" is contained as an address in the wallet of logged in user. If yes, means that
     # currently logged in user has initiated a transaction (he is a sender), otherwise currently 
     # logged in user is a recipient.
-    message.isCurrentUser = currentUserWalletContainsAddress(message.commandParameters.fromAddress)
+    if message.commandParameters.fromAddress != "":
+      message.isCurrentUser = currentUserWalletContainsAddress(message.commandParameters.fromAddress)
 
   message.hasMention = concat(message.parsedText.map(
     t => t.children.filter(
