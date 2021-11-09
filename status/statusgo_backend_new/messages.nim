@@ -39,3 +39,13 @@ proc fetchMessageByMessageId*(messageId: string): RpcResponse[JsonNode] {.raises
 proc fetchReactionsForMessageWithId*(chatId: string, messageId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [chatId, messageId]
   result = callPrivateRPC("emojiReactionsByChatIDMessageID".prefix, payload)
+
+proc fetchAllMessagesFromChatWhichMatchTerm*(chatId: string, searchTerm: string, caseSensitive: bool): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, searchTerm, caseSensitive]
+  result = callPrivateRPC("allMessagesFromChatWhichMatchTerm".prefix, payload)
+
+proc fetchAllMessagesFromChatsAndCommunitiesWhichMatchTerm*(communityIds: seq[string], chatIds: seq[string], 
+  searchTerm: string, caseSensitive: bool): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [communityIds, chatIds, searchTerm, caseSensitive]
+  result = callPrivateRPC("allMessagesFromChatsAndCommunitiesWhichMatchTerm".prefix, payload)
