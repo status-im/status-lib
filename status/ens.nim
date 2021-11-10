@@ -320,7 +320,10 @@ proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabl
 
 proc statusRegistrarAddress*():string =
   let network = status_settings.getCurrentNetwork().toNetwork()
-  result = $contracts.findContract(network.chainId, "ens-usernames").address
+  let contract = contracts.findContract(network.chainId, "ens-usernames")
+  if contract != nil:
+     return $contract.address
+  result = ""
 
 type
   ENSType* {.pure.} = enum
