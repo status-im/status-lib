@@ -12,6 +12,7 @@ import ../eth/contracts as status_contracts
 import web3/conversions
 from ../utils import parseAddress, wei2Eth
 import setting, network
+import chronicles
 
 include message_command_parameters
 include message_reaction
@@ -95,7 +96,7 @@ var identiconIndex = initTable[string, string]()
 var aliasIndex = initTable[string, string]()
 
 
-proc toMessage*(jsonMsg: JsonNode): Message =
+proc toMessage*(jsonMsg: JsonNode, logMessage: bool = false): Message =
   let publicChatKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
 
   var contentType: ContentType
@@ -121,6 +122,9 @@ proc toMessage*(jsonMsg: JsonNode): Message =
     alias = aliasIndex[publicKey]
   else:
     alias = generateAlias(publicKey)
+
+  if logMessage:
+    debug "message received: ", messageId=jsonMsg{"id"}.getStr
 
   var message = Message(
       alias: alias,

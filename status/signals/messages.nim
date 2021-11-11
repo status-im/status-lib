@@ -18,7 +18,7 @@ type MessageSignal* = ref object of Signal
   statusUpdates*: seq[StatusUpdate]
   deletedMessages*: seq[RemovedMessage]
 
-proc fromEvent*(T: type MessageSignal, event: JsonNode): MessageSignal = 
+proc fromEvent*(T: type MessageSignal, event: JsonNode, logMessage: bool = false): MessageSignal = 
   var signal:MessageSignal = MessageSignal()
   signal.messages = @[]
   signal.contacts = @[]
@@ -31,7 +31,7 @@ proc fromEvent*(T: type MessageSignal, event: JsonNode): MessageSignal =
 
   if event["event"]{"messages"} != nil:
     for jsonMsg in event["event"]["messages"]:
-      var message = jsonMsg.toMessage()
+      var message = jsonMsg.toMessage(logMessage)
       if message.hasMention:
         chatsWithMentions.add(message.chatId)
       signal.messages.add(message)
