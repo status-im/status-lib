@@ -49,3 +49,12 @@ proc fetchAllMessagesFromChatsAndCommunitiesWhichMatchTerm*(communityIds: seq[st
   searchTerm: string, caseSensitive: bool): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [communityIds, chatIds, searchTerm, caseSensitive]
   result = callPrivateRPC("allMessagesFromChatsAndCommunitiesWhichMatchTerm".prefix, payload)
+
+proc markAllMessagesFromChatWithIdAsRead*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("markAllRead".prefix, payload)
+
+proc markCertainMessagesFromChatWithIdAsRead*(chatId: string, messageIds: seq[string]): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageIds]
+  result = callPrivateRPC("markMessagesSeen".prefix, payload)
