@@ -12,7 +12,7 @@ proc decode*(jsonSignal: JsonNode): Signal =
     raise newException(ValueError, "Unknown signal received: " & signalString)
 
   result = case signalType:
-    of SignalType.Message: MessageSignal.fromEvent(jsonSignal)
+    of SignalType.Message: MessageSignal.fromEvent(jsonSignal, true)
     of SignalType.EnvelopeSent: EnvelopeSentSignal.fromEvent(jsonSignal)
     of SignalType.EnvelopeExpired: EnvelopeExpiredSignal.fromEvent(jsonSignal)
     of SignalType.WhisperFilterAdded: WhisperFilterSignal.fromEvent(jsonSignal)
