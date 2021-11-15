@@ -15,6 +15,7 @@ type
     keyUid* {.serializedFieldName("key-uid").}: string
     identityImage*: IdentityImage
     identicon*: string
+    isKeycard* {.dontSerialize.}: bool
 
 type
   NodeAccount* = ref object of Account
@@ -35,12 +36,16 @@ type
     keyUid*: string
     identicon*: string
     identityImage*: IdentityImage
+    isKeycard*: bool
+
+proc isKeycard*(account: NodeAccount): bool =
+  result = account.keycardPairing != ""
 
 proc toAccount*(account: GeneratedAccount): Account =
-  result = Account(name: account.name, identityImage: account.identityImage, identicon: account.identicon, keyUid: account.keyUid)
+  result = Account(name: account.name, identityImage: account.identityImage, identicon: account.identicon, keyUid: account.keyUid, isKeycard: account.isKeycard)
 
 proc toAccount*(account: NodeAccount): Account =
-  result = Account(name: account.name, identityImage: account.identityImage, identicon: account.identicon, keyUid: account.keyUid)
+  result = Account(name: account.name, identityImage: account.identityImage, identicon: account.identicon, keyUid: account.keyUid, isKeycard: isKeycard(account))
 
 type AccountArgs* = ref object of Args
     account*: Account
