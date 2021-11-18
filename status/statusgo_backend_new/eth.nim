@@ -22,5 +22,9 @@ proc getTokenBalance*(tokenAddress: string, accountAddress: string): RpcResponse
   }, "latest"]
   return core.callPrivateRPC("eth_call", payload)
 
-proc call*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
-  return core.callPrivateRPC("eth_call", payload)
+proc sendTransaction*(transactionData: string, password: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  core.sendTransaction(transactionData, password)
+
+# This is the replacement of the `call` function
+proc doEthCall*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+  core.callPrivateRPC("eth_call", payload)
