@@ -1,4 +1,4 @@
-import json, json_serialization, strformat, chronicles
+import json, json_serialization, strformat, chronicles, nimcrypto
 import status_go
 import response_type
 
@@ -39,3 +39,12 @@ proc callPrivateRPC*(methodName: string, payload = %* []): RpcResponse[JsonNode]
     raise newException(RpcException, e.msg)
     
 
+proc sendTransaction*(inputJSON: string, password: string): RpcResponse[JsonNode] 
+  {.raises: [RpcException, ValueError, Defect, SerializationError].} =
+  try:
+    var hashed_password = "0x" & $keccak_256.digest(password)
+    let rpcResponseRaw = status_go.sendTransaction(inputJSON, hashed_password)
+    result = Json.decode(rpcResponseRaw, RpcResponse[JsonNode])
+  except RpcException as e:
+    error "error sending tx", inputJSON, exception=e.msg
+    raise newException(RpcException, e.msg)
