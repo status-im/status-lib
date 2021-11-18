@@ -36,7 +36,7 @@ proc resolver*(usernameHash: string): string =
     "data": fmt"{resolver_signature}{userNameHash}"
   }, "latest"]
 
-  var resolverAddr = eth.call(payload).result.getStr()
+  var resolverAddr = eth.doEthCall(payload).result.getStr()
   resolverAddr.removePrefix("0x000000000000000000000000")
   result = "0x" & resolverAddr
 
@@ -51,7 +51,7 @@ proc contenthash*(ensAddr: string): string =
     "data": fmt"{contenthash_signature}{ensHash}"
   }, "latest"]
 
-  let bytesResponse =  eth.call(payload).result.getStr()
+  let bytesResponse =  eth.doEthCall(payload).result.getStr()
   if bytesResponse == "0x":
     return ""
 
