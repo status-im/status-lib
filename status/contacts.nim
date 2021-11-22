@@ -36,15 +36,11 @@ proc getContactByID*(self: ContactModel, id: string): Profile =
   return status_contacts.getContactByID(id)
   
 proc blockContact*(self: ContactModel, id: string) =
-  var contact = self.getContactByID(id)
-  contact.blocked = true
-  self.saveContact(contact)
+  status_contacts.blockContact(id)
   self.events.emit("contactBlocked", ContactIdArgs(id: id))
 
 proc unblockContact*(self: ContactModel, id: string) =
-  var contact = self.getContactByID(id)
-  contact.blocked = false
-  self.saveContact(contact)
+  status_contacts.unblockContact(id)
   self.events.emit("contactUnblocked", ContactIdArgs(id: id))
 
 proc getContacts*(self: ContactModel, useCache: bool = true): seq[Profile] =
@@ -83,7 +79,7 @@ proc setNickName*(self: ContactModel, id: string, localNickname: string, account
       localNickname
 
   contact.localNickname = nickname
-  self.saveContact(contact)
+  status_contacts.setContactLocalNickname(id, nickname);
   self.events.emit("contactAdded", Args())
   sendContactUpdate(contact.id, accountKeyUID)
 
@@ -119,11 +115,7 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string) =
     self.events.emit("contactUpdate", ContactUpdateArgs(contacts: @[profile]))
 
 proc removeContact*(self: ContactModel, id: string) =
-  let contact = self.getContactByID(id)
-  contact.added = false
-  contact.hasAddedUs = false
-
-  self.saveContact(contact)
+  status_contacts.removeContact(id)
   self.events.emit("contactRemoved", Args())
 
 proc isAdded*(self: ContactModel, id: string): bool =

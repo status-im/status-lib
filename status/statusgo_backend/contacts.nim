@@ -47,25 +47,44 @@ proc getContactsIndex*(): (Table[string, Profile], bool)=
   discard getContacts()
   return (contactsIndex, false)
 
+proc blockContact*(id: string) =
+  discard callPrivateRPC("blockContact".prefix, %* [id])
+  dirty.store(true)
+
+proc unblockContact*(id: string) =
+  discard callPrivateRPC("unblockContact".prefix, %* [id])
+  dirty.store(true)
+
+proc removeContact*(id: string) =
+  discard callPrivateRPC("removeContact".prefix, %* [id])
+  dirty.store(true)
+
+proc rejectContactRequest*(id: string) =
+  let payload = %*[{
+    "id": id
+  }]
+  discard callPrivateRPC("rejectContactRequest".prefix, payload)
+  dirty.store(true)
+
+proc setContactLocalNickname*(id: string, name: string) =
+  let payload = %* [{
+    "id": id,
+    "nickname": name
+  }]
+  discard callPrivateRPC("setContactLocalNickname".prefix, payload)
+  dirty.store(true)
+
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
   identicon: string, thumbnail: string, largeImage: string, added: bool, blocked: bool, 
   hasAddedUs: bool, localNickname: string) =
+  # TODO: Most of these method arguments aren't used anymore
+  # as status-go's RPC API became smarter. Should remove those.
   let payload = %* [{
       "id": id,
-      "name": ensName,
-      "ensVerified": ensVerified,
-      "alias": alias,
-      "identicon": identicon,
-      "images": {
-        "thumbnail": {"Payload": thumbnail.partition(",")[2]},
-        "large": {"Payload": largeImage.partition(",")[2]}
-        },
-      "added": added,
-      "blocked": blocked,
-      "hasAddedUs": hasAddedUs,
-      "localNickname": localNickname
+      "ensName": ensName
     }]
-  discard callPrivateRPC("saveContact".prefix, payload)
+
+  discard callPrivateRPC("addContact".prefix, payload)
   dirty.store(true)
 
 proc sendContactUpdate*(publicKey: string, accountKeyUID: string) =
