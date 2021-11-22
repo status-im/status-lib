@@ -28,3 +28,6 @@ proc sendTransaction*(transactionData: string, password: string): RpcResponse[Js
 # This is the replacement of the `call` function
 proc doEthCall*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
   core.callPrivateRPC("eth_call", payload)
+
+proc estimateGas*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+  core.callPrivateRPC("eth_estimateGas", payload)

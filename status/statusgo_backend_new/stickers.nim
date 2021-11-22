@@ -41,3 +41,16 @@ proc getPackIdFromTokenId*(address: string, data: string): RpcResponse[JsonNode]
     raise newException(RpcException, "Error getting pack id from token id: " & response.error.message)
   
   return response
+
+proc getPackCount*(address: string, data: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [{
+      "to": address,
+      "data": data
+    }, "latest"]
+
+  let response = eth.doEthCall(payload)
+
+  if not response.error.isNil:
+    raise newException(RpcException, "Error getting stickers balance: " & response.error.message)
+  
+  return response
