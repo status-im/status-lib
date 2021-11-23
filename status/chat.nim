@@ -376,7 +376,7 @@ proc sendSticker*(self: ChatModel, chatId: string, replyTo: string, sticker: Sti
   self.events.emit("stickerSent", StickerArgs(sticker: sticker, save: true))
   var (chats, messages) = self.parseChatResponse(response)
   self.events.emit("chatUpdate", ChatUpdateArgs(messages: messages, chats: chats))
-  self.events.emit("sendingMessage", MessageArgs(id: messages[0].id, channel: messages[0].chatId))
+  self.events.emit("messageSendingSuccess", MessageSendingSuccess(message: messages[0], chat: chats[0]))
 
 proc addEmojiReaction*(self: ChatModel, chatId: string, messageId: string, emojiId: int) =
   let reactions = status_chat.addEmojiReaction(chatId, messageId, emojiId)
