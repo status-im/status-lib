@@ -30,7 +30,7 @@ type Status* = ref object
   provider*: ProviderModel
   keycard*: KeycardModel
 
-proc newStatusInstanceInternal(backendName: string = "statusgo"): Status =
+proc newStatusInstance*(backendName: string): Status =
   result = Status()
   result.backend = newBackend(backendName)
   result.events = createEventEmitter()
@@ -94,7 +94,7 @@ proc getBloomFilterBitsSet*(self: Status): int {.exportc, dynlib.} =
 
 
 proc newStatusInstance*(): Status {.exportc, dynlib.} =
-  newStatusInstanceInternal()
+  newStatusInstance("statusgo")
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: cstring) {.exportc, dynlib.} =
   self.initNode($statusGoDir, $keystoreDir)
