@@ -89,9 +89,8 @@ proc getCurrentNetworkDetails*(): NetworkDetails =
 proc getLinkPreviewWhitelist*(): JsonNode =
   result = callPrivateRPC("getLinkPreviewWhitelist".prefix, %* []).parseJSON()["result"]
 
-proc getFleet*(): Fleet =
-  let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
-  result = parseEnum[Fleet](fleet)
+proc getFleet*(): string =
+  result = getSetting[string](Setting.Fleet, $Fleet.PROD)
 
 proc getPinnedMailserver*(): string =
   let pinnedMailservers = getSetting[JsonNode](Setting.PinnedMailservers, %*{})
@@ -203,16 +202,17 @@ proc setBloomLevel*(bloomFilterMode: bool, fullNode: bool): StatusGoError =
   nodeConfig["WakuConfig"]["LightClient"] = newJBool(not fullNode)
   return saveSetting(Setting.NodeConfig, nodeConfig)
 
-proc setFleet*(fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
-  let statusGoResult = saveSetting(Setting.Fleet, $fleet)
+proc setFleet*(fleetConfig: FleetConfig, fleet: string): StatusGoError =
+  let fleetType = parseEnum[Fleet](fleet)
+  let statusGoResult = saveSetting(Setting.Fleet, fleet)
   if statusGoResult.error != "":
     return statusGoResult
   var nodeConfig = getNodeConfig()
-  nodeConfig["ClusterConfig"]["Fleet"] = newJString($fleet)
-  nodeConfig["ClusterConfig"]["BootNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Bootnodes)
-  nodeConfig["ClusterConfig"]["TrustedMailServers"] = %* fleetConfig.getNodes(fleet, FleetNodes.Mailservers)
-  nodeConfig["ClusterConfig"]["StaticNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Whisper)
-  nodeConfig["ClusterConfig"]["RendezvousNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Rendezvous)
+  nodeConfig["ClusterConfig"]["Fleet"] = newJString(fleet)
+  nodeConfig["ClusterConfig"]["BootNodes"] = %* fleetConfig.getNodes(fleetType, FleetNodes.Bootnodes)
+  nodeConfig["ClusterConfig"]["TrustedMailServers"] = %* fleetConfig.getNodes(fleetType, FleetNodes.Mailservers)
+  nodeConfig["ClusterConfig"]["StaticNodes"] = %* fleetConfig.getNodes(fleetType, FleetNodes.Whisper)
+  nodeConfig["ClusterConfig"]["RendezvousNodes"] = %* fleetConfig.getNodes(fleetType, FleetNodes.Rendezvous)
   nodeConfig["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
   nodeConfig["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
   nodeConfig["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
