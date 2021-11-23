@@ -9,12 +9,11 @@ import ./keycard
 
 import ../backends/backend
 
-export chat, accounts, node, messages, contacts, profile, network, permissions, fleet, eventemitter
+export chat, accounts, node, messages, contacts, profile, network, permissions, eventemitter
 
 type Status* = ref object
   backend*: Backend
   events*: EventEmitter
-  fleet*: FleetModel
   chat*: ChatModel
   messages*: MessagesModel
   accounts*: AccountModel
@@ -31,11 +30,10 @@ type Status* = ref object
   provider*: ProviderModel
   keycard*: KeycardModel
 
-proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): Status =
+proc newStatusInstanceInternal(backendName: string = "statusgo"): Status =
   result = Status()
   result.backend = newBackend(backendName)
   result.events = createEventEmitter()
-  result.fleet = fleet.newFleetModel(fleetConfig)
   result.chat = chat.newChatModel(result.events)
   result.accounts = accounts.newAccountModel(result.events)
   result.wallet = wallet.newWalletModel(result.events)
@@ -95,8 +93,8 @@ proc getBloomFilterBitsSet*(self: Status): int {.exportc, dynlib.} =
 # exported correctly
 
 
-proc newStatusInstance*(fleetConfig: cstring): Status {.exportc, dynlib.} =
-  newStatusInstance($fleetConfig)
+proc newStatusInstance*(): Status {.exportc, dynlib.} =
+  newStatusInstanceInternal()
 
 proc initNode*(self: Status, statusGoDir, keystoreDir: cstring) {.exportc, dynlib.} =
   self.initNode($statusGoDir, $keystoreDir)
