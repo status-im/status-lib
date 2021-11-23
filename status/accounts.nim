@@ -62,7 +62,7 @@ proc generateAlias*(self: AccountModel, publicKey: string): string =
 proc generateIdenticon*(self: AccountModel, publicKey: string): string =
   result = generateIdenticon(publicKey)
 
-proc changeNetwork*(self: AccountModel, fleetConfig: FleetConfig, network: string) =
+proc changeNetwork*(self: AccountModel, network: string) =
   var statusGoResult = status_settings.setNetwork(network)
   if statusGoResult.error != "":
     error "Error saving updated node config", msg=statusGoResult.error
