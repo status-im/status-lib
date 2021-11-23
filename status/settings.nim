@@ -1,4 +1,4 @@
-import json, json_serialization
+import json, json_serialization, strutils
 
 import statusgo_backend/settings as statusgo_backend_settings
 import ../eventemitter
@@ -36,8 +36,8 @@ proc pinMailserver*(self: SettingsModel, enode: string = "") =
 proc saveMailserver*(self: SettingsModel, name, enode: string) =
   statusgo_backend_settings.saveMailserver(name, enode)
 
-proc getFleet*(self: SettingsModel): Fleet =
-    result = statusgo_backend_settings.getFleet()
+proc getFleet*(self: SettingsModel): string =
+  statusgo_backend_settings.getFleet()
 
 proc getCurrentNetwork*(self: SettingsModel): NetworkType =
     result = statusgo_backend_settings.getCurrentNetwork()
@@ -51,7 +51,7 @@ proc getWakuVersion*(self: SettingsModel): int =
 proc setBloomFilterMode*(self: SettingsModel, bloomFilterMode: bool): StatusGoError =
   statusgo_backend_settings.setBloomFilterMode(bloomFilterMode)
 
-proc setFleet*(self: SettingsModel, fleetConfig: FleetConfig, fleet: Fleet): StatusGoError =
+proc setFleet*(self: SettingsModel, fleetConfig: FleetConfig, fleet: string): StatusGoError =
   statusgo_backend_settings.setFleet(fleetConfig, fleet)
 
 proc setV2LightMode*(self: SettingsModel, enabled: bool): StatusGoError =
