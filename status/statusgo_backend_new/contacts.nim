@@ -12,27 +12,40 @@ proc getContactById*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} 
   let payload = %* [id]
   result = callPrivateRPC("getContactByID".prefix, payload)
 
+proc blockContact*(id: string) =
+  discard callPrivateRPC("blockContact".prefix, %* [id])
+
+proc unblockContact*(id: string) =
+  discard callPrivateRPC("unblockContact".prefix, %* [id])
+
+proc removeContact*(id: string) =
+  discard callPrivateRPC("removeContact".prefix, %* [id])
+
+proc rejectContactRequest*(id: string) =
+  let payload = %*[{
+    "id": id
+  }]
+  discard callPrivateRPC("rejectContactRequest".prefix, payload)
+
+proc setContactLocalNickname*(id: string, name: string) =
+  let payload = %* [{
+    "id": id,
+    "nickname": name
+  }]
+  discard callPrivateRPC("setContactLocalNickname".prefix, payload)
+
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
   identicon: string, thumbnail: string, largeImage: string, added: bool, 
   blocked: bool, hasAddedUs: bool, localNickname: string) 
   {.raises: [Exception].} =
+  # TODO: Most of these method arguments aren't used anymore
+  # as status-go's RPC API became smarter. Should remove those.
   let payload = %* [{
-    "id": id,
-    "name": ensName,
-    "ensVerified": ensVerified,
-    "alias": alias,
-    "identicon": identicon,
-    "images": {
-      "thumbnail": {"Payload": thumbnail.partition(",")[2]},
-      "large": {"Payload": largeImage.partition(",")[2]}
-      },
-    "added": added,
-    "blocked": blocked,
-    "hasAddedUs": hasAddedUs,
-    "localNickname": localNickname
-  }]
+      "id": id,
+      "ensName": ensName
+    }]
 
-  discard callPrivateRPC("saveContact".prefix, payload)
+  discard callPrivateRPC("addContact".prefix, payload)
 
 proc sendContactUpdate*(publicKey, ensName, thumbnail: string)
   {.raises: [Exception].} =
