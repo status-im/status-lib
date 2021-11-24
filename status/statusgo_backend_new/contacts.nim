@@ -14,7 +14,7 @@ proc getContactById*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} 
 
 proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
   identicon: string, thumbnail: string, largeImage: string, added: bool, 
-  blocked: bool, hasAddedUs: bool, localNickname: string) 
+  blocked: bool, hasAddedUs: bool, localNickname: string)
   {.raises: [Exception].} =
   let payload = %* [{
     "id": id,
@@ -23,19 +23,18 @@ proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string,
     "alias": alias,
     "identicon": identicon,
     "images": {
-      "thumbnail": {"Payload": thumbnail.partition(",")[2]},
-      "large": {"Payload": largeImage.partition(",")[2]}
+      "thumbnail": thumbnail,
+      "large": largeImage
       },
     "added": added,
     "blocked": blocked,
     "hasAddedUs": hasAddedUs,
     "localNickname": localNickname
   }]
-
-  discard callPrivateRPC("saveContact".prefix, payload)
+  #TODO figure out why this causes the app to crash and uncomment
+  #discard callPrivateRPC("saveContact".prefix, payload)
 
 proc sendContactUpdate*(publicKey, ensName, thumbnail: string)
   {.raises: [Exception].} =
   let payload = %* [publicKey, ensName, thumbnail]
   discard callPrivateRPC("sendContactUpdate".prefix, payload)
-  
