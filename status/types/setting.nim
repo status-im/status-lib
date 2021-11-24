@@ -30,3 +30,4 @@ type
     SendUserStatus = "send-status-updates?"
     CurrentUserStatus = "current-user-status"
     TelemetryServerUrl = "telemetry-server-url"
+    AutoMessageEnabled = "auto-message-enabled?"
