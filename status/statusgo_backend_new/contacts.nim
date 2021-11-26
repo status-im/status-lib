@@ -34,12 +34,7 @@ proc setContactLocalNickname*(id: string, name: string) =
   }]
   discard callPrivateRPC("setContactLocalNickname".prefix, payload)
 
-proc saveContact*(id: string, ensVerified: bool, ensName: string, alias: string, 
-  identicon: string, thumbnail: string, largeImage: string, added: bool, 
-  blocked: bool, hasAddedUs: bool, localNickname: string) 
-  {.raises: [Exception].} =
-  # TODO: Most of these method arguments aren't used anymore
-  # as status-go's RPC API became smarter. Should remove those.
+proc addContact*(id: string, ensName: string) {.raises: [Exception].} =
   let payload = %* [{
       "id": id,
       "ensName": ensName
