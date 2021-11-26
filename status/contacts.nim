@@ -94,7 +94,6 @@ proc addContact*(self: ContactModel, id: string, accountKeyUID: string) =
 
   if not updating:
     contact.added = true
-    discard status_chat.createProfileChat(contact.id)
   else:
     contact.blocked = false
 

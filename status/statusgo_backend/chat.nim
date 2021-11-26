@@ -41,9 +41,6 @@ proc deactivateChat*(chat: Chat):string =
   chat.isActive = false
   callPrivateRPC("deactivateChat".prefix, %* [{ "ID": chat.id }])
 
-proc createProfileChat*(pubKey: string):string =
-  callPrivateRPC("createProfileChat".prefix, %* [{ "ID": pubKey }])
-
 proc loadChats*(): seq[Chat] =
   result = @[]
   let jsonResponse = parseJson($callPrivateRPC("chats".prefix))

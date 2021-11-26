@@ -156,7 +156,7 @@ proc removeChatFilters(self: ChatModel, chatId: string) =
     for filter in filters:
       if filter["chatId"].getStr == chatId:
         status_chat.removeFilters(chatId, filter["filterId"].getStr)
-  of ChatType.OneToOne, ChatType.Profile:
+  of ChatType.OneToOne:
     # Check if user does not belong to any active chat group
     var inGroup = false
     for channel in self.channels.values:
@@ -256,6 +256,19 @@ proc sortChats(x, y: chat_type.Chat): int =
   elif t1 == t2: 0
   else: -1
 
+proc leave*(self: ChatModel, chatId: string) =
+  self.removeChatFilters(chatId)
+
+  if self.channels[chatId].chatType == ChatType.PrivateGroupChat:
+    let leaveGroupResponse = status_chat.leaveGroupChat(chatId)
+    self.emitUpdate(leaveGroupResponse)
+
+  discard status_chat.deactivateChat(self.channels[chatId])
+
+  self.channels.del(chatId)
+  discard status_chat.clearChatHistory(chatId)
+  self.events.emit("channelLeft", ChatIdArg(chatId: chatId))
+
 proc init*(self: ChatModel, pubKey: string) =
   self.publicKey = pubKey
 
@@ -263,31 +276,6 @@ proc init*(self: ChatModel, pubKey: string) =
   contacts = contacts.filter(c => c.added)
   var chatList = status_chat.loadChats()
   chatList.sort(sortChats)
-
-  let profileUpdatesChatIds = chatList.filter(c => c.chatType == ChatType.Profile).map(c => c.id)
-
-  if chatList.filter(c => c.chatType == ChatType.Timeline).len == 0:
-    var timelineChannel = newChat(status_utils.getTimelineChatId(), ChatType.Timeline)
-    self.join(timelineChannel.id, timelineChannel.chatType)
-    chatList.add(timelineChannel)
-
-  let timelineChatId = status_utils.getTimelineChatId(pubKey)
-
-  if not profileUpdatesChatIds.contains(timelineChatId):
-    var profileUpdateChannel = newChat(timelineChatId, ChatType.Profile)
-    status_chat.saveChat(profileUpdateChannel.id, profileUpdateChannel.chatType, profile=pubKey)
-    chatList.add(profileUpdateChannel)
-
-  # For profile updates and timeline, we have to make sure that for
-  # each added contact, a chat has been saved for the currently logged-in
-  # user. Users that will use a version of Status with timeline support for the
-  # first time, won't have any of those otherwise.
-  if profileUpdatesChatIds.filter(id => id != timelineChatId).len != contacts.len:
-    for contact in contacts:
-      if not profileUpdatesChatIds.contains(status_utils.getTimelineChatId(contact.address)):
-        let profileUpdatesChannel = newChat(status_utils.getTimelineChatId(contact.address), ChatType.Profile)
-        status_chat.saveChat(profileUpdatesChannel.id, profileUpdatesChannel.chatType, ensName=contact.ensName, profile=contact.address)
-        chatList.add(profileUpdatesChannel)
 
   var filters:seq[JsonNode] = @[]
   for chat in chatList:
@@ -307,22 +295,13 @@ proc init*(self: ChatModel, pubKey: string) =
     self.mailserverReady = true
     self.requestMissingCommunityInfos()
 
+  let timelineAndProfileChatIds = chatList.filter(c => c.chatType == ChatType.Profile or c.chatType == ChatType.Timeline).map(c => c.id)
+  for chatId in timelineAndProfileChatIds:
+    self.leave(chatId)
+
 proc statusUpdates*(self: ChatModel) =
   let statusUpdates = status_chat.statusUpdates()
   self.events.emit("messagesLoaded", MsgsLoadedArgs(statusUpdates: statusUpdates))
-
-proc leave*(self: ChatModel, chatId: string) =
-  self.removeChatFilters(chatId)
-
-  if self.channels[chatId].chatType == ChatType.PrivateGroupChat:
-    let leaveGroupResponse = status_chat.leaveGroupChat(chatId)
-    self.emitUpdate(leaveGroupResponse)
-
-  discard status_chat.deactivateChat(self.channels[chatId])
-
-  self.channels.del(chatId)
-  discard status_chat.clearChatHistory(chatId)
-  self.events.emit("channelLeft", ChatIdArg(chatId: chatId))
 
 proc clearHistory*(self: ChatModel, chatId: string) =
   discard status_chat.clearChatHistory(chatId)
