@@ -12,38 +12,36 @@ proc getContactById*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} 
   let payload = %* [id]
   result = callPrivateRPC("getContactByID".prefix, payload)
 
-proc blockContact*(id: string) =
-  discard callPrivateRPC("blockContact".prefix, %* [id])
+proc blockContact*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("blockContact".prefix, %* [id])
 
-proc unblockContact*(id: string) =
-  discard callPrivateRPC("unblockContact".prefix, %* [id])
+proc unblockContact*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("unblockContact".prefix, %* [id])
 
-proc removeContact*(id: string) =
-  discard callPrivateRPC("removeContact".prefix, %* [id])
+proc removeContact*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("removeContact".prefix, %* [id])
 
-proc rejectContactRequest*(id: string) =
+proc rejectContactRequest*(id: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %*[{
     "id": id
   }]
-  discard callPrivateRPC("rejectContactRequest".prefix, payload)
+  result = callPrivateRPC("rejectContactRequest".prefix, payload)
 
-proc setContactLocalNickname*(id: string, name: string) =
+proc setContactLocalNickname*(id: string, name: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [{
     "id": id,
     "nickname": name
   }]
-  discard callPrivateRPC("setContactLocalNickname".prefix, payload)
+  result = callPrivateRPC("setContactLocalNickname".prefix, payload)
 
-proc addContact*(id: string, ensName: string) {.raises: [Exception].} =
+proc addContact*(id: string, ensName: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [{
       "id": id,
       "ensName": ensName
     }]
+  result = callPrivateRPC("addContact".prefix, payload)
 
-  discard callPrivateRPC("addContact".prefix, payload)
-
-proc sendContactUpdate*(publicKey, ensName, thumbnail: string)
-  {.raises: [Exception].} =
+proc sendContactUpdate*(publicKey, ensName, thumbnail: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [publicKey, ensName, thumbnail]
-  discard callPrivateRPC("sendContactUpdate".prefix, payload)
+  result = callPrivateRPC("sendContactUpdate".prefix, payload)
   
