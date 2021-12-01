@@ -44,6 +44,8 @@ type Chat* = ref object
   canPost*: bool
   ensName*: string
   position*: int
+  syncedFrom*: int64
+  syncedTo*: int64
 
 proc `$`*(self: Chat): string =
   result = fmt"Chat(id:{self.id}, name:{self.name}, active:{self.isActive}, type:{self.chatType})"
@@ -64,7 +66,9 @@ proc toJsonNode*(self: Chat): JsonNode =
     "timestamp": self.timestamp,
     "unviewedMessagesCount": self.unviewedMessagesCount,
     "joined": self.joined,
-    "position": self.position
+    "position": self.position,
+    "syncedFrom": self.syncedFrom,
+    "syncedTo": self.syncedTo,
   }
 
 proc toChatMember*(jsonMember: JsonNode): ChatMember =
@@ -116,7 +120,9 @@ proc toChat*(jsonChat: JsonNode): Chat =
     muted: false,
     ensName: "",
     joined: 0,
-    private: jsonChat{"private"}.getBool
+    private: jsonChat{"private"}.getBool,
+    syncedFrom: jsonChat{"syncedFrom"}.getBiggestInt,
+    syncedTo: jsonChat{"syncedTo"}.getBiggestInt,
   )
 
   if jsonChat.hasKey("muted") and jsonChat["muted"].kind != JNull: 
