@@ -257,7 +257,14 @@ proc sortChats(x, y: chat_type.Chat): int =
   else: -1
 
 proc leave*(self: ChatModel, chatId: string) =
-  self.removeChatFilters(chatId)
+  if self.msgCursor.hasKey(chatId):
+    self.msgCursor.del(chatId)
+
+  if self.emojiCursor.hasKey(chatId):
+    self.emojiCursor.del(chatId)
+
+  if self.pinnedMsgCursor.hasKey(chatId):
+    self.pinnedMsgCursor.del(chatId)
 
   if self.channels[chatId].chatType == ChatType.PrivateGroupChat:
     let leaveGroupResponse = status_chat.leaveGroupChat(chatId)
@@ -265,8 +272,10 @@ proc leave*(self: ChatModel, chatId: string) =
 
   discard status_chat.deactivateChat(self.channels[chatId])
 
+  self.removeChatFilters(chatId)
+
   self.channels.del(chatId)
-  discard status_chat.clearChatHistory(chatId)
+
   self.events.emit("channelLeft", ChatIdArg(chatId: chatId))
 
 proc init*(self: ChatModel, pubKey: string) =
