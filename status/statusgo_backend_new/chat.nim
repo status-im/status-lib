@@ -64,3 +64,11 @@ proc sendImages*(chatId: string, images: var seq[string]): RpcResponse[JsonNode]
       }
     )
   callPrivateRPC("sendChatMessages".prefix, %* [imagesJson])
+
+proc muteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("muteChat".prefix, payload)
+
+proc unmuteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("unmuteChat".prefix, payload)
