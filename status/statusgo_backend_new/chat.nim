@@ -11,3 +11,11 @@ proc getChats*(): RpcResponse[JsonNode] {.raises: [Exception].} =
 proc createPublicChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [{"ID": chatId}]
   result = callPrivateRPC("createPublicChat".prefix, payload)
+
+proc muteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("muteChat".prefix, payload)
+
+proc unmuteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("unmuteChat".prefix, payload)
