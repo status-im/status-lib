@@ -1,8 +1,35 @@
-import json
+import json, sequtils, sugar
 import core, utils
 import response_type
 
 export response_type
+
+proc saveChat*(
+    chatId: string,
+    chatType: int,
+    active: bool = true,
+    color: string = "#000000",
+    ensName: string = "",
+    profile: string = "", 
+    joined: int64 = 0
+    ): RpcResponse[JsonNode] {.raises: [Exception].} =
+  # TODO: ideally status-go/stimbus should handle some of these fields instead of having the client
+  # send them: lastMessage, unviewedMEssagesCount, timestamp, lastClockValue, name?
+  return callPrivateRPC("saveChat".prefix, %* [
+    {
+      "lastClockValue": 0, # TODO:
+      "color": color,
+      "name": (if ensName != "": ensName else: chatId),
+      "lastMessage": nil, # TODO:
+      "active": active,
+      "profile": profile,
+      "id": chatId,
+      "unviewedMessagesCount": 0, # TODO:
+      "chatType":  chatType.int,
+      "timestamp": 1588940692659,  # TODO:
+      "joined": joined
+    }
+  ])
 
 proc getChats*(): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* []
@@ -11,3 +38,29 @@ proc getChats*(): RpcResponse[JsonNode] {.raises: [Exception].} =
 proc createPublicChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [{"ID": chatId}]
   result = callPrivateRPC("createPublicChat".prefix, payload)
+
+proc createOneToOneChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [{"ID": chatId}]
+  result = callPrivateRPC("createOneToOneChat".prefix, payload)
+
+proc leaveGroupChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("leaveGroupChat".prefix, %* [nil, chatId, true])
+
+proc deactivateChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  callPrivateRPC("deactivateChat".prefix, %* [{ "ID": chatId }])
+
+proc clearChatHistory*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  callPrivateRPC("deleteMessagesByChatID".prefix, %* [chatId])
+
+proc sendImages*(chatId: string, images: var seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let imagesJson = %* images.map(image => %*
+      {
+        "chatId": chatId,
+        "contentType": 7, # TODO how do we unhardcode this
+        "imagePath": image,
+        # TODO is this still needed
+        # "ensName": preferredUsername,
+        "text": "Update to latest version to see a nice image here!"
+      }
+    )
+  callPrivateRPC("sendChatMessages".prefix, %* [imagesJson])
