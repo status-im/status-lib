@@ -19,3 +19,7 @@ proc muteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
 proc unmuteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [chatId]
   result = callPrivateRPC("unmuteChat".prefix, payload)
+
+proc deleteMessagesByChatId*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("deleteMessagesByChatID".prefix, payload)
