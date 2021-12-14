@@ -1,5 +1,6 @@
 import statusgo_backend/settings as status_settings
 import statusgo_backend/tokens as statusgo_backend_tokens
+import ./statusgo_backend/network
 import eth/tokens as status_tokens
 import eth/contracts
 import ./types/network_type

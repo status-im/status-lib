@@ -13,6 +13,7 @@ import chronicles, libp2p/[multihash, multicodec, cid]
 
 import ./statusgo_backend/eth as eth
 import ./statusgo_backend/wallet
+import ./statusgo_backend/network as status_network
 import ./statusgo_backend/accounts as status_accounts
 import ./statusgo_backend/settings as status_settings
 import ./types/[transaction, setting, rpc_response, network_type, network, profile]

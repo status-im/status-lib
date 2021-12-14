@@ -2,6 +2,7 @@ import strformat, strutils, stint, httpclient, json, chronicles, net
 import ../statusgo_backend/wallet as status_wallet
 import ../statusgo_backend/eth as eth
 import ../statusgo_backend/settings as status_settings
+import ../statusgo_backend/network
 import ../eth/tokens as status_tokens
 import ../types/[rpc_response, network_type]
 import ../utils/cache

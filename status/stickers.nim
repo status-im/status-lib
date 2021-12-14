@@ -11,6 +11,7 @@ import # local deps
   eth/stickers as eth_stickers,
   transactions,
   statusgo_backend/wallet, ../eventemitter
+import ./statusgo_backend/network as status_network
 import ./types/[sticker, transaction, rpc_response, network_type, network]
 
 logScope:

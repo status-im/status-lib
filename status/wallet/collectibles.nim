@@ -13,6 +13,7 @@ import # status-desktop libs
   ../utils as status_utils,
   ../types/network_type,
   web3/[conversions, ethtypes], ../utils, account
+import ../statusgo_backend/network
 
 const CRYPTOKITTY* = "cryptokitty"
 const KUDO* = "kudo"
