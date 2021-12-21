@@ -1,6 +1,5 @@
 import json
-import ../statusgo_backend_new/eth as eth
-
+import ./eth
 
 # Retrieves number of sticker packs owned by user
 # See https://notes.status.im/Q-sQmQbpTOOWCQcYiXtf5g#Read-Sticker-Packs-owned-by-a-user
