@@ -227,7 +227,10 @@ proc login*(name, keyUid, hashedPassword, identicon, thumbnail, large: string):
     var nodeCfg = %* {
       "Web3Provider": %* {
         "Enabled": true
-      }
+      },
+      "EnsConfig": %* {
+        "Enabled": true
+      },
     }
 
     let response = status_go.loginWithConfig($payload, hashedPassword, $nodeCfg)
