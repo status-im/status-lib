@@ -219,7 +219,16 @@ proc login*(name, keyUid, hashedPassword, identicon, thumbnail, large: string):
     if(thumbnail.len>0 and large.len > 0):
       payload["identityImage"] = %* {"thumbnail": thumbnail, "large": large}
 
-    let response = status_go.login($payload, hashedPassword)
+    # TODO:
+    # If you added a new value in the nodeconfig in status-go, old accounts will not have this value, since the node config
+    # is stored in the database, and it's not easy to migrate using .sql 
+    # While this is fixed, you can add here any missing attribute on the node config, and it will be merged with whatever
+    # the account has in the db
+    var nodeCfg = %* {
+      
+    }
+
+    let response = status_go.loginWithConfig($payload, hashedPassword, $nodeCfg)
     result.result = Json.decode(response, JsonNode)
 
   except RpcException as e:
