@@ -52,6 +52,31 @@ proc deactivateChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception
 proc clearChatHistory*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   callPrivateRPC("deleteMessagesByChatID".prefix, %* [chatId])
 
+proc sendChatMessage*(
+    chatId: string,
+    msg: string,
+    replyTo: string,
+    contentType: int,
+    preferredUsername: string = "",
+    communityId: string = "",
+    stickerHash: string = "",
+    stickerPack: int = 0,
+    ): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("sendChatMessage".prefix, %* [
+    {
+      "chatId": chatId,
+      "text": msg,
+      "responseTo": replyTo,
+      "ensName": preferredUsername,
+      "sticker": {
+        "hash": stickerHash,
+        "pack": stickerPack
+      },
+      "contentType": contentType,
+      "communityId": communityId
+    }
+  ])
+
 proc sendImages*(chatId: string, images: var seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
   let imagesJson = %* images.map(image => %*
       {
