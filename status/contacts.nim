@@ -18,12 +18,6 @@ type
   ContactIdArgs* = ref object of Args
     id*: string
 
-  ContactArgs* = ref object of Args
-    contactId*: string
-
-  ContactNicknameUpdatedArgs* = ref object of ContactArgs
-    nickname*: string
-
 proc newContactModel*(events: EventEmitter): ContactModel =
     result = ContactModel()
     result.events = events
