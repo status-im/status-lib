@@ -248,3 +248,11 @@ proc verifyAccountPassword*(address: string, password: string, keystoreDir: stri
 
   return false
   
+proc storeIdentityImage*(keyUID: string, imagePath: string, aX, aY, bX, bY: int): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID, imagePath, aX, aY, bX, bY]
+  result = core.callPrivateRPC("multiaccounts_storeIdentityImage", payload)
+
+proc deleteIdentityImage*(keyUID: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID]
+  result = core.callPrivateRPC("multiaccounts_deleteIdentityImage", payload)
