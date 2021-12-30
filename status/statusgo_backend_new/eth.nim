@@ -31,3 +31,6 @@ proc doEthCall*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} 
 
 proc estimateGas*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
   core.callPrivateRPC("eth_estimateGas", payload)
+
+proc getEthAccounts*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("eth_accounts")
