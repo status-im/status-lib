@@ -1,4 +1,4 @@
-import json, json_serialization, chronicles, nimcrypto
+import json, json_serialization, chronicles
 import ./core, ./utils
 import ./response_type
 
@@ -135,9 +135,6 @@ proc storeAccounts*(id, hashedPassword: string): RpcResponse[JsonNode] {.raises:
   except RpcException as e:
     error "error doing rpc request", methodName = "storeAccounts", exception=e.msg
     raise newException(RpcException, e.msg)
-
-proc hashPassword*(password: string): string =
-  result = "0x" & $keccak_256.digest(password)
 
 proc saveAccount*(
   address: string,

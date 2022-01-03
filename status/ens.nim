@@ -1,17 +1,14 @@
 import sequtils
-import strformat
 import strutils
 import nimcrypto
 import json
 import json_serialization
 import tables
 import stew/byteutils
-import unicode
-import algorithm
-import web3/[ethtypes, conversions], stew/byteutils, stint
+import web3/[ethtypes, conversions], stint
 import chronicles, libp2p/[multihash, multicodec, cid]
 
-import ./statusgo_backend/eth as eth
+
 import ./statusgo_backend/wallet
 import ./statusgo_backend/accounts as status_accounts
 import ./statusgo_backend/settings as status_settings
@@ -90,151 +87,101 @@ proc getPrice*(): Stuint[256] =
   let res = status_ens.price(chainId)
   return fromHex(Stuint[256], res.result.getStr)
 
-proc label*(username:string): string =
-  var node:array[32, byte] = keccak_256.digest(username.toLower()).data
-  result = "0x" & node.toHex()
-
-proc namehash*(ensName:string): string =
-  let name = ensName.toLower()
-  var node:array[32, byte]
-
-  node.fill(0)
-  var parts = name.split(".")
-  for i in countdown(parts.len - 1,0):
-    let elem = keccak_256.digest(parts[i]).data
-    var concatArrays: array[64, byte]
-    concatArrays[0..31] = node
-    concatArrays[32..63] = elem
-    node = keccak_256.digest(concatArrays).data
-
-  result = "0x" & node.toHex()
-
 proc releaseEstimateGas*(username: string, address: string, success: var bool): int =
   let
-    label = fromHex(FixedBytes[32], label(username))
-    network = status_settings.getCurrentNetwork().toNetwork()
-    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
-    release = Release(label: label)
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), ensUsernamesContract.address, "", "")
+    chainId = status_settings.getCurrentNetwork().toChainId()
+    txData = transactions.buildTransaction(parseAddress(address), 0.u256)
+  
   try:
-    let response = ensUsernamesContract.methods["release"].estimateGas(tx, release, success)
-    if success:
-      result = fromHex[int](response)
-  except rpc_response.RpcException as e:
-    error "Could not estimate gas for ens release", err=e.msg
+    let resp = status_ens.releaseEstimate(chainId, txData, username)
+    result = resp.result.getInt
+    success = true
+  except:
+    success = false
+    result = 0
 
 proc release*(username: string, address: string, gas, gasPrice,  password: string, success: var bool): string =
   let
-    label = fromHex(FixedBytes[32], label(username))
-    network = status_settings.getCurrentNetwork().toNetwork()
-    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
-    release = Release(label: label)
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), ensUsernamesContract.address, "", "")
+    chainId = status_settings.getCurrentNetwork().toChainId()
+    txData = transactions.buildTransaction(
+      parseAddress(address), 0.u256, gas, gasPrice
+    )
+  
   try:
-    result = ensUsernamesContract.methods["release"].send(tx, release, password, success)
-    if success:
-      trackPendingTransaction(result, address, $ensUsernamesContract.address, PendingTransactionType.ReleaseENS, username)
-  except rpc_response.RpcException as e:
-    error "Could not estimate gas for ens release", err=e.msg
+    let resp = status_ens.release(chainId, txData, password, username)
+    result = resp.result.getStr
+    success = true
+    let ensUsernamesContract = contracts.findContract(chainId, "ens-usernames")
+    trackPendingTransaction(result, address, $ensUsernamesContract.address, PendingTransactionType.ReleaseENS, username)
+  except:
+    success = false
+    result = "failed to release the username"
 
 proc getExpirationTime*(username: string, success: var bool): int =
   let chainId = status_settings.getCurrentNetwork().toChainId()
   let res = status_ens.expireAt(chainId, username)
   return fromHex[int](res.result.getStr)
 
-proc extractCoordinates*(pubkey: string):tuple[x: string, y:string] =
-  result = ("0x" & pubkey[4..67], "0x" & pubkey[68..131])
-
 proc registerUsernameEstimateGas*(username: string, address: string, pubKey: string, success: var bool): int =
   let
-    label = fromHex(FixedBytes[32], label(username))
-    coordinates = extractCoordinates(pubkey)
-    x = fromHex(FixedBytes[32], coordinates.x)
-    y =  fromHex(FixedBytes[32], coordinates.y)
-    network = status_settings.getCurrentNetwork().toNetwork()
-    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
-    sntContract = contracts.findErc20Contract(network.chainId, network.sntSymbol())
-    price = getPrice()
-
-  let
-    register = Register(label: label, account: parseAddress(address), x: x, y: y)
-    registerAbiEncoded = ensUsernamesContract.methods["register"].encodeAbi(register)
-    approveAndCallObj = ApproveAndCall[132](to: ensUsernamesContract.address, value: price, data: DynamicBytes[132].fromHex(registerAbiEncoded))
-    approveAndCallAbiEncoded = sntContract.methods["approveAndCall"].encodeAbi(approveAndCallObj)
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, "", "")
-
-  let response = sntContract.methods["approveAndCall"].estimateGas(tx, approveAndCallObj, success)
-  if success:
-    result = fromHex[int](response)
+    chainId = status_settings.getCurrentNetwork().toChainId()
+    txData = transactions.buildTransaction(parseAddress(address), 0.u256)
+  
+  try:
+    let resp = status_ens.registerEstimate(chainId, txData, username, pubkey)
+    result = resp.result.getInt
+    success = true
+  except:
+    success = false
+    result = 0
 
 proc registerUsername*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string, maxFeePerGas: string, password: string, success: var bool): string =
   let
-    label = fromHex(FixedBytes[32], label(username))
-    coordinates = extractCoordinates(pubkey)
-    x = fromHex(FixedBytes[32], coordinates.x)
-    y =  fromHex(FixedBytes[32], coordinates.y)
     network = status_settings.getCurrentNetwork().toNetwork()
-    ensUsernamesContract = contracts.findContract(network.chainId, "ens-usernames")
-    sntContract = contracts.findErc20Contract(network.chainId, network.sntSymbol)
-    price = getPrice()
-
-  let
-    register = Register(label: label, account: parseAddress(address), x: x, y: y)
-    registerAbiEncoded = ensUsernamesContract.methods["register"].encodeAbi(register)
-    approveAndCallObj = ApproveAndCall[132](to: ensUsernamesContract.address, value: price, data: DynamicBytes[132].fromHex(registerAbiEncoded))
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
-
-  result = sntContract.methods["approveAndCall"].send(tx, approveAndCallObj, password, success)
-  if success:
-    trackPendingTransaction(result, address, $sntContract.address, PendingTransactionType.RegisterENS, username & domain)
+    chainId = network.chainId
+    txData = transactions.buildTransaction(
+      parseAddress(address), 0.u256, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas
+    )
+  
+  try:
+    let resp = status_ens.register(chainId, txData, password, username, pubkey)
+    result = resp.result.getStr
+    success = true
+    let sntContract = contracts.findErc20Contract(chainId, network.sntSymbol())
+    trackPendingTransaction(result, address, $sntContract.address, PendingTransactionType.RegisterEns, username & domain)
+  except:
+    success = false
+    result = "failed to register the username"
 
 proc setPubKeyEstimateGas*(username: string, address: string, pubKey: string, success: var bool): int =
-  var hash = namehash(username)
-  hash.removePrefix("0x")
-
   let
-    label = fromHex(FixedBytes[32], "0x" & hash)
-    x = fromHex(FixedBytes[32], "0x" & pubkey[4..67])
-    y =  fromHex(FixedBytes[32], "0x" & pubkey[68..131])
-    network = status_settings.getCurrentNetwork().toNetwork()
-    resolverContract = contracts.findContract(network.chainId, "ens-resolver")
-    setPubkey = SetPubkey(label: label, x: x, y: y)
-    resolverAddress = resolver(hash)
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), parseAddress(resolverAddress), "", "")
-
+    chainId = status_settings.getCurrentNetwork().toChainId()
+    txData = transactions.buildTransaction(parseAddress(address), 0.u256)
+  
   try:
-    let response = resolverContract.methods["setPubkey"].estimateGas(tx, setPubkey, success)
-    if success:
-      result = fromHex[int](response)
-  except rpc_response.RpcException as e:
-    raise
+    let resp = status_ens.setPubKeyEstimate(chainId, txData, username, pubkey)
+    result = resp.result.getInt
+    success = true
+  except:
+    success = false
+    result = 0
 
 proc setPubKey*(username, pubKey, address, gas, gasPrice: string, isEIP1559Enabled: bool, maxPriorityFeePerGas: string, maxFeePerGas: string, password: string, success: var bool): string =
-  var hash = namehash(username)
-  hash.removePrefix("0x")
-
   let
-    label = fromHex(FixedBytes[32], "0x" & hash)
-    x = fromHex(FixedBytes[32], "0x" & pubkey[4..67])
-    y =  fromHex(FixedBytes[32], "0x" & pubkey[68..131])
-    network = status_settings.getCurrentNetwork().toNetwork()
-    resolverContract = contracts.findContract(network.chainId, "ens-resolver")
-    setPubkey = SetPubkey(label: label, x: x, y: y)
-    resolverAddress = resolver(hash)
-
-  var tx = transactions.buildTokenTransaction(parseAddress(address), parseAddress(resolverAddress), gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
-
+    chainId = status_settings.getCurrentNetwork().toChainId()
+    txData = transactions.buildTransaction(
+      parseAddress(address), 0.u256, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas
+    )
+  
   try:
-    result = resolverContract.methods["setPubkey"].send(tx, setPubkey, password, success)
-    if success:
-      trackPendingTransaction(result, $address, resolverAddress, PendingTransactionType.SetPubKey, username)
-  except rpc_response.RpcException as e:
-    raise
+    let resp = status_ens.setPubKey(chainId, txData, password, username, pubkey)
+    result = resp.result.getStr
+    success = true
+    let resolverAddress = resolver(username)
+    trackPendingTransaction(result, $address, resolverAddress, PendingTransactionType.SetPubKey, username)
+  except:
+    success = false
+    result = "failed to set the pubkey"
 
 proc statusRegistrarAddress*():string =
   let network = status_settings.getCurrentNetwork().toNetwork()

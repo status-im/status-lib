@@ -1,7 +1,7 @@
 import json, json_serialization, strformat, chronicles
 import status_go
-import accounts
-import core
+import ./utils
+import ./core
 
 logScope:
   topics = "provider"
