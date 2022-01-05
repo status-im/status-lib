@@ -12,7 +12,7 @@ proc saveMailserver*(id: string, name: string, enode: string, fleet: string):
       "address": enode,
       "fleet": fleet
     }]
-  result = callPrivateRPC("mailservers_addMailserver", payload)
+  result = core.callPrivateRPC("mailservers_addMailserver", payload)
 
 proc getMailservers*(): RpcResponse[JsonNode] {.raises: [Exception].} =
-  result = callPrivateRPC("mailservers_getMailservers")
+  result = core.callPrivateRPC("mailservers_getMailservers")
