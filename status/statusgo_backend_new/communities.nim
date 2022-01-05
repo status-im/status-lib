@@ -171,3 +171,25 @@ proc importCommunity*(communityKey: string): RpcResponse[JsonNode] {.raises: [Ex
 
 proc exportCommunity*(communityId: string): RpcResponse[JsonNode] {.raises: [Exception].}  =
   result = callPrivateRPC("exportCommunity".prefix, %*[communityId])
+
+proc removeUserFromCommunity*(communityId: string, pubKey: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("removeUserFromCommunity".prefix, %*[communityId, pubKey])
+
+proc acceptRequestToJoinCommunity*(requestId: string): RpcResponse[JsonNode] {.raises: [Exception].}  =
+  return callPrivateRPC("acceptRequestToJoinCommunity".prefix, %*[{
+    "id": requestId
+  }])
+
+proc declineRequestToJoinCommunity*(requestId: string): RpcResponse[JsonNode] {.raises: [Exception].}  =
+  return callPrivateRPC("declineRequestToJoinCommunity".prefix, %*[{
+    "id": requestId
+  }])
+
+proc banUserFromCommunity*(communityId: string, pubKey: string): RpcResponse[JsonNode] {.raises: [Exception].}  =
+  return callPrivateRPC("banUserFromCommunity".prefix, %*[{
+    "communityId": communityId,
+    "user": pubKey
+  }])
+
+proc setCommunityMuted*(communityId: string, muted: bool): RpcResponse[JsonNode] {.raises: [Exception].}  =
+  return callPrivateRPC("setCommunityMuted".prefix, %*[communityId, muted])
