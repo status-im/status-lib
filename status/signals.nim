@@ -30,6 +30,8 @@ proc decode*(jsonSignal: JsonNode): Signal =
     of SignalType.HistoryRequestFailed: HistoryRequestFailedSignal.fromEvent(jsonSignal)
     of SignalType.HistoryRequestBatchProcessed: HistoryRequestBatchProcessedSignal.fromEvent(jsonSignal)
     of SignalType.KeycardConnected: KeycardConnectedSignal.fromEvent(jsonSignal)
+    of SignalType.MailserverAvailable: MailserverAvailableSignal.fromEvent(jsonSignal)
+    of SignalType.MailserverChanged: MailserverChangedSignal.fromEvent(jsonSignal)
     else: Signal()
 
   result.signalType = signalType

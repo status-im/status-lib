@@ -225,6 +225,9 @@ proc login*(name, keyUid, hashedPassword, identicon, thumbnail, large: string):
     # While this is fixed, you can add here any missing attribute on the node config, and it will be merged with whatever
     # the account has in the db
     var nodeCfg = %* {
+      "ShhextConfig": %* {
+        "EnableMailserverCycle": true
+      },
       "Web3ProviderConfig": %* {
         "Enabled": true
       },
