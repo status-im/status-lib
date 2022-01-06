@@ -1,7 +1,7 @@
 import statusgo_backend/accounts as statusgo_backend_accounts
 import statusgo_backend/core as statusgo_backend_core
 import statusgo_backend/settings as statusgo_backend_settings
-import chat, accounts, wallet, wallet2, node, network, messages, contacts, profile, stickers, permissions, fleet, settings, mailservers, tokens
+import chat, accounts, wallet, wallet2, node, network, messages, contacts, profile, stickers, permissions, fleet, settings, tokens
 import notifications/os_notifications
 import ../eventemitter
 import bitops, stew/byteutils, chronicles
@@ -28,7 +28,6 @@ type Status* = ref object
   stickers*: StickersModel
   permissions*: PermissionsModel
   settings*: SettingsModel
-  mailservers*: MailserversModel
   tokens*: TokensModel
   osnotifications*: OsNotifications
   keycard*: KeycardModel
@@ -51,7 +50,6 @@ proc newStatusInstance*(fleetConfig: string, backendName: string = "statusgo"): 
   result.stickers = stickers.newStickersModel(result.events)
   result.permissions = permissions.newPermissionsModel(result.events)
   result.settings = settings.newSettingsModel(result.events)
-  result.mailservers = mailservers.newMailserversModel(result.events)
   result.tokens = tokens.newTokensModel(result.events)
   result.osnotifications = newOsNotifications(result.events)
   result.keycard = newKeycardModel(result.backend)
@@ -69,7 +67,6 @@ proc reset*(self: Status) {.exportc, dynlib.} =
   # NOT NEEDED self.chat.reset()
   # NOT NEEDED self.wallet.reset()
   # NOT NEEDED self.node.reset()
-  # NOT NEEDED self.mailservers.reset()
   # NOT NEEDED self.profile.reset()
 
   # TODO: add all resets here
