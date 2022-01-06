@@ -49,6 +49,34 @@ proc createCommunity*(
       "imageBy": bY
     }])
 
+proc editCommunity*(
+    communityId: string,
+    name: string,
+    description: string,
+    access: int,
+    ensOnly: bool,
+    color: string,
+    imageUrl: string,
+    aX: int,
+    aY: int,
+    bX: int,
+    bY: int
+    ): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("editCommunity".prefix, %*[{
+    # TODO this will need to be renamed membership (small m)
+    "CommunityID": communityId,
+    "Membership": access,
+    "name": name,
+    "description": description,
+    "ensOnly": ensOnly,
+    "color": color,
+    "image": imageUrl,
+    "imageAx": aX,
+    "imageAy": aY,
+    "imageBx": bX,
+    "imageBy": bY
+  }])
+
 proc createCommunityChannel*(
     communityId: string,
     name: string,
