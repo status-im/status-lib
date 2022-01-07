@@ -221,3 +221,9 @@ proc banUserFromCommunity*(communityId: string, pubKey: string): RpcResponse[Jso
 
 proc setCommunityMuted*(communityId: string, muted: bool): RpcResponse[JsonNode] {.raises: [Exception].}  =
   return callPrivateRPC("setCommunityMuted".prefix, %*[communityId, muted])
+
+proc inviteUsersToCommunity*(communityId: string, pubKeys: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return callPrivateRPC("inviteUsersToCommunity".prefix, %*[{
+    "communityId": communityId,
+    "users": pubKeys
+  }])
