@@ -18,6 +18,10 @@ proc validateMnemonic*(mnemonic: string): RpcResponse[JsonNode] {.raises: [Excep
     error "error doing rpc request", methodName = "validateMnemonic", exception=e.msg
     raise newException(RpcException, e.msg)
 
+proc startMessenger*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* []
+  result = core.callPrivateRPC("startMessenger".prefix, payload)
+
 proc generateSymKeyFromPassword*(password: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [password]
   result = core.callPrivateRPC("waku_generateSymKeyFromPassword", payload)
