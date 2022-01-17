@@ -30,10 +30,10 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
 
-  result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
-  result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
-  result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
-  result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.nodes.vac.dev"]
+  result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+  result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+  result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+  result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
   
   #TODO: in the meantime we're using the go-waku test fleet for rendezvous.
   #      once we have a prod fleet this code needs to be updated
