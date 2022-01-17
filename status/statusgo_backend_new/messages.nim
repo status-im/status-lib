@@ -61,3 +61,6 @@ proc markCertainMessagesFromChatWithIdAsRead*(chatId: string, messageIds: seq[st
 
 proc deleteMessageAndSend*(messageID: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   result = callPrivateRPC("deleteMessageAndSend".prefix, %* [messageID])
+
+proc editMessage*(messageId: string, msg: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("editMessage".prefix, %* [{"id": messageId, "text": msg}])
