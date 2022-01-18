@@ -34,3 +34,6 @@ proc estimateGas*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].
 
 proc getEthAccounts*(): RpcResponse[JsonNode] {.raises: [Exception].} =
   return core.callPrivateRPC("eth_accounts")
+
+proc getGasPrice*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("eth_gasPrice", payload)
