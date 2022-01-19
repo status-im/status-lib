@@ -101,3 +101,31 @@ proc unmuteChat*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} 
 proc deleteMessagesByChatId*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
   let payload = %* [chatId]
   result = callPrivateRPC("deleteMessagesByChatID".prefix, payload)
+  
+proc addGroupMembers*(chatId: string, pubKeys: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [nil, chatId, pubKeys]
+  result = callPrivateRPC("addMembersToGroupChat".prefix, payload)
+
+proc removeMembersFromGroupChat*(chatId: string, pubKey: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [nil, chatId, pubKey]
+  result = callPrivateRPC("removeMemberFromGroupChat".prefix, payload) 
+
+proc renameGroupChat*(chatId: string, newName: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [nil, chatId, newName]
+  result = callPrivateRPC("changeGroupChatName".prefix, payload) 
+
+proc makeAdmin*(chatId: string, pubKey: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [nil, chatId, [pubKey]]
+  result = callPrivateRPC("addAdminsToGroupChat".prefix, payload)
+
+proc createGroupChat*(groupName: string, pubKeys: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [nil, groupName, pubKeys]
+  result = callPrivateRPC("createGroupChatWithMembers".prefix, payload)
+
+proc confirmJoiningGroup*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("confirmJoiningGroup".prefix, payload)
+
+proc createGroupChatFromInvitation*(groupName: string, chatId: string, adminPK: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [groupName, chatId, adminPK]
+  result = callPrivateRPC("createGroupChatFromInvitation".prefix, payload)
