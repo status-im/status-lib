@@ -30,10 +30,19 @@ proc getDefaultNodeConfig*(fleetConfig: FleetConfig, installationId: string): Js
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
 
-  result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
-  result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
-  result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
-  result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+  case fleet:
+    of Fleet.WakuV2Prod:
+      result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://ANTL4SLG2COUILKAPE7EF2BYNL2SHSHVCHLRD5J7ZJLN5R3PRJD2Y@prod.waku.nodes.status.im"]
+      result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://ANTL4SLG2COUILKAPE7EF2BYNL2SHSHVCHLRD5J7ZJLN5R3PRJD2Y@prod.waku.nodes.status.im"]
+      result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://ANTL4SLG2COUILKAPE7EF2BYNL2SHSHVCHLRD5J7ZJLN5R3PRJD2Y@prod.waku.nodes.status.im"]
+      result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://ANTL4SLG2COUILKAPE7EF2BYNL2SHSHVCHLRD5J7ZJLN5R3PRJD2Y@prod.waku.nodes.status.im"]
+    of Fleet.WakuV2Test:
+      result["ClusterConfig"]["RelayNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+      result["ClusterConfig"]["StoreNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+      result["ClusterConfig"]["FilterNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]
+      result["ClusterConfig"]["LightpushNodes"] =  %* @["enrtree://AOFTICU2XWDULNLZGRMQS4RIZPAZEHYMV4FYHAPW563HNRAOERP7C@test.waku.nodes.status.im"]   
+    else:
+      discard
   
   #TODO: in the meantime we're using the go-waku test fleet for rendezvous.
   #      once we have a prod fleet this code needs to be updated
