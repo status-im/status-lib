@@ -83,7 +83,8 @@ proc editCommunity*(
 proc createCommunityChannel*(
     communityId: string,
     name: string,
-    description: string
+    description: string,
+    categoryId: string
     ): RpcResponse[JsonNode] {.raises: [Exception].} =
   result = callPrivateRPC("createCommunityChat".prefix, %*[
     communityId,
@@ -103,7 +104,8 @@ proc createCommunityChannel*(
         #     "image_type": 1 # 1 is a raw payload
         #   }
         # ]
-      }
+      },
+      "category_id": categoryId
     }])
 
 proc editCommunityChannel*(
