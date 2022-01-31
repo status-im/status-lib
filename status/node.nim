@@ -1,16 +1,20 @@
-import statusgo_backend/core as status
-import ../eventemitter
+import json
+import core, utils
+import response_type
 
-type NodeModel* = ref object
-  events*: EventEmitter
+export response_type
 
-proc newNodeModel*(): NodeModel =
-  result = NodeModel()
-  result.events = createEventEmitter()
+proc adminPeers*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+    let payload = %* []
+    result = callPrivateRPC("admin_peers", payload)
 
-proc delete*(self: NodeModel) =
-  discard
+proc wakuV2Peers*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+    let payload = %* []
+    result = callPrivateRPC("peers", payload)
 
-proc sendRPCMessageRaw*(self: NodeModel, msg: string): string =
-  echo "sending RPC message"
-  status.callPrivateRPCRaw(msg)
+proc sendRPCMessageRaw*(inputJSON: string): string {.raises: [Exception].} =
+    result = callPrivateRPCRaw(inputJSON)
+
+proc getBloomFilter*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+    let payload = %* []
+    result = callPrivateRPC("bloomFilter".prefix, payload)

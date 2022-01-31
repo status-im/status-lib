@@ -1,86 +1,256 @@
-import options, chronicles, json, json_serialization, sequtils, sugar
-import statusgo_backend/accounts as status_accounts
-import statusgo_backend/settings as status_settings
-import ./types/[account, fleet, sticker, setting]
-import utils
-import ../eventemitter
+import json, json_serialization, chronicles, nimcrypto
+import ./core, ./utils
+import ./response_type
 
-const DEFAULT_NETWORK_NAME* = "mainnet_rpc"
+import status_go
 
-type
-  AccountModel* = ref object
-    generatedAddresses*: seq[GeneratedAccount]
-    nodeAccounts*: seq[NodeAccount]
-    events: EventEmitter
+export response_type
 
-proc newAccountModel*(events: EventEmitter): AccountModel =
-  result = AccountModel()
-  result.events = events
+logScope:
+  topics = "rpc-accounts"
 
-proc generateAddresses*(self: AccountModel): seq[GeneratedAccount] =
-  var accounts = status_accounts.generateAddresses()
-  for account in accounts.mitems:
-    account.name = status_accounts.generateAlias(account.derived.whisper.publicKey)
-    account.identicon = status_accounts.generateIdenticon(account.derived.whisper.publicKey)
-    self.generatedAddresses.add(account)
-  result = self.generatedAddresses
+const NUMBER_OF_ADDRESSES_TO_GENERATE = 5
+const MNEMONIC_PHRASE_LENGTH = 12
 
-proc openAccounts*(self: AccountModel, statusGoDir: string): seq[NodeAccount] =
-  result = status_accounts.openAccounts(statusGoDir)
+const GENERATED* = "generated"
+const SEED* = "seed"
+const KEY* = "key"
+const WATCH* = "watch"
 
-proc login*(self: AccountModel, selectedAccountIndex: int, password: string): NodeAccount =
-  let currentNodeAccount = self.nodeAccounts[selectedAccountIndex]
-  result = status_accounts.login(currentNodeAccount, password)
+proc getAccounts*(): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("accounts_getAccounts")
 
-proc storeAccountAndLogin*(self: AccountModel, fleetConfig: FleetConfig, selectedAccountIndex: int, password: string): Account =
-  let generatedAccount: GeneratedAccount = self.generatedAddresses[selectedAccountIndex]
-  result = status_accounts.setupAccount(fleetConfig, generatedAccount, password)
+proc deleteAccount*(address: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  return core.callPrivateRPC("accounts_deleteAccount", %* [address])
 
-proc storeDerivedAndLogin*(self: AccountModel, fleetConfig: FleetConfig, importedAccount: GeneratedAccount, password: string): Account =
-  result = status_accounts.setupAccount(fleetConfig, importedAccount, password)
+proc updateAccount*(name, address, publicKey, walletType, color: string) {.raises: [Exception].} =
+  discard core.callPrivateRPC("accounts_saveAccounts", %* [
+    [{
+      "color": color,
+      "name": name,
+      "address": address,
+      "public-key": publicKey,
+      "type": walletType,
+      "path": "m/44'/60'/0'/0/1" # <--- TODO: fix this. Derivation path is not supposed to change
+    }]
+  ])
 
-proc importMnemonic*(self: AccountModel, mnemonic: string): GeneratedAccount =
-  let importedAccount = status_accounts.multiAccountImportMnemonic(mnemonic)
-  importedAccount.derived = status_accounts.deriveAccounts(importedAccount.id)
-  importedAccount.name = status_accounts.generateAlias(importedAccount.derived.whisper.publicKey)
-  importedAccount.identicon = status_accounts.generateIdenticon(importedAccount.derived.whisper.publicKey)
-  result = importedAccount
+proc generateAddresses*(paths: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* {
+    "n": NUMBER_OF_ADDRESSES_TO_GENERATE,
+    "mnemonicPhraseLength": MNEMONIC_PHRASE_LENGTH,
+    "bip39Passphrase": "",
+    "paths": paths
+  }
 
-proc reset*(self: AccountModel) =
-  self.nodeAccounts = @[]
-  self.generatedAddresses = @[]
-
-proc generateAlias*(publicKey: string): string =
-  result = status_accounts.generateAlias(publicKey)
-
-proc generateIdenticon*(publicKey: string): string =
-  result = status_accounts.generateIdenticon(publicKey)
-
-proc generateAlias*(self: AccountModel, publicKey: string): string =
-  result = generateAlias(publicKey)
-
-proc generateIdenticon*(self: AccountModel, publicKey: string): string =
-  result = generateIdenticon(publicKey)
-
-proc changeNetwork*(self: AccountModel, network: string) =
-  var statusGoResult = status_settings.setNetwork(network)
-  if statusGoResult.error != "":
-    error "Error saving updated node config", msg=statusGoResult.error
-
-  # remove all installed sticker packs (pack ids do not match across networks)
-  statusGoResult = status_settings.saveSetting(Setting.Stickers_PacksInstalled, %* {})
-  if statusGoResult.error != "":
-    error "Error removing all installed sticker packs", msg=statusGoResult.error
-
-  # remove all recent stickers (pack ids do not match across networks)
-  statusGoResult = status_settings.saveSetting(Setting.Stickers_Recent, %* {})
-  if statusGoResult.error != "":
-    error "Error removing all recent stickers", msg=statusGoResult.error
-
-proc changePassword*(self: AccountModel, keyUID: string,  password: string, newPassword: string): bool =
   try:
-    if not status_accounts.changeDatabasePassword(keyUID, password, newPassword):
-      return false
-  except:
-    return false
-  return true
+    let response = status_go.multiAccountGenerateAndDeriveAddresses($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "generateAddresses", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc generateAlias*(publicKey: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let response = status_go.generateAlias(publicKey)
+    result.result = %* response
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "generateAlias", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc generateIdenticon*(publicKey: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let response = status_go.identicon(publicKey)
+    result.result = %* response
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "generateIdenticon", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc multiAccountImportMnemonic*(mnemonic: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* {
+    "mnemonicPhrase": mnemonic,
+    "Bip39Passphrase": ""
+  }
+  
+  try:
+    let response = status_go.multiAccountImportMnemonic($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "multiAccountImportMnemonic", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc deriveAccounts*(accountId: string, paths: seq[string]): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* {
+    "accountID": accountId,
+    "paths": paths
+  }
+  
+  try:
+    let response = status_go.multiAccountDeriveAddresses($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "deriveAccounts", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc openedAccounts*(path: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let response = status_go.openAccounts(path)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "openedAccounts", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc storeDerivedAccounts*(id, hashedPassword: string, paths: seq[string]):
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* {
+    "accountID": id,
+    "paths": paths,
+    "password": hashedPassword
+  }
+
+  try:
+    let response = status_go.multiAccountStoreDerivedAccounts($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "storeDerivedAccounts", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc storeAccounts*(id, hashedPassword: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* {
+    "accountID": id,
+    "password": hashedPassword
+  }
+
+  try:
+    let response = status_go.multiAccountStoreAccount($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "storeAccounts", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc saveAccount*(
+  address: string,
+  name: string,
+  password: string,
+  color: string,
+  accountType: string,
+  isADerivedAccount = true,
+  walletIndex: int = 0,
+  id: string = "",
+  publicKey: string = "",
+) {.raises: [Exception].} =
+  var derivationPath = "m/44'/60'/0'/0/0"
+  let hashedPassword = hashPassword(password)
+
+  if (isADerivedAccount):
+    let derivationPath = (if accountType == GENERATED: "m/" else: "m/44'/60'/0'/0/") & $walletIndex
+    discard storeDerivedAccounts(id, hashedPassword, @[derivationPath])
+  elif accountType == KEY:
+    discard storeAccounts(id, hashedPassword)
+
+  discard callPrivateRPC("accounts_saveAccounts", %* [
+    [{
+      "color": color,
+      "name": name,
+      "address": address,
+      "public-key": publicKey,
+      "type": accountType,
+      "path": derivationPath
+    }]
+  ])
+
+proc loadAccount*(address: string, password: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let hashedPassword = hashPassword(password)
+  let payload = %* {
+    "address": address,
+    "password": hashedPassword
+  }
+
+  try:
+    let response = status_go.multiAccountLoadAccount($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "storeAccounts", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc addPeer*(peer: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let response = status_go.addPeer(peer)
+    result.result = %* response
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "addPeer", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc saveAccountAndLogin*(hashedPassword: string, account, subaccounts, settings,
+  config: JsonNode): RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let response = status_go.saveAccountAndLogin($account, hashedPassword, 
+    $settings, $config, $subaccounts)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "saveAccountAndLogin", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc login*(name, keyUid, hashedPassword, identicon, thumbnail, large: string, nodeCfgObj: string): 
+  RpcResponse[JsonNode] 
+  {.raises: [Exception].} =
+  try:
+    var payload = %* {
+      "name": name,
+      "key-uid": keyUid,
+      "identityImage": newJNull(),
+      "identicon": identicon
+    }
+
+    if(thumbnail.len>0 and large.len > 0):
+      payload["identityImage"] = %* {"thumbnail": thumbnail, "large": large}
+
+    let response = status_go.loginWithConfig($payload, hashedPassword, nodeCfgObj)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "login", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc multiAccountImportPrivateKey*(privateKey: string): RpcResponse[JsonNode] =
+  let payload = %* {
+    "privateKey": privateKey
+  }
+  try:
+    let response = status_go.multiAccountImportPrivateKey($payload)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "multiAccountImportPrivateKey", exception=e.msg
+    raise newException(RpcException, e.msg)
+
+proc verifyAccountPassword*(address: string, password: string, keystoreDir: string): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let hashedPassword = hashPassword(password)
+    let response = status_go.verifyAccountPassword(keystoreDir, address, hashedPassword)
+    result.result = Json.decode(response, JsonNode)
+
+  except RpcException as e:
+    error "error doing rpc request", methodName = "verifyAccountPassword", exception=e.msg
+    raise newException(RpcException, e.msg)
+  
+proc storeIdentityImage*(keyUID: string, imagePath: string, aX, aY, bX, bY: int): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID, imagePath, aX, aY, bX, bY]
+  result = core.callPrivateRPC("multiaccounts_storeIdentityImage", payload)
+
+proc deleteIdentityImage*(keyUID: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID]
+  result = core.callPrivateRPC("multiaccounts_deleteIdentityImage", payload)

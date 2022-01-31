@@ -1,26 +1,29 @@
-import
-  options, strutils
+import json, stint, chronicles, strutils
 
-import
-  stint, web3/ethtypes, types/transaction
+import ./core as core
 
-from utils as status_utils import toUInt64, gwei2Wei, parseAddress
+proc checkRecentHistory*(addresses: seq[string]) {.raises: [Exception].} =
+  let payload = %* [addresses]
+  discard callPrivateRPC("wallet_checkRecentHistory", payload)
 
-proc buildTransaction*(source: Address, value: Uint256, gas = "", gasPrice = "", isEIP1559Enabled = false, maxPriorityFeePerGas = "", maxFeePerGas = "", data = ""): TransactionData =
-  result = TransactionData(
-    source: source,
-    value: value.some,
-    gas: (if gas.isEmptyOrWhitespace: Quantity.none else: Quantity(cast[uint64](parseFloat(gas).toUInt64)).some),
-    gasPrice: (if gasPrice.isEmptyOrWhitespace: int.none else: gwei2Wei(parseFloat(gasPrice)).truncate(int).some),
-    data: data
-  )
-  if isEIP1559Enabled:
-    result.txType = "0x02"
-    result.maxPriorityFeePerGas = if maxFeePerGas.isEmptyOrWhitespace: Uint256.none else: gwei2Wei(parseFloat(maxPriorityFeePerGas)).some
-    result.maxFeePerGas = (if maxFeePerGas.isEmptyOrWhitespace: Uint256.none else: gwei2Wei(parseFloat(maxFeePerGas)).some)
-  else:
-    result.txType = "0x00"
-
-proc buildTokenTransaction*(source, contractAddress: Address, gas = "", gasPrice = "", isEIP1559Enabled = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): TransactionData =
-  result = buildTransaction(source, 0.u256, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
-  result.to = contractAddress.some
+proc getTransfersByAddress*(address: string, toBlock: Uint256, limitAsHexWithoutLeadingZeros: string, 
+  loadMore: bool = false): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let toBlockParsed = if not loadMore: newJNull() else: %("0x" & stint.toHex(toBlock))
+    
+  callPrivateRPC("wallet_getTransfersByAddress", %* [address, toBlockParsed, limitAsHexWithoutLeadingZeros, loadMore])
+    
+proc trackPendingTransaction*(hash: string, fromAddress: string, toAddress: string, trxType: string, data: string): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [{
+    "hash": hash, 
+    "from": fromAddress, 
+    "to": toAddress, 
+    "type": trxType, 
+    "additionalData": data, 
+    "data": "",  
+    "value": 0, 
+    "timestamp": 0, 
+    "gasPrice": 0, 
+    "gasLimit": 0
+  }]
+  callPrivateRPC("wallet_storePendingTransaction", payload)
