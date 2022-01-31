@@ -1,51 +1,66 @@
-import tables, sets
-import statusgo_backend/chat
-import ../eventemitter
+import json
+import core, utils
+import response_type
 
-type
-  MessageDetails* = object
-    status*: string
-    chatId*: string
+export response_type
 
-  MessagesModel* = ref object
-    events*: EventEmitter
-    messages*: Table[string, MessageDetails]
-    confirmations*: HashSet[string]
+proc fetchMessages*(chatId: string, cursorVal: string, limit: int): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, cursorVal, limit]
+  result = callPrivateRPC("chatMessages".prefix, payload)
 
-  MessageSentArgs* = ref object of Args
-    messageId*: string
-    chatId*: string
+proc fetchPinnedMessages*(chatId: string, cursorVal: string, limit: int): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, cursorVal, limit]
+  result = callPrivateRPC("chatPinnedMessages".prefix, payload)
 
-proc newMessagesModel*(events: EventEmitter): MessagesModel =
-  result = MessagesModel()
-  result.events = events
-  result.messages = initTable[string, MessageDetails]()
-  result.confirmations = initHashSet[string]()
+proc fetchReactions*(chatId: string, cursorVal: string, limit: int): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, cursorVal, limit]
+  result = callPrivateRPC("emojiReactionsByChatID".prefix, payload)
 
-proc delete*(self: MessagesModel) =
-  discard
+proc addReaction*(chatId: string, messageId: string, emojiId: int): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageId, emojiId]
+  result = callPrivateRPC("sendEmojiReaction".prefix, payload)
 
-# For each message sent we call trackMessage to register the message id,
-# and wait until an EnvelopeSent signals is emitted for that message. However
-# due to communication being async, it's possible that the signal arrives
-# first, hence why we check if there's a confirmation (an envelope.sent) 
-# inside trackMessage to emit the "messageSent" event
+proc removeReaction*(reactionId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [reactionId]
+  result = callPrivateRPC("sendEmojiReactionRetraction".prefix, payload)
 
-proc trackMessage*(self: MessagesModel, messageId: string, chatId: string) =
-  if self.messages.hasKey(messageId): return
+proc pinUnpinMessage*(chatId: string, messageId: string, pin: bool): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %*[{
+    "message_id": messageId,
+    "pinned": pin,
+    "chat_id": chatId
+  }]
+  result = callPrivateRPC("sendPinMessage".prefix, payload)
 
-  self.messages[messageId] = MessageDetails(status: "sending", chatId: chatId)
-  if self.confirmations.contains(messageId):
-    self.confirmations.excl(messageId)
-    self.messages[messageId].status = "sent"
-    discard updateOutgoingMessageStatus(messageId, "sent")
-    self.events.emit("messageSent", MessageSentArgs(messageId: messageId, chatId: chatId))
+proc fetchMessageByMessageId*(messageId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [messageId]
+  result = callPrivateRPC("messageByMessageID".prefix, payload)
 
-proc updateStatus*(self: MessagesModel, messageIds: seq[string]) =
-  for messageId in messageIds:
-    if self.messages.hasKey(messageId):
-      self.messages[messageId].status = "sent"
-      discard updateOutgoingMessageStatus(messageId, "sent")
-      self.events.emit("messageSent", MessageSentArgs(messageId: messageId, chatId: self.messages[messageId].chatId))
-    else:
-      self.confirmations.incl(messageId)
+proc fetchReactionsForMessageWithId*(chatId: string, messageId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageId]
+  result = callPrivateRPC("emojiReactionsByChatIDMessageID".prefix, payload)
+
+proc fetchAllMessagesFromChatWhichMatchTerm*(chatId: string, searchTerm: string, caseSensitive: bool): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, searchTerm, caseSensitive]
+  result = callPrivateRPC("allMessagesFromChatWhichMatchTerm".prefix, payload)
+
+proc fetchAllMessagesFromChatsAndCommunitiesWhichMatchTerm*(communityIds: seq[string], chatIds: seq[string], 
+  searchTerm: string, caseSensitive: bool): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [communityIds, chatIds, searchTerm, caseSensitive]
+  result = callPrivateRPC("allMessagesFromChatsAndCommunitiesWhichMatchTerm".prefix, payload)
+
+proc markAllMessagesFromChatWithIdAsRead*(chatId: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId]
+  result = callPrivateRPC("markAllRead".prefix, payload)
+
+proc markCertainMessagesFromChatWithIdAsRead*(chatId: string, messageIds: seq[string]): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [chatId, messageIds]
+  result = callPrivateRPC("markMessagesSeen".prefix, payload)
+
+proc deleteMessageAndSend*(messageID: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("deleteMessageAndSend".prefix, %* [messageID])
+
+proc editMessage*(messageId: string, msg: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  result = callPrivateRPC("editMessage".prefix, %* [{"id": messageId, "text": msg}])
