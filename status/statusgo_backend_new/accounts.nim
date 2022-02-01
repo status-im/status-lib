@@ -261,19 +261,12 @@ proc verifyAccountPassword*(address: string, password: string, keystoreDir: stri
     return true
 
   return false
+  
+proc storeIdentityImage*(keyUID: string, imagePath: string, aX, aY, bX, bY: int): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID, imagePath, aX, aY, bX, bY]
+  result = core.callPrivateRPC("multiaccounts_storeIdentityImage", payload)
 
-proc generateAccount*(password, name, color: string): RpcResponse[JsonNode] {.raises: [Exception].} =
-  let payload = %* [hashPassword(password), name, color]
-  return core.callPrivateRPC("accounts_generateAccount", payload)
-
-proc addAccountWithMnemonic*(mnemonic, password, name, color: string): RpcResponse[JsonNode] {.raises: [Exception].} =
-  let payload = %* [mnemonic, hashPassword(password), name, color]
-  return core.callPrivateRPC("accounts_addAccountWithMnemonic", payload)
-
-proc addAccountWithPrivateKey*(privateKey, password, name, color: string): RpcResponse[JsonNode] {.raises: [Exception].} =
-  let payload = %* [privateKey, hashPassword(password), name, color]
-  return core.callPrivateRPC("accounts_addAccountWithPrivateKey", payload)
-
-proc addAccountWatch*(address, name, color: string): RpcResponse[JsonNode] {.raises: [Exception].} =
-  let payload = %* [address, name, color]
-  return core.callPrivateRPC("accounts_addAccountWatch", payload)
+proc deleteIdentityImage*(keyUID: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  let payload = %* [keyUID]
+  result = core.callPrivateRPC("multiaccounts_deleteIdentityImage", payload)
