@@ -252,15 +252,16 @@ proc multiAccountImportPrivateKey*(privateKey: string): RpcResponse[JsonNode] =
     error "error doing rpc request", methodName = "multiAccountImportPrivateKey", exception=e.msg
     raise newException(RpcException, e.msg)
 
-proc verifyAccountPassword*(address: string, password: string, keystoreDir: string): bool =
-  let hashedPassword = hashPassword(password)
-  let verifyResult = status_go.verifyAccountPassword(keystoreDir, address, hashedPassword)
-  let error = parseJson(verifyResult)["error"].getStr
+proc verifyAccountPassword*(address: string, password: string, keystoreDir: string): 
+  RpcResponse[JsonNode] {.raises: [Exception].} =
+  try:
+    let hashedPassword = hashPassword(password)
+    let response = status_go.verifyAccountPassword(keystoreDir, address, hashedPassword)
+    result.result = Json.decode(response, JsonNode)
 
-  if error == "":
-    return true
-
-  return false
+  except RpcException as e:
+    error "error doing rpc request", methodName = "verifyAccountPassword", exception=e.msg
+    raise newException(RpcException, e.msg)
   
 proc storeIdentityImage*(keyUID: string, imagePath: string, aX, aY, bX, bY: int): 
   RpcResponse[JsonNode] {.raises: [Exception].} =
