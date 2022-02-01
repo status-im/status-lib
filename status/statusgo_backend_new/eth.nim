@@ -14,5 +14,17 @@ proc getEthBalance*(address: string): RpcResponse[JsonNode] {.raises: [Exception
   let payload = %* [address, "latest"]
   return core.callPrivateRPC("eth_getBalance", payload)
 
-proc call*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+proc getTokenBalance*(tokenAddress: string, accountAddress: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  var postfixedAccount: string = accountAddress
+  postfixedAccount.removePrefix("0x")
+  let payload = %* [{
+    "to": tokenAddress, "from": accountAddress, "data": fmt"0x70a08231000000000000000000000000{postfixedAccount}"
+  }, "latest"]
   return core.callPrivateRPC("eth_call", payload)
+
+proc sendTransaction*(transactionData: string, password: string): RpcResponse[JsonNode] {.raises: [Exception].} =
+  core.sendTransaction(transactionData, password)
+
+# This is the replacement of the `call` function
+proc doEthCall*(payload = %* []): RpcResponse[JsonNode] {.raises: [Exception].} =
+  core.callPrivateRPC("eth_call", payload)
